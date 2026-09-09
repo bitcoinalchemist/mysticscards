@@ -285,7 +285,7 @@ var CASTFIELD_SUIT_SVG = {
       'translate3d(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px,' + z.toFixed(1) + 'px)' +
       ' scale(' + scale.toFixed(3) + ') rotateZ(' + rotZ.toFixed(1) + 'deg)';
 
-    var opacity = (0.18 + depth * 0.26).toFixed(3);
+    var opacity = (0.225 + depth * 0.325).toFixed(3);
     if (opacity !== o.opacity) { o.el.style.opacity = opacity; o.opacity = opacity; }
 
   }

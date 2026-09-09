@@ -8,7 +8,7 @@
   var callbacks = [], raf = null, timer = null;
   var last = null, elapsed = 0, activeUntil = 0;
   var focused = document.hasFocus();
-  var INTERVAL = 1000 / 30, IDLE_MS = 12000;
+  var INTERVAL = 1000 / 30, IDLE_MS = 30000;
 
   function allowed() {
     return focused && !document.hidden && !motion.matches && performance.now() < activeUntil;

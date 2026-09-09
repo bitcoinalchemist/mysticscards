@@ -202,6 +202,12 @@
   function wireDateNav() {
     const root = document.getElementById('fInTime');
     if (!root) return;
+    let readingTouch = null;
+    let readingWheelTotal = 0;
+    let readingWheelUsed = false;
+    let readingWheelCanRearm = false;
+    let readingWheelDirection = 0;
+    let readingWheelTimer = null;
     function commitAgeInput(ageInput) {
       const age = parseInt(ageInput.value, 10);
       if (Number.isInteger(age)) setAge(age);
@@ -261,6 +267,54 @@
         setAge((parseInt(ageInput.value, 10) || 0) + (ev.key === 'ArrowUp' ? 1 : -1));
       }
     });
+    root.addEventListener('touchstart', function (ev) {
+      if (ev.touches.length !== 1 || !ev.target.closest('.it-reading') || ev.target.closest('button, input')) {
+        readingTouch = null;
+        return;
+      }
+      readingTouch = { x: ev.touches[0].clientX, y: ev.touches[0].clientY };
+    }, { passive: true });
+    root.addEventListener('touchcancel', function () { readingTouch = null; }, { passive: true });
+    root.addEventListener('touchend', function (ev) {
+      if (!readingTouch || !ev.changedTouches.length) return;
+      const dx = ev.changedTouches[0].clientX - readingTouch.x;
+      const dy = ev.changedTouches[0].clientY - readingTouch.y;
+      readingTouch = null;
+      if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.4) {
+        shiftActiveHorizon(dx < 0 ? 1 : -1);
+      }
+    }, { passive: true });
+    root.addEventListener('wheel', function (ev) {
+      if (!ev.target.closest('.it-reading') || ev.target.closest('button, input') || ev.ctrlKey ||
+          Math.abs(ev.deltaX) <= Math.abs(ev.deltaY) * 1.25) return;
+      ev.preventDefault();
+      const unit = ev.deltaMode === 1 ? 16 : (ev.deltaMode === 2 ? window.innerWidth : 1);
+      const delta = ev.deltaX * unit;
+      const magnitude = Math.abs(delta);
+      const direction = Math.sign(delta);
+      if (readingWheelUsed) {
+        if (magnitude <= 3) readingWheelCanRearm = true;
+        if ((readingWheelCanRearm && magnitude >= 8) || (direction !== readingWheelDirection && magnitude >= 8)) {
+          readingWheelTotal = 0;
+          readingWheelUsed = false;
+          readingWheelCanRearm = false;
+        }
+      }
+      if (!readingWheelUsed) readingWheelTotal += delta;
+      if (!readingWheelUsed && Math.abs(readingWheelTotal) >= 32) {
+        readingWheelUsed = true;
+        readingWheelDirection = Math.sign(readingWheelTotal);
+        shiftActiveHorizon(readingWheelTotal > 0 ? 1 : -1);
+      }
+      if (readingWheelTimer !== null) window.clearTimeout(readingWheelTimer);
+      readingWheelTimer = window.setTimeout(function () {
+        readingWheelTotal = 0;
+        readingWheelUsed = false;
+        readingWheelCanRearm = false;
+        readingWheelDirection = 0;
+        readingWheelTimer = null;
+      }, 90);
+    }, { passive: false });
   }
 
   function pcReadCard(spreadIdx, birthCardIdx, posIdx) {

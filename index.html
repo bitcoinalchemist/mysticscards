@@ -25,26 +25,26 @@
   <meta name="twitter:title" content="Mystics Cards - mysticscards.space" />
   <meta name="twitter:description" content="Explore cardology with Mystics Cards: find your birthday cards, Life Script, and cycles." />
   <meta name="twitter:image" content="https://mysticscards.space/assets/og-image.png" />
-  <link rel="stylesheet" href="css/site.css?v=20260909i" />
+  <link rel="stylesheet" href="css/site.css?v=20260909o" />
 </head>
 <body class="starry bg-enabled">
 <canvas class="stars-bg" aria-hidden="true"></canvas>
 <div class="castfield-stage" id="castfield" aria-hidden="true"><div class="field"></div></div>
 <script src="js/stardata.js?v=20260908a"></script>
-<script src="js/ambient-motion.js?v=20260909a"></script>
+<script src="js/ambient-motion.js?v=20260909b"></script>
 <script src="js/stars.js?v=20260909b"></script>
 <script src="js/site.js?v=20260909c"></script>
 <script src="js/store.js?v=20260909a"></script>
 <script src="js/cardsdata.js?v=20260909a"></script>
 <script src="js/relationshipdata.js?v=20260908a"></script>
-<script src="js/castfield.js?v=20260909c"></script>
-<script src="js/spread-grid.js?v=20260906b"></script>
-<script src="js/quadrations.js?v=20260909g"></script>
+<script src="js/castfield.js?v=20260909d"></script>
+<script src="js/spread-grid.js?v=20260909g"></script>
+<script src="js/quadrations.js?v=20260909h"></script>
 <script src="js/finder.js?v=20260908l"></script>
 <script src="js/olney.js?v=20260908b"></script>
-<script src="js/lifescript.js?v=20260909c"></script>
-<script src="js/in-time.js?v=20260908a"></script>
-<script src="js/birthdays.js?v=20260725b"></script>
+<script src="js/lifescript.js?v=20260909d"></script>
+<script src="js/in-time.js?v=20260909c"></script>
+<script src="js/birthdays.js?v=20260909c"></script>
 <script src="js/finder-trays.js?v=20260909a"></script>
 <script>
   // Keep Saved Birthdays available while an older cached finder-trays script
@@ -186,24 +186,32 @@
                   <div class="section-shell">
                     <div class="spreads-top">
                       <span class="q-mode-current" id="qModeCurrent" aria-live="polite"></span>
-                      <div class="age-controls-wrap">
-                        <div class="age-controls q-size-stepper" role="group" aria-label="Chart size">
-                          <button type="button" class="age-btn" id="qSizeDown" aria-label="Decrease chart size">−</button>
-                          <input type="number" id="qSize" class="age-input" min="60" max="120" step="5" value="100" aria-label="Chart size percent">
-                          <button type="button" class="age-btn" id="qSizeUp" aria-label="Increase chart size">+</button>
-                        </div>
-                        <div class="age-controls">
-                          <button class="age-btn" id="ageDown" aria-label="Previous age">−</button>
-                          <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" id="ageInput" class="age-input" value="0" aria-label="Age (0–89)">
-                          <button class="age-btn" id="ageUp" aria-label="Next age">+</button>
-                        </div>
-                        <div class="q-display-toggles">
-                          <button type="button" class="q-disp-toggle q-solar-toggle" id="qSolar" role="switch" aria-checked="false" aria-label="Show solar values" title="Show solar values">☉</button>
-                          <button type="button" class="q-disp-toggle" id="qDisp" role="switch" aria-checked="false" aria-label="Show displacements" title="Show displacements">
-                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 4.5h9v11h-9zM9.5 8.5h9v11h-9z"/><path d="m7 18 2.2 2.2L11.5 18M17 6l-2.2-2.2L12.5 6"/></svg>
-                          </button>
-                          <button type="button" class="q-disp-toggle q-alt-toggle" id="qAlt" role="switch" aria-checked="false" aria-label="Alternate court cards" title="Alternate court cards">♛</button>
-                        </div>
+                      <div class="age-controls-wrap q-controls-menu" id="qControlsMenu" aria-label="Quadrations menu" hidden>
+                        <fieldset class="q-control-group q-size-stepper">
+                          <legend>Chart size</legend>
+                          <div class="age-controls">
+                            <button type="button" class="age-btn" id="qSizeDown" aria-label="Decrease chart size">−</button>
+                            <label class="q-size-value">
+                              <input type="number" id="qSize" class="age-input" min="60" max="120" step="5" value="100" aria-label="Chart size percent">
+                              <span class="q-size-unit" aria-hidden="true">%</span>
+                            </label>
+                            <button type="button" class="age-btn" id="qSizeUp" aria-label="Increase chart size">+</button>
+                          </div>
+                        </fieldset>
+                        <fieldset class="q-control-group q-display-group">
+                          <legend>Display</legend>
+                          <div class="q-display-toggles">
+                            <button type="button" class="q-disp-toggle q-solar-toggle" id="qSolar" role="switch" aria-checked="false">
+                              <span class="q-toggle-icon" aria-hidden="true">☉</span><span>Solar Values</span><span class="q-switch-track" aria-hidden="true"></span>
+                            </button>
+                            <button type="button" class="q-disp-toggle" id="qDisp" role="switch" aria-checked="false">
+                              <span class="q-toggle-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5.5 4.5h9v11h-9zM9.5 8.5h9v11h-9z"/><path d="m7 18 2.2 2.2L11.5 18M17 6l-2.2-2.2L12.5 6"/></svg></span><span>Displacements</span><span class="q-switch-track" aria-hidden="true"></span>
+                            </button>
+                            <button type="button" class="q-disp-toggle q-alt-toggle" id="qAlt" role="switch" aria-checked="false">
+                              <span class="q-toggle-icon" aria-hidden="true">♛</span><span>Pips Only</span><span class="q-switch-track" aria-hidden="true"></span>
+                            </button>
+                          </div>
+                        </fieldset>
                       </div>
                     </div>
                     <div class="spread-layout">

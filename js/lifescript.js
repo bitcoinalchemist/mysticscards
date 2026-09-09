@@ -458,6 +458,12 @@
     });
   }
 
+  let planetWheelTotal = 0;
+  let planetWheelUsed = false;
+  let planetWheelCanRearm = false;
+  let planetWheelDirection = 0;
+  let planetWheelTimer = null;
+
   function clearPlanetInfo() {
     document.querySelectorAll('.ls-planet-link').forEach(function (button) {
       button.setAttribute('aria-expanded', 'false');
@@ -509,6 +515,37 @@
       touch = null;
       if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) movePlanet(dx < 0 ? 1 : -1, false);
     }, { passive: true });
+    reading.addEventListener('wheel', function (event) {
+      if (event.ctrlKey || Math.abs(event.deltaX) <= Math.abs(event.deltaY) * 1.25) return;
+      event.preventDefault();
+      const unit = event.deltaMode === 1 ? 16 : (event.deltaMode === 2 ? window.innerWidth : 1);
+      const delta = event.deltaX * unit;
+      const magnitude = Math.abs(delta);
+      const direction = Math.sign(delta);
+      if (planetWheelUsed) {
+        if (magnitude <= 3) planetWheelCanRearm = true;
+        if ((planetWheelCanRearm && magnitude >= 8) ||
+            (direction !== planetWheelDirection && magnitude >= 8)) {
+          planetWheelTotal = 0;
+          planetWheelUsed = false;
+          planetWheelCanRearm = false;
+        }
+      }
+      if (!planetWheelUsed) planetWheelTotal += delta;
+      if (!planetWheelUsed && Math.abs(planetWheelTotal) >= 32) {
+        planetWheelUsed = true;
+        planetWheelDirection = Math.sign(planetWheelTotal);
+        movePlanet(planetWheelTotal > 0 ? 1 : -1, false);
+      }
+      if (planetWheelTimer !== null) window.clearTimeout(planetWheelTimer);
+      planetWheelTimer = window.setTimeout(function () {
+        planetWheelTotal = 0;
+        planetWheelUsed = false;
+        planetWheelCanRearm = false;
+        planetWheelDirection = 0;
+        planetWheelTimer = null;
+      }, 90);
+    }, { passive: false });
     reading.addEventListener('keydown', function (event) {
       if (event.target !== reading) return;
       if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {

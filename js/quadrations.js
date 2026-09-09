@@ -62,7 +62,7 @@
   }
 
   function alignQuadControls() {
-    // All controls stay above the chart; only the label belongs in the crown.
+    // The endpoint label and compact age/menu controls live in the crown.
     alignSpreadLabel();
   }
 
@@ -122,13 +122,35 @@
     }
   }
 
-  function wireQuadrationsInline() {
+  function wireQuadrationsMenu() {
+    const button = document.getElementById('qMenu');
+    const panel = document.getElementById('qControlsMenu');
+    if (!button || !panel) return function () {};
+
+    function setOpen(open, focusButton) {
+      panel.hidden = !open;
+      button.classList.toggle('on', open);
+      button.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (focusButton) button.focus({ preventScroll: true });
+    }
+    button.addEventListener('click', function () { setOpen(panel.hidden); });
+    panel.addEventListener('keydown', function (event) {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      setOpen(false, true);
+    });
+    setOpen(false);
+    return function () { setOpen(false); };
+  }
+
+  function wireQuadrationsInline(closeMenu) {
     const openBtn = document.getElementById('qOpen');
     const panel = document.getElementById('qInlinePanel');
     if (!openBtn || !panel) return;
 
     window.bindDisclosurePanel(openBtn, panel, {
       onOpen: function () {
+        closeMenu();
         window.requestAnimationFrame(function () {
           alignQuadControls();
         });
@@ -143,7 +165,8 @@
   document.addEventListener('DOMContentLoaded', function () {
     if (!document.getElementById('annualGrid')) return;
     wireDelegatedControls();
-    wireQuadrationsInline();
+    const closeMenu = wireQuadrationsMenu();
+    wireQuadrationsInline(closeMenu);
     restoreQuadToggles();
     applyQuadSize(CardsStore.getQuadSize(), false);
     // Sync the endpoint label to whatever spread the spread-grid boot rendered.

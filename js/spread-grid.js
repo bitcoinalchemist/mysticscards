@@ -16,7 +16,17 @@ function buildSpreadGrid(gridEl, opts) {
   html += '<div class="crown-row">';
   html += '<div class="crown-side crown-joker"></div>';
   for (let i = 51; i >= 49; i--) html += `<div class="sl-seat" data-pos="${i}"></div>`;
-  html += '<div class="crown-side crown-controls" aria-hidden="true"></div>';
+  html += '<div class="crown-side crown-controls">';
+  html += '<div class="q-crown-control-box">';
+  html += '<div class="q-crown-age" role="group" aria-label="Age">';
+  html += '<div class="age-controls">';
+  html += '<button type="button" class="age-btn" id="ageDown" aria-label="Previous age">−</button>';
+  html += '<input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" id="ageInput" class="age-input" value="0" aria-label="Age (0–89)">';
+  html += '<button type="button" class="age-btn" id="ageUp" aria-label="Next age">+</button>';
+  html += '</div></div>';
+  html += '<button type="button" class="q-menu-toggle" id="qMenu" aria-expanded="false" aria-controls="qControlsMenu">';
+  html += '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10M14 4v6M7 14v6"/></svg><span>Menu</span>';
+  html += '</button></div></div>';
   html += '</div>';
   for (let row = 0; row < 7; row++)
     for (let col = 6; col >= 0; col--)
@@ -117,7 +127,6 @@ function buildSpreadGrid(gridEl, opts) {
 
   return {
     setDeck(deck, o) { o = o || {}; place(deck, o.animate !== false); },
-    showRings(on) { gridEl.classList.toggle('sl-rings', !!on); },
     showGhosts(mode) {
       if (mode === true) mode = 'displaces';
       const both = mode === 'both';
@@ -177,8 +186,6 @@ function ensureSpreadCtl() {
 function buildAnnualGrid(age) {
   const ctl = ensureSpreadCtl();
   const isLife = age === 1;
-  const isSpirit = age === 90;
-  ctl.showRings(isLife || isSpirit);
   ctl.setDeck(deckAtAge(age));
   document.getElementById('annualGrid').classList.toggle('ls-lifespread', isLife);
   if (typeof window.syncSpreadLabel === 'function') window.syncSpreadLabel(age);
@@ -207,6 +214,72 @@ function changeAge(d) {
   setQuadAge(a);
 }
 
+function wireQuadSwipe(grid) {
+  if (!grid) return;
+  let touch = null;
+  let suppressClickUntil = 0;
+  let wheelTotal = 0;
+  let wheelGestureUsed = false;
+  let wheelEndTimer = null;
+  let wheelCanRearm = false;
+  let wheelDirection = 0;
+
+  grid.addEventListener('touchstart', function (event) {
+    touch = event.touches.length === 1
+      ? { x: event.touches[0].clientX, y: event.touches[0].clientY }
+      : null;
+  }, { passive: true });
+  grid.addEventListener('touchcancel', function () { touch = null; }, { passive: true });
+  grid.addEventListener('touchend', function (event) {
+    if (!touch || !event.changedTouches.length) return;
+    const dx = event.changedTouches[0].clientX - touch.x;
+    const dy = event.changedTouches[0].clientY - touch.y;
+    touch = null;
+    if (Math.abs(dx) < 48 || Math.abs(dx) <= Math.abs(dy) * 1.4) return;
+    suppressClickUntil = Date.now() + 450;
+    changeAge(dx < 0 ? 1 : -1);
+  }, { passive: true });
+  grid.addEventListener('click', function (event) {
+    if (Date.now() >= suppressClickUntil) return;
+    event.preventDefault();
+    event.stopPropagation();
+  }, true);
+  grid.addEventListener('wheel', function (event) {
+    if (event.ctrlKey || Math.abs(event.deltaX) <= Math.abs(event.deltaY) * 1.25) return;
+    event.preventDefault();
+
+    const unit = event.deltaMode === 1 ? 16 : (event.deltaMode === 2 ? window.innerWidth : 1);
+    const delta = event.deltaX * unit;
+    const magnitude = Math.abs(delta);
+    const direction = Math.sign(delta);
+
+    if (wheelGestureUsed) {
+      if (magnitude <= 3) wheelCanRearm = true;
+      if ((wheelCanRearm && magnitude >= 8) || (direction !== wheelDirection && magnitude >= 8)) {
+        wheelTotal = 0;
+        wheelGestureUsed = false;
+        wheelCanRearm = false;
+      }
+    }
+
+    if (!wheelGestureUsed) wheelTotal += delta;
+    if (!wheelGestureUsed && Math.abs(wheelTotal) >= 32) {
+      wheelGestureUsed = true;
+      wheelDirection = Math.sign(wheelTotal);
+      changeAge(wheelTotal > 0 ? 1 : -1);
+    }
+
+    if (wheelEndTimer !== null) window.clearTimeout(wheelEndTimer);
+    wheelEndTimer = window.setTimeout(function () {
+      wheelTotal = 0;
+      wheelGestureUsed = false;
+      wheelCanRearm = false;
+      wheelDirection = 0;
+      wheelEndTimer = null;
+    }, 90);
+  }, { passive: false });
+}
+
 
 function wireAgeSelectAll(input) {
   if (!input) return;
@@ -228,8 +301,10 @@ function wireAgeSelectAll(input) {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-  if (!document.getElementById('annualGrid')) return;
+  const grid = document.getElementById('annualGrid');
+  if (!grid) return;
   buildAnnualGrid(1);
+  wireQuadSwipe(grid);
 
   const down = document.getElementById('ageDown');
   const up   = document.getElementById('ageUp');

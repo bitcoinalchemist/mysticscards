@@ -53,6 +53,14 @@
   let _editingBirthId = null;
   let _birthQuery = '';
   let _birthPage = 1;
+  let _birthPageCount = 1;
+
+  function changeBirthPage(direction) {
+    const next = Math.max(1, Math.min(_birthPageCount, _birthPage + direction));
+    if (next === _birthPage) return;
+    _birthPage = next;
+    renderBirthPanel();
+  }
 
   function loadBirth(entry, target, options) {
     options = options || {};
@@ -98,14 +106,19 @@
     if (searchWrap) searchWrap.hidden = !list.length;
     if (search && search.value !== _birthQuery) search.value = _birthQuery;
     if (!list.length) {
+      _birthPageCount = 1;
       panel.innerHTML = '<div class="birth-empty">No saved birthdays yet.</div>';
       if (pager) { pager.hidden = true; pager.innerHTML = ''; }
       return;
     }
+    const ordered = list.slice().sort((a, b) =>
+      String(a.name || '').localeCompare(String(b.name || ''), undefined, { sensitivity: 'base', numeric: true }) ||
+      (a.year - b.year) || (a.month - b.month) || (a.day - b.day) || (a.id - b.id));
     const query = _birthQuery.toLocaleLowerCase();
-    const matches = query ? list.filter(e => [e.name, MONTHS_SHORT[e.month - 1], e.day, e.month, e.year]
-      .filter(v => v != null).join(' ').toLocaleLowerCase().includes(query)) : list;
+    const matches = query ? ordered.filter(e => [e.name, MONTHS_SHORT[e.month - 1], e.day, e.month, e.year]
+      .filter(v => v != null).join(' ').toLocaleLowerCase().includes(query)) : ordered;
     const pageCount = Math.max(1, Math.ceil(matches.length / BIRTH_PAGE_SIZE));
+    _birthPageCount = pageCount;
     _birthPage = Math.min(_birthPage, pageCount);
     const start = (_birthPage - 1) * BIRTH_PAGE_SIZE;
     const visible = matches.slice(start, start + BIRTH_PAGE_SIZE);
@@ -155,9 +168,74 @@
         '<button type="button" class="bday-page-btn" data-page="next">Next</button>';
       const prev = pager.querySelector('[data-page="prev"]');
       const next = pager.querySelector('[data-page="next"]');
-      if (prev) { prev.disabled = _birthPage === 1; prev.addEventListener('click', () => { _birthPage--; renderBirthPanel(); }); }
-      if (next) { next.disabled = _birthPage === pageCount; next.addEventListener('click', () => { _birthPage++; renderBirthPanel(); }); }
+      if (prev) { prev.disabled = _birthPage === 1; prev.addEventListener('click', () => changeBirthPage(-1)); }
+      if (next) { next.disabled = _birthPage === pageCount; next.addEventListener('click', () => changeBirthPage(1)); }
     }
+  }
+
+  function wireBirthPaging() {
+    const panel = document.getElementById('birthPanel');
+    if (!panel) return;
+    let touch = null;
+    let suppressClickUntil = 0;
+    let wheelTotal = 0;
+    let wheelUsed = false;
+    let wheelCanRearm = false;
+    let wheelDirection = 0;
+    let wheelTimer = null;
+
+    panel.addEventListener('touchstart', function (event) {
+      if (_birthPageCount < 2 || event.touches.length !== 1 || event.target.closest('button, input')) {
+        touch = null;
+        return;
+      }
+      touch = { x: event.touches[0].clientX, y: event.touches[0].clientY };
+    }, { passive: true });
+    panel.addEventListener('touchcancel', function () { touch = null; }, { passive: true });
+    panel.addEventListener('touchend', function (event) {
+      if (!touch || !event.changedTouches.length) return;
+      const dx = event.changedTouches[0].clientX - touch.x;
+      const dy = event.changedTouches[0].clientY - touch.y;
+      touch = null;
+      if (Math.abs(dx) < 48 || Math.abs(dx) <= Math.abs(dy) * 1.4) return;
+      suppressClickUntil = Date.now() + 450;
+      changeBirthPage(dx < 0 ? 1 : -1);
+    }, { passive: true });
+    panel.addEventListener('click', function (event) {
+      if (Date.now() >= suppressClickUntil) return;
+      event.preventDefault();
+      event.stopPropagation();
+    }, true);
+    panel.addEventListener('wheel', function (event) {
+      if (_birthPageCount < 2 || event.ctrlKey || Math.abs(event.deltaX) <= Math.abs(event.deltaY) * 1.25) return;
+      event.preventDefault();
+      const unit = event.deltaMode === 1 ? 16 : (event.deltaMode === 2 ? window.innerWidth : 1);
+      const delta = event.deltaX * unit;
+      const magnitude = Math.abs(delta);
+      const direction = Math.sign(delta);
+      if (wheelUsed) {
+        if (magnitude <= 3) wheelCanRearm = true;
+        if ((wheelCanRearm && magnitude >= 8) || (direction !== wheelDirection && magnitude >= 8)) {
+          wheelTotal = 0;
+          wheelUsed = false;
+          wheelCanRearm = false;
+        }
+      }
+      if (!wheelUsed) wheelTotal += delta;
+      if (!wheelUsed && Math.abs(wheelTotal) >= 32) {
+        wheelUsed = true;
+        wheelDirection = Math.sign(wheelTotal);
+        changeBirthPage(wheelTotal > 0 ? 1 : -1);
+      }
+      if (wheelTimer !== null) window.clearTimeout(wheelTimer);
+      wheelTimer = window.setTimeout(function () {
+        wheelTotal = 0;
+        wheelUsed = false;
+        wheelCanRearm = false;
+        wheelDirection = 0;
+        wheelTimer = null;
+      }, 90);
+    }, { passive: false });
   }
 
   // Start pickers on the first empty slot when relationship mode is on:
@@ -414,6 +492,7 @@
   document.addEventListener('DOMContentLoaded', function () {
     if (!document.getElementById('birthPanel')) return;
     wireTray();
+    wireBirthPaging();
     wireAddFormAutoAdvance();
     renderBirthPanel();
   });
