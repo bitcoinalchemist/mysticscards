@@ -9,8 +9,6 @@ site, no build step, no framework.
   read the Life Script and yearly cycles, and explore the Quadrations spread,
   the four suits, and the planets.
 
-The I Ching and Seed Oracle pages are archived locally in `dev/retired code/`.
-
 ## Built with
 
 Plain HTML, CSS, and JavaScript, served straight from the repository root —
