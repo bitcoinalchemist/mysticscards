@@ -1,0 +1,104 @@
+/*
+ * sw.js — offline support for mysticscards.space
+ * Network-first for same-origin; cache-first for Google Fonts.
+ * PRECACHE lists every deployed file.
+ */
+// Cache-key bump on every deployed change.
+const CACHE = 'mysticscards-216';
+const PRECACHE = [
+  './',
+  'index.html',
+  'manifest.webmanifest',
+  'favicon.ico',
+  'CNAME',
+  'css/site.css',
+  'js/store.js',
+  'js/cardsdata.js',
+  'js/relationshipdata.js',
+  'js/castfield.js',
+  'js/spread-grid.js',
+  'js/quadrations.js',
+  'js/finder.js',
+  'js/olney.js',
+  'js/lifescript.js',
+  'js/in-time.js',
+  'js/birthdays.js',
+  'js/finder-trays.js',
+  'js/planetdata.js',
+  'js/site.js',
+  'js/stars.js',
+  'js/ambient-motion.js',
+  'js/stardata.js',
+  'assets/favicon.svg',
+  'assets/apple-touch-icon.png',
+  'assets/card-back-square-mini.webp',
+  'assets/icon-192.png',
+  'assets/icon-512.png',
+  'assets/icon-512-maskable.png',
+  'assets/og-image.png',
+  'assets/cards/JC.webp',
+  'assets/cards/JD.webp',
+  'assets/cards/JH.webp',
+  'assets/cards/JOKER.webp',
+  'assets/cards/JS.webp',
+  'assets/cards/KC.webp',
+  'assets/cards/KD.webp',
+  'assets/cards/KH.webp',
+  'assets/cards/KS.webp',
+  'assets/cards/QC.webp',
+  'assets/cards/QD.webp',
+  'assets/cards/QH.webp',
+  'assets/cards/QS.webp'
+];
+
+self.addEventListener('install', (e) => {
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(PRECACHE)).then(() => self.skipWaiting()));
+});
+
+self.addEventListener('activate', (e) => {
+  e.waitUntil(
+    caches.keys()
+      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch', (e) => {
+  const req = e.request;
+  if (req.method !== 'GET') return;
+  const url = new URL(req.url);
+
+  if (url.origin === location.origin) {
+    const bypass = req.mode === 'navigate' || /\.(?:html|css|js)$/.test(url.pathname);
+    e.respondWith(
+      fetch(req, bypass ? { cache: 'reload' } : {})
+        .then((res) => {
+          if (res && res.ok) {
+            const copy = res.clone();
+            caches.open(CACHE).then((c) => c.put(req, copy));
+          }
+          return res;
+        })
+        .catch(() =>
+          caches.match(req, { ignoreSearch: true }).then((hit) => {
+            if (hit) return hit;
+            if (req.mode === 'navigate') return caches.match('index.html');
+            return Response.error();
+          })
+        )
+    );
+  } else if (url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com') {
+    e.respondWith(
+      caches.match(req).then((hit) =>
+        hit ||
+        fetch(req).then((res) => {
+          if (res && (res.ok || res.type === 'opaque')) {
+            const copy = res.clone();
+            caches.open(CACHE).then((c) => c.put(req, copy));
+          }
+          return res;
+        })
+      )
+    );
+  }
+});

@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mystics Cards - mysticscards.space</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet" />
+  <link rel="icon" href="favicon.ico" sizes="any" />
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="canonical" href="https://mysticscards.space/" />
+  <meta name="theme-color" content="#100c1e" />
+  <meta name="version" content="2026-07-27a" />
+  <meta name="description" content="Explore cardology with Mystics Cards: find your birthday cards, Life Script, and cycles." />
+  <!-- OpenGraph / Twitter link previews. og-image is 1200×630. -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://mysticscards.space/" />
+  <meta property="og:title" content="Mystics Cards - mysticscards.space" />
+  <meta property="og:description" content="Explore cardology with Mystics Cards: find your birthday cards, Life Script, and cycles." />
+  <meta property="og:image" content="https://mysticscards.space/assets/og-image.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Mystics Cards - mysticscards.space" />
+  <meta name="twitter:description" content="Explore cardology with Mystics Cards: find your birthday cards, Life Script, and cycles." />
+  <meta name="twitter:image" content="https://mysticscards.space/assets/og-image.png" />
+  <link rel="stylesheet" href="css/site.css?v=20260909i" />
+</head>
+<body class="starry bg-enabled">
+<canvas class="stars-bg" aria-hidden="true"></canvas>
+<div class="castfield-stage" id="castfield" aria-hidden="true"><div class="field"></div></div>
+<script src="js/stardata.js?v=20260908a"></script>
+<script src="js/ambient-motion.js?v=20260909a"></script>
+<script src="js/stars.js?v=20260909b"></script>
+<script src="js/site.js?v=20260909c"></script>
+<script src="js/store.js?v=20260909a"></script>
+<script src="js/cardsdata.js?v=20260909a"></script>
+<script src="js/relationshipdata.js?v=20260908a"></script>
+<script src="js/castfield.js?v=20260909c"></script>
+<script src="js/spread-grid.js?v=20260906b"></script>
+<script src="js/quadrations.js?v=20260909g"></script>
+<script src="js/finder.js?v=20260908l"></script>
+<script src="js/olney.js?v=20260908b"></script>
+<script src="js/lifescript.js?v=20260909c"></script>
+<script src="js/in-time.js?v=20260908a"></script>
+<script src="js/birthdays.js?v=20260725b"></script>
+<script src="js/finder-trays.js?v=20260909a"></script>
+<script>
+  // Keep Saved Birthdays available while an older cached finder-trays script
+  // is being replaced. The module owns the normal path; this only runs if it
+  // did not expose its tray helper.
+  document.addEventListener('DOMContentLoaded', function () {
+    if (typeof window.toggleFinderTray === 'function') return;
+    const button = document.getElementById('finderBdayBtn');
+    const tray = document.getElementById('bdayTrayWrap');
+    if (!button || !tray) return;
+    button.addEventListener('click', function () {
+      const opening = !tray.classList.contains('open');
+      if (opening && typeof window.prepareBirthTray === 'function') window.prepareBirthTray();
+      tray.classList.toggle('open', opening);
+      button.classList.toggle('is-active', opening);
+      button.setAttribute('aria-expanded', opening ? 'true' : 'false');
+    });
+  });
+</script>
+<script src="js/planetdata.js?v=20260908a"></script>
+<main id="main" tabindex="-1">
+  <h1 class="vh">Mystics Cards — Cardology</h1>
+  <section class="finder page-section section-open" id="finder" aria-labelledby="finderHeading">
+    <h2 class="vh" id="finderHeading">Finder</h2>
+    <div class="section-bodywrap">
+        <div class="section-bodymin" id="finderBody">
+          <div class="section-shell">
+          <div class="finder-persons">
+            <fieldset class="finder-person" data-role="you">
+              <legend class="vh">You</legend>
+              <div class="finder-inputs">
+                <div class="finder-datepair">
+                  <label class="finder-select-wrap">
+                    <input id="fDay" class="finder-select finder-day-input" type="text"
+                           maxlength="2" inputmode="numeric" pattern="[0-9]*"
+                           placeholder="DD" aria-label="Your birth day">
+                  </label>
+                  <span class="finder-datepair-slash" aria-hidden="true">/</span>
+                  <label class="finder-select-wrap">
+                    <input id="fMonth" class="finder-select finder-day-input" type="text"
+                           maxlength="2" inputmode="numeric" pattern="[0-9]*"
+                           placeholder="MM" aria-label="Your birth month">
+                  </label>
+                </div>
+              </div>
+            </fieldset>
+            <fieldset class="finder-person" data-role="partner">
+              <legend class="vh">Partner</legend>
+              <div class="finder-inputs">
+                <div class="finder-datepair">
+                  <label class="finder-select-wrap">
+                    <input id="fpDay" class="finder-select finder-day-input" type="text"
+                           maxlength="2" inputmode="numeric" pattern="[0-9]*"
+                           placeholder="DD" aria-label="Partner's birth day">
+                  </label>
+                  <span class="finder-datepair-slash" aria-hidden="true">/</span>
+                  <label class="finder-select-wrap">
+                    <input id="fpMonth" class="finder-select finder-day-input" type="text"
+                           maxlength="2" inputmode="numeric" pattern="[0-9]*"
+                           placeholder="MM" aria-label="Partner's birth month">
+                  </label>
+                </div>
+              </div>
+            </fieldset>
+          </div>
+
+          <!-- Finder tools load inline under the Finder controls. -->
+          <div class="finder-tools">
+            <button type="button" id="fDateReset" class="finder-tool-btn finder-tool-btn--icon finder-date-reset"
+                    aria-label="Restore selected date" title="Restore selected date" hidden>↻</button>
+            <button type="button" id="fRelToggle" class="finder-tool-btn finder-tool-btn--icon finder-rel-toggle"
+                    title="Add partner" aria-label="Add partner" aria-pressed="false">+</button>
+            <button type="button" id="finderBdayBtn" class="finder-tool-btn finder-tool-btn--icon"
+                    title="Saved birthdays" aria-label="Saved birthdays" aria-expanded="false" aria-controls="bdayTrayWrap">
+              <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 2h8v12l-4-3-4 3V2z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+              <span class="finder-tool-badge" id="finderBdayBadge"></span>
+            </button>
+            <button type="button" id="qOpen" class="finder-tool-btn finder-tool-btn--icon"
+                    title="Quadrations" aria-label="Quadrations" aria-expanded="false" aria-controls="qInlinePanel">Q</button>
+            <button type="button" id="shInfoBtn" class="finder-tool-btn finder-tool-btn--icon"
+                    aria-controls="shInfoPanel" aria-expanded="false" aria-label="Information" title="Information"><span aria-hidden="true">i</span></button>
+            <button type="button" id="finderShareBtn" class="finder-tool-btn finder-tool-btn--icon finder-share-btn"
+                    title="Share Finder link" aria-label="Share Finder link" hidden>
+              <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <circle cx="5" cy="8" r="1.55" stroke="currentColor" stroke-width="1.4"/>
+                <circle cx="11.5" cy="4" r="1.55" stroke="currentColor" stroke-width="1.4"/>
+                <circle cx="11.5" cy="12" r="1.55" stroke="currentColor" stroke-width="1.4"/>
+                <path d="M6.35 7.2l3.75-2.3M6.35 8.8l3.75 2.3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="finder-tray-wrap" id="bdayTrayWrap">
+            <div class="finder-tray-min">
+              <div class="finder-tray">
+                <div class="bday-inline-head">
+                  <span class="bday-inline-title">Saved birthdays</span>
+                  <span class="finder-tool-badge bday-inline-badge" id="bdayCount" aria-hidden="true"></span>
+                </div>
+                <div class="pick-target" id="bdayTarget" hidden>
+                  <button type="button" class="pick-target-btn is-active" id="bdayTargetSelf" data-target="self">Player 1</button>
+                  <button type="button" class="pick-target-btn" id="bdayTargetPartner" data-target="partner">Player 2</button>
+                </div>
+                <div class="bday-toolbar">
+                  <button class="btn btn--gold" id="bdayAddBtn" type="button">+ Add birthday</button>
+                  <div class="bday-io">
+                    <button class="btn" id="bdayImportBtn" type="button" title="Import a saved birthdays file">Import</button>
+                    <button class="btn" id="bdayExportBtn" type="button" title="Download your saved birthdays">Export</button>
+                    <input type="file" id="bdayImportFile" accept="application/json" hidden>
+                  </div>
+                </div>
+                <div class="bday-search" id="bdaySearchWrap" hidden>
+                  <label for="bdaySearch">Search saved birthdays</label>
+                  <input type="search" id="bdaySearch" placeholder="Name or date" autocomplete="off">
+                </div>
+                <div class="birth-add-panel" id="birthAddPanel">
+                  <div class="birth-add-row">
+                    <input type="text" id="baDay" class="ba-field ba-num" maxlength="2" inputmode="numeric" placeholder="DD" aria-label="Day">
+                    <input type="text" id="baMonth" class="ba-field ba-num" maxlength="2" inputmode="numeric" placeholder="MM" aria-label="Month">
+                    <input type="text" id="baYear" class="ba-field ba-year" maxlength="4" inputmode="numeric" placeholder="YYYY" aria-label="Year">
+                    <input type="text" id="baName" class="ba-field ba-name" placeholder="Name" aria-label="Name">
+                    <button type="button" class="btn btn--gold" id="birthAddSave">Save</button>
+                  </div>
+                  <p class="birth-add-error" id="birthAddError" aria-live="polite"></p>
+                </div>
+                <div class="bday-list" id="birthPanel"></div>
+                <div class="bday-pager" id="bdayPager" hidden aria-label="Saved birthdays pages"></div>
+                <p class="bday-note">Saved in this browser only. Export to back up or move to another device.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="quadrations-inline utility-slide-panel" id="qInlinePanel" hidden>
+            <div class="utility-slide-min">
+            <section class="quadrations page-section section-open" id="quadrations" aria-labelledby="quadrationsHeading">
+              <h2 class="quadrations-inline-title" id="quadrationsHeading">Quadrations</h2>
+              <div class="section-bodywrap">
+                <div class="section-bodymin" id="quadrationsBody">
+                  <div class="section-shell">
+                    <div class="spreads-top">
+                      <span class="q-mode-current" id="qModeCurrent" aria-live="polite"></span>
+                      <div class="age-controls-wrap">
+                        <div class="age-controls q-size-stepper" role="group" aria-label="Chart size">
+                          <button type="button" class="age-btn" id="qSizeDown" aria-label="Decrease chart size">−</button>
+                          <input type="number" id="qSize" class="age-input" min="60" max="120" step="5" value="100" aria-label="Chart size percent">
+                          <button type="button" class="age-btn" id="qSizeUp" aria-label="Increase chart size">+</button>
+                        </div>
+                        <div class="age-controls">
+                          <button class="age-btn" id="ageDown" aria-label="Previous age">−</button>
+                          <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" id="ageInput" class="age-input" value="0" aria-label="Age (0–89)">
+                          <button class="age-btn" id="ageUp" aria-label="Next age">+</button>
+                        </div>
+                        <div class="q-display-toggles">
+                          <button type="button" class="q-disp-toggle q-solar-toggle" id="qSolar" role="switch" aria-checked="false" aria-label="Show solar values" title="Show solar values">☉</button>
+                          <button type="button" class="q-disp-toggle" id="qDisp" role="switch" aria-checked="false" aria-label="Show displacements" title="Show displacements">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 4.5h9v11h-9zM9.5 8.5h9v11h-9z"/><path d="m7 18 2.2 2.2L11.5 18M17 6l-2.2-2.2L12.5 6"/></svg>
+                          </button>
+                          <button type="button" class="q-disp-toggle q-alt-toggle" id="qAlt" role="switch" aria-checked="false" aria-label="Alternate court cards" title="Alternate court cards">♛</button>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="spread-layout">
+                      <div class="spread-wrap">
+                        <div class="spread-stack">
+                          <div id="annualGrid" class="spread-grid"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+            </div>
+          </div>
+
+          <section class="info-inline utility-slide-panel" id="shInfoPanel" aria-labelledby="shInfoTitle" hidden></section>
+
+          <div class="finder-results">
+            <div class="finder-result" id="fResult" aria-live="polite"></div>
+            <div class="finder-result finder-result-composite" id="frResult" aria-live="polite"></div>
+            <div class="finder-result" id="fpResult" aria-live="polite"></div>
+          </div>
+
+          <!-- Finder reading — the card context stays above these focused
+               panels. The wrapper is hidden when no card is selected. -->
+          <div class="finder-panels" id="fPanels" hidden>
+            <div class="finder-reading-tabs" role="tablist" aria-label="Card reading sections">
+              <button class="finder-reading-tab" id="fReadingMapTab" type="button" role="tab" aria-selected="false" aria-controls="fCardMap" data-reading-tab="map">Card map</button>
+              <button class="finder-reading-tab is-active" id="fReadingAboutTab" type="button" role="tab" aria-selected="true" aria-controls="fAbout" data-reading-tab="about">About</button>
+              <button class="finder-reading-tab" id="fReadingCyclesTab" type="button" role="tab" aria-selected="false" aria-controls="fInTime" data-reading-tab="cycles">Cycles</button>
+            </div>
+            <!-- About — the personal card reading. -->
+            <section class="finder-reading-panel finder-about" id="fAbout" role="tabpanel" tabindex="0" aria-labelledby="fReadingAboutTab">
+                <div class="finder-about-inner">
+                  <div class="finder-about-view finder-about-modern is-active" id="fAboutModern">
+                  <div class="finder-about-card-heading">
+                    <h3 id="fAboutCardHeading"></h3>
+                    <span class="finder-about-card-label" id="fAboutCardValue"></span>
+                  </div>
+                  <div class="finder-about-personality" id="fAboutPersonality"></div>
+                  <div class="finder-about-lifescript relationship-connections" id="fRelationshipConnections"></div>
+                  <div class="finder-about-longform" id="fAboutLongform"></div>
+                  <section class="finder-about-suit" id="fAboutSuit" aria-live="polite"></section>
+                  <section class="finder-about-rank" id="fAboutRank" aria-live="polite"></section>
+                  <div class="finder-modern-olney">
+                    <button class="finder-modern-olney-btn" id="fModernOlney" type="button" aria-expanded="false" aria-controls="fYenloPanel">
+                      <span>The Mystic Test Book</span><span aria-hidden="true">→</span>
+                    </button>
+                    <div class="finder-modern-yenlo" id="fYenloPanel" hidden aria-live="polite"><div class="olney-inner olney-panel"></div></div>
+                  </div>
+                  </div>
+                </div>
+            </section>
+            <!-- Card map — the card's planetary and deck positions. -->
+            <section class="finder-reading-panel finder-card-map" id="fCardMap" role="tabpanel" tabindex="0" aria-labelledby="fReadingMapTab" hidden>
+              <div class="finder-about-modern-stats-wrap">
+                <div class="finder-about-modern-stats" id="fAboutModernStats"></div>
+              </div>
+              <div class="finder-about-lifescript" id="fAboutLifeScript"></div>
+              <div class="about-planet-info" id="fAboutPlanetInfo" hidden aria-live="polite"></div>
+            </section>
+            <!-- Cycles — 13-Year / 7-Year / Yearly / 52-Day / Daily
+                 period cards for the selected birthday. -->
+            <section class="finder-reading-panel finder-intime" id="fInTime" role="tabpanel" tabindex="0" aria-labelledby="fReadingCyclesTab" hidden>
+              <div class="it-inner"></div>
+              <p class="it-empty">Cycles aren't available for this card.</p>
+            </section>
+          </div>
+          </div>
+        </div>
+      </div>
+  </section>
+
+</main>
+
+</body>
+</html>

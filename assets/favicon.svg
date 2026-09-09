@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <g transform="translate(256 326)">
+    <g transform="rotate(-44)">
+      <rect x="-52" y="-172" width="104" height="156" rx="13" fill="#100c1e" stroke="#c79a54" stroke-width="5"/>
+      <rect x="-43" y="-163" width="86" height="138" rx="8" fill="none" stroke="#c79a54" stroke-width="1.4" stroke-opacity=".45"/>
+    </g>
+    <g transform="rotate(44)">
+      <rect x="-52" y="-172" width="104" height="156" rx="13" fill="#100c1e" stroke="#c79a54" stroke-width="5"/>
+      <rect x="-43" y="-163" width="86" height="138" rx="8" fill="none" stroke="#c79a54" stroke-width="1.4" stroke-opacity=".45"/>
+    </g>
+    <g transform="rotate(-22)">
+      <rect x="-52" y="-172" width="104" height="156" rx="13" fill="#100c1e" stroke="#c79a54" stroke-width="5"/>
+      <rect x="-43" y="-163" width="86" height="138" rx="8" fill="none" stroke="#c79a54" stroke-width="1.4" stroke-opacity=".45"/>
+    </g>
+    <g transform="rotate(22)">
+      <rect x="-52" y="-172" width="104" height="156" rx="13" fill="#100c1e" stroke="#c79a54" stroke-width="5"/>
+      <rect x="-43" y="-163" width="86" height="138" rx="8" fill="none" stroke="#c79a54" stroke-width="1.4" stroke-opacity=".45"/>
+    </g>
+    <g>
+      <rect x="-52" y="-172" width="104" height="156" rx="13" fill="#100c1e" stroke="#c79a54" stroke-width="5"/>
+      <rect x="-43" y="-163" width="86" height="138" rx="8" fill="none" stroke="#c79a54" stroke-width="1.4" stroke-opacity=".45"/>
+      <circle cx="0" cy="-94" r="33" fill="#c79a54"/>
+      <rect x="-11" y="-105" width="22" height="22" rx="3" fill="#100c1e"/>
+    </g>
+  </g>
+</svg>
