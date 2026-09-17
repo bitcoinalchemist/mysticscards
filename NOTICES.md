@@ -49,6 +49,35 @@ The site links to a Library of Congress scan of a historical edition:
 Modern scans, editions, annotations, or transcriptions may carry separate
 rights and are not intended to be reproduced here.
 
+### Astronomy Engine
+
+The restored astrology and solar-time features use `js/astronomy.js`, a
+vendored browser build of Astronomy Engine by Don Cross.
+
+- Project: <https://github.com/cosinekitty/astronomy>
+- License: MIT License
+- Copyright: Copyright (c) 2019-2023 Don Cross
+
+The MIT notice is retained at the top of `js/astronomy.js`.
+
+### IANA timezone reference coordinates
+
+`js/tzcoords.js` contains IANA timezone reference-city coordinates generated
+from the tz database's `zone.tab` material. The tz database is public-domain
+style reference material maintained for timezone identification. The site uses
+these coordinates to approximate longitude for the birth-place selector and
+solar-time calculations.
+
+Timezone database project: <https://www.iana.org/time-zones>
+
+### Gate and hexagram calculations
+
+`js/sun-gate.js` and `js/chart-table.js` calculate Human Design-style gate
+positions from ecliptic longitude and display the corresponding I Ching
+hexagram figures/names. These modules contain calculation tables and labels
+used for positional display; they do not include third-party interpretive
+reading text.
+
 ### Hosted fonts
 
 The site requests Inter and Lora from Google Fonts rather than bundling font

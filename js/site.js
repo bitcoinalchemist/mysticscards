@@ -107,8 +107,9 @@
           '<section><h3>Credits</h3><ul>' +
             '<li><a href="https://opengameart.org/content/playing-cards-vector-png" target="_blank" rel="noopener">Byron Knoll playing-card artwork</a> — CC0 public-domain dedication.</li>' +
             '<li><a href="https://tile.loc.gov/storage-services/public/gdcmassbookdig/mystictestbook01rich/mystictestbook01rich.pdf" target="_blank" rel="noopener">Olney H. Richmond, <em>The Mystic Test Book</em></a> (1893) — public-domain source material for the Olney readings.</li>' +
+            '<li><a href="https://github.com/cosinekitty/astronomy" target="_blank" rel="noopener">Astronomy Engine</a> by Don Cross — MIT-licensed astronomy calculations. Timezone reference coordinates are derived from public-domain IANA tz database material.</li>' +
           '</ul><p class="sh-info-note">Complete source notes are in <a href="NOTICES.md">NOTICES.md</a>.</p></section>' +
-          '<section><h3>Disclaimer</h3><p>Cardology readings are offered for reflection and entertainment. They are not medical, legal, financial, or mental-health advice.</p></section>' +
+          '<section><h3>Disclaimer</h3><p>Cardology readings and astrology calculations are offered for reflection and entertainment. They are not medical, legal, financial, or mental-health advice.</p></section>' +
           '<section class="sh-info-contact"><h3>Contact</h3><a href="mailto:mysticscards@proton.me">mysticscards@proton.me</a></section>' +
         '</div>';
 

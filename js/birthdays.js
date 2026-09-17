@@ -42,6 +42,40 @@
   }
   function ageFromBirthYear(birthYear, m, d) { return lastBdayYear(m, d) - birthYear; }
 
+  function cleanTime(value) {
+    const time = String(value || '').trim();
+    return /^\d{2}:\d{2}$/.test(time) ? time : '';
+  }
+
+  function cleanPlace(value) {
+    return String(value || '').trim();
+  }
+
+  function birthMeta(entry) {
+    const bits = [];
+    if (entry.time) bits.push(entry.time);
+    if (entry.place) bits.push(entry.place);
+    return bits.length ? '<div class="birth-meta">' + escHtml(bits.join(' · ')) + '</div>' : '';
+  }
+
+  function setBirthDetailsOpen(open) {
+    const panel = document.getElementById('birthMoreDetails');
+    const button = document.getElementById('birthMoreToggle');
+    if (panel) panel.hidden = !open;
+    if (button) button.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+
+  function applySavedBirthDetails(entry, target) {
+    if (target === 'partner') return;
+    const timeEl = document.getElementById('solTime');
+    const placeEl = document.getElementById('solPlace');
+    const time = cleanTime(entry && entry.time);
+    const place = cleanPlace(entry && entry.place);
+    if (timeEl) timeEl.value = time;
+    if (placeEl) placeEl.value = place;
+    if (window.SolarTime && typeof window.SolarTime.refresh === 'function') window.SolarTime.refresh();
+  }
+
   function relOn() {
     const f = document.getElementById('finder');
     return !!(f && f.classList.contains('rel-on'));
@@ -74,6 +108,7 @@
     }
     if (typeof window.loadDateInFinder !== 'function') return;
     window.loadDateInFinder(entry.month, entry.day, target, { name: entry.name });
+    applySavedBirthDetails(entry, target);
     if (!options.keepTrayOpen && typeof window.closeFinderTray === 'function') window.closeFinderTray('bday');
   }
 
@@ -115,7 +150,7 @@
       String(a.name || '').localeCompare(String(b.name || ''), undefined, { sensitivity: 'base', numeric: true }) ||
       (a.year - b.year) || (a.month - b.month) || (a.day - b.day) || (a.id - b.id));
     const query = _birthQuery.toLocaleLowerCase();
-    const matches = query ? ordered.filter(e => [e.name, MONTHS_SHORT[e.month - 1], e.day, e.month, e.year]
+    const matches = query ? ordered.filter(e => [e.name, MONTHS_SHORT[e.month - 1], e.day, e.month, e.year, e.time, e.place]
       .filter(v => v != null).join(' ').toLocaleLowerCase().includes(query)) : ordered;
     const pageCount = Math.max(1, Math.ceil(matches.length / BIRTH_PAGE_SIZE));
     _birthPageCount = pageCount;
@@ -131,6 +166,7 @@
           '<div class="birth-name">' + escHtml(e.name) + '</div>' +
           '<div class="birth-date">' + MONTHS_SHORT[e.month - 1] + ' ' + e.day + ', ' + e.year +
             ' &middot; age ' + ageFromBirthYear(e.year, e.month, e.day) + '</div>' +
+          birthMeta(e) +
         '</div>' +
         '<button type="button" class="birth-edit" data-edit="' + e.id + '" title="Edit" aria-label="Edit ' + escHtml(e.name) + '">Edit</button>' +
         '<button type="button" class="birth-del" data-del="' + e.id + '" title="Delete" aria-label="Delete ' + escHtml(e.name) + '">&times;</button>' +
@@ -284,10 +320,15 @@
     const mEl = document.getElementById('baMonth');
     const yEl = document.getElementById('baYear');
     const nEl = document.getElementById('baName');
+    const tEl = document.getElementById('baTime');
+    const pEl = document.getElementById('baPlace');
     if (dEl) dEl.value = '';
     if (mEl) mEl.value = '';
     if (yEl) yEl.value = '';
     if (nEl) nEl.value = '';
+    if (tEl) tEl.value = '';
+    if (pEl) pEl.value = '';
+    setBirthDetailsOpen(false);
   }
 
   function openBirthAddPanel() {
@@ -315,11 +356,16 @@
     const mEl = document.getElementById('baMonth');
     const yEl = document.getElementById('baYear');
     const nEl = document.getElementById('baName');
+    const tEl = document.getElementById('baTime');
+    const pEl = document.getElementById('baPlace');
     setBirthFormMode(entry);
     dEl.value = String(entry.day).padStart(2, '0');
     mEl.value = String(entry.month).padStart(2, '0');
     yEl.value = String(entry.year);
     nEl.value = entry.name;
+    if (tEl) tEl.value = cleanTime(entry.time);
+    if (pEl) pEl.value = cleanPlace(entry.place);
+    setBirthDetailsOpen(!!(cleanTime(entry.time) || cleanPlace(entry.place)));
     document.getElementById('birthAddPanel').classList.add('open');
     setTimeout(() => nEl.focus(), 0);
   }
@@ -337,11 +383,15 @@
     const mEl = document.getElementById('baMonth');
     const yEl = document.getElementById('baYear');
     const nEl = document.getElementById('baName');
+    const tEl = document.getElementById('baTime');
+    const pEl = document.getElementById('baPlace');
     const err = document.getElementById('birthAddError');
     const d = parseInt(dEl.value, 10);
     const m = parseInt(mEl.value, 10);
     const y = parseInt(yEl.value, 10);
     const name = (nEl.value || '').trim();
+    const time = cleanTime(tEl ? tEl.value : '');
+    const place = cleanPlace(pEl ? pEl.value : '');
     err.textContent = '';
     if (!name)                       { err.textContent = 'Name is required.'; nEl.focus(); return; }
     if (!d || d < 1 || d > 31)       { err.textContent = 'Day must be 1–31.'; dEl.focus(); return; }
@@ -361,6 +411,8 @@
       list = list.map(item => {
         if (item.id !== _editingBirthId) return item;
         entry = { id: item.id, name, day: d, month: m, year: y };
+        if (time) entry.time = time;
+        if (place) entry.place = place;
         return entry;
       });
       if (!entry) {
@@ -371,6 +423,8 @@
       }
     } else {
       entry = { id: Date.now(), name, day: d, month: m, year: y };
+      if (time) entry.time = time;
+      if (place) entry.place = place;
       list.push(entry);
     }
     saveBirths(list);
@@ -381,7 +435,7 @@
   }
 
   function wireAddFormAutoAdvance() {
-    const seq = ['baDay', 'baMonth', 'baYear', 'baName'];
+    const seq = ['baDay', 'baMonth', 'baYear', 'baName', 'baTime', 'baPlace'];
     seq.slice(0, 3).forEach((id, i) => {
       const el = document.getElementById(id);
       if (!el) return;
@@ -440,7 +494,12 @@
       if (!incoming) { bdayToast('No birthdays found in that file.', true); return; }
       const clean = incoming.filter(validBirth).map(o => ({
         id: Number.isFinite(o.id) ? o.id : Date.now() + Math.floor(Math.random() * 1e6),
-        name: o.name.trim(), day: o.day, month: o.month, year: o.year
+        name: o.name.trim(),
+        day: o.day,
+        month: o.month,
+        year: o.year,
+        time: cleanTime(o.time) || undefined,
+        place: cleanPlace(o.place) || undefined
       }));
       if (!clean.length) { bdayToast('No valid birthdays to import.', true); return; }
       const existing = loadBirths();
@@ -465,6 +524,11 @@
     });
     const saveBtn = document.getElementById('birthAddSave');
     if (saveBtn) saveBtn.addEventListener('click', saveManualBirth);
+    const moreToggle = document.getElementById('birthMoreToggle');
+    if (moreToggle) moreToggle.addEventListener('click', () => {
+      const details = document.getElementById('birthMoreDetails');
+      setBirthDetailsOpen(details ? details.hidden : true);
+    });
     const exportBtn = document.getElementById('bdayExportBtn');
     if (exportBtn) exportBtn.addEventListener('click', exportBirths);
     const importBtn = document.getElementById('bdayImportBtn');

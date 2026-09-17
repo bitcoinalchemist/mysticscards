@@ -831,6 +831,9 @@
     const state = readFinderState();
     const animation = options.animate === false ? null : captureAnimationContext(state.targetMode);
     renderFinderState(state);
+    if (window.SolarTime && typeof window.SolarTime.refresh === 'function') {
+      window.SolarTime.refresh();
+    }
     if (animation) playFinderAnimation(animation);
   }
 

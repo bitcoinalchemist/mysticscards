@@ -84,6 +84,7 @@
   let _lastCard = null;
   let _activeLabel = IT_DEFAULT_FOCUS;
   let _activeCards = [];
+  let _expandedCycleRows = {};
 
   function isViewingToday() {
     return viewDate === localMidnight(new Date());
@@ -99,6 +100,11 @@
     const m = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
     return `${y}-${m}-${day}`;
+  }
+  function compactDate(ms) {
+    const d = new Date(ms);
+    const mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()];
+    return `${d.getDate()} ${mo}`;
   }
   function setViewDate(ms) {
     viewDate = localMidnight(new Date(ms));
@@ -230,6 +236,14 @@
         const dir = parseInt(cycleBtn.getAttribute('data-it-cycle') || '0', 10);
         if (!dir) return;
         shiftActiveHorizon(dir);
+        return;
+      }
+      const expandBtn = ev.target.closest('[data-it-expand]');
+      if (expandBtn) {
+        const slug = expandBtn.getAttribute('data-it-expand');
+        if (!slug) return;
+        _expandedCycleRows[slug] = !_expandedCycleRows[slug];
+        renderInTime(_lastCard);
         return;
       }
       const todayBtn = ev.target.closest('.it-date-today');
@@ -387,6 +401,93 @@
     return `<p class="it-reading-planet"><strong>${horizonOpening(pc.label)},</strong> ${energy.first} ${energy.second}</p>`;
   }
 
+  function planetAbbr(planet) {
+    const abbr = {
+      Mercury: 'MER',
+      Venus: 'VEN',
+      Mars: 'MAR',
+      Jupiter: 'JUP',
+      Saturn: 'SAT',
+      Uranus: 'URA',
+      Neptune: 'NEP'
+    };
+    return abbr[planet] || '';
+  }
+
+  function cycleSequenceCardHTML(idx, planet, active, detail, currentLabel) {
+    const c = CARDS[idx];
+    if (!c) return '';
+    const face = spreadCardPips(c);
+    const glyph = planet ? `<span class="it-planet-glyph" title="${planet}">${SPREAD_PLANET_SYM[planet]}</span>` : '';
+    const label = planetAbbr(planet);
+    const sub = typeof detail === 'number' ? compactDate(detail) : (detail || '');
+    const activeLabel = currentLabel || 'current cycle card';
+    return `<div class="it-seq-col${active ? ' is-current' : ''}">
+      <div class="it-seq-head" title="${planet || ''}">${glyph}<span class="it-seq-label">${label}</span></div>
+      <button type="button" class="spread-card it-seq-card ${c.suit}" data-idx="${idx}" title="${c.name}" aria-label="${c.name}${active ? ', ' + activeLabel : ''}">${face}</button>
+      <div class="it-seq-date">${sub}</div>
+    </div>`;
+  }
+
+  function fiftyTwoDaySequenceHTML(birthIdx, spreadIdx, activePos, cycleStartMs) {
+    if (!_expandedCycleRows['52-day']) return '';
+    const cards = [];
+    for (let i = 6; i >= 0; i--) {
+      const startMs = addCalendarDays(cycleStartMs, i * 52);
+      cards.push(cycleSequenceCardHTML(pcReadCard(spreadIdx, birthIdx, i), SPREAD_PLANETS[i], i === activePos, startMs, 'current 52-Day card'));
+    }
+    return `<div class="it-sequence" id="itSequence52" aria-label="All seven 52-Day cycle cards">
+      ${cards.join('')}
+    </div>`;
+  }
+
+  function yearlySequenceHTML(birthIdx, spreadIdx, activePos, firstAge) {
+    if (!_expandedCycleRows.yearly) return '';
+    const cards = [];
+    for (let i = 6; i >= 0; i--) {
+      cards.push(cycleSequenceCardHTML(pcReadCard(spreadIdx, birthIdx, i), SPREAD_PLANETS[i], i === activePos, 'age ' + (firstAge + i), 'current Yearly card'));
+    }
+    return `<div class="it-sequence" id="itSequenceYearly" aria-label="All seven Yearly cycle cards">
+      ${cards.join('')}
+    </div>`;
+  }
+
+  function sevenYearSequenceHTML(birthIdx, spreadIdx, activePos, firstAge) {
+    if (!_expandedCycleRows['7-year']) return '';
+    const cards = [];
+    for (let i = 6; i >= 0; i--) {
+      const start = firstAge + (i * 7);
+      cards.push(cycleSequenceCardHTML(pcReadCard(spreadIdx, birthIdx, i), SPREAD_PLANETS[i], i === activePos, 'age ' + start + '-' + (start + 6), 'current 7-Year card'));
+    }
+    return `<div class="it-sequence" id="itSequence7Year" aria-label="All seven 7-Year cycle cards">
+      ${cards.join('')}
+    </div>`;
+  }
+
+  function thirteenYearSequenceHTML(birthIdx, spreadIdx, activePos, firstAge) {
+    if (!_expandedCycleRows['13-year']) return '';
+    const cards = [];
+    for (let i = 6; i >= 0; i--) {
+      const start = firstAge + (i * 13);
+      cards.push(cycleSequenceCardHTML(pcReadCard(spreadIdx, birthIdx, i), SPREAD_PLANETS[i], i === activePos, 'age ' + start + '-' + (start + 12), 'current 13-Year card'));
+    }
+    return `<div class="it-sequence" id="itSequence13Year" aria-label="All seven 13-Year cycle cards">
+      ${cards.join('')}
+    </div>`;
+  }
+
+  function dailySequenceHTML(birthIdx, spreadIdx, activePos, cycleStartMs) {
+    if (!_expandedCycleRows.daily) return '';
+    const cards = [];
+    for (let i = 6; i >= 0; i--) {
+      const dayMs = addCalendarDays(cycleStartMs, i);
+      cards.push(cycleSequenceCardHTML(pcReadCard(spreadIdx, birthIdx, i), SPREAD_PLANETS[i], i === activePos, compactDate(dayMs), 'current Daily card'));
+    }
+    return `<div class="it-sequence" id="itSequenceDaily" aria-label="All seven Daily cycle cards">
+      ${cards.join('')}
+    </div>`;
+  }
+
   function inTimeReadingHTML(pc, canGoBack) {
     const c = CARDS[pc.idx];
     if (!c) return '';
@@ -454,10 +555,13 @@
 
     const tStart = Math.floor(age / 13) * 13, tEnd = tStart + 12;
     const cStart = Math.floor(age / 7)  * 7,  cEnd = cStart + 6;
+    const tCycleStart = Math.floor(age / 91) * 91;
+    const cCycleStart = Math.floor(age / 49) * 49;
     const tStartMs = localMidnight(new Date(birthYear + tStart, date.m - 1, date.d));
     const cStartMs = localMidnight(new Date(birthYear + cStart, date.m - 1, date.d));
     const yStartMs = localMidnight(new Date(viewLbYear, date.m - 1, date.d));
     const fStartMs = addCalendarDays(new Date(viewLbYear, date.m - 1, date.d).getTime(), fPos * 52);
+    const dCycleStartMs = addCalendarDays(viewDate, -dPos);
     const dStartMs = viewDate;
 
     const cards = [
@@ -479,18 +583,35 @@
       const glyph = pc.planet ? `<span class="it-planet-glyph" title="${pc.planet}">${SPREAD_PLANET_SYM[pc.planet]}</span>` : '<span class="it-planet-glyph it-planet-glyph-empty" aria-hidden="true">&#9679;</span>';
       const planetLine = pc.planet ? `<div class="it-planet-name" title="${pc.planet}">${pc.planet}</div>` : '';
       const slug = pc.slug;
+      const sequenceIds = {
+        '13-year': 'itSequence13Year',
+        '7-year': 'itSequence7Year',
+        yearly: 'itSequenceYearly',
+        '52-day': 'itSequence52',
+        daily: 'itSequenceDaily'
+      };
+      const controls = sequenceIds[slug] || '';
+      const expand = controls
+        ? `<button type="button" class="it-expand" data-it-expand="${slug}" aria-expanded="${_expandedCycleRows[slug] ? 'true' : 'false'}" aria-controls="${controls}" title="${_expandedCycleRows[slug] ? 'Hide' : 'Show'} all ${pc.label} cycle cards">${_expandedCycleRows[slug] ? '⌃' : '⌄'}</button>`
+        : '<span class="it-expand-placeholder" aria-hidden="true"></span>';
       return `<div class="it-col" data-label="${slug}">
         ${glyph}
         <div class="it-label">${pc.label}</div>
         <button type="button" class="spread-card it-card ${c ? c.suit : ''}${slug === _activeLabel ? ' is-active' : ''}" data-it-focus="${slug}" title="${c ? c.name : ''}" aria-pressed="${slug === _activeLabel ? 'true' : 'false'}">${face}</button>
         ${planetLine}
         <div class="it-sub">${pc.sub}</div>
+        ${expand}
       </div>`;
     }).join('');
 
     return `${dateNavHTML(age)}
     <div class="it-row-wrap">
       <div class="it-row">${rowHTML}</div>
+      ${thirteenYearSequenceHTML(birthIdx, tSpread, tPos, tCycleStart)}
+      ${sevenYearSequenceHTML(birthIdx, cSpread, cPos, cCycleStart)}
+      ${yearlySequenceHTML(birthIdx, ySpread, yPos, age - yPos)}
+      ${fiftyTwoDaySequenceHTML(birthIdx, fSpread, fPos, yStartMs)}
+      ${dailySequenceHTML(birthIdx, dSpread, dPos, dCycleStartMs)}
     </div>
     <div class="it-reading">${inTimeReadingHTML(active, canShiftActiveHorizon(active, -1))}</div>
     `;

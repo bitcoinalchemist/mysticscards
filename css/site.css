@@ -1226,6 +1226,39 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
 .finder-reading-tab:focus-visible { position: relative; outline: 2px solid var(--gold); outline-offset: -2px; }
 .finder-reading-panel[hidden] { display: none; }
 .finder-card-map { color: var(--text); }
+.finder-card-map .card-map-astrology {
+  width: min(100%, 46rem);
+  margin: var(--space-5) auto 0;
+  padding-top: var(--space-3);
+}
+.card-map-astrology .it-solar-body {
+  max-width: none;
+}
+.card-map-astrology .it-solar-title {
+  display: grid;
+  grid-template-columns: minmax(2.5rem, 1fr) auto minmax(2.5rem, 1fr);
+  align-items: center;
+  gap: .8rem;
+  width: min(100%, 28rem);
+  margin: 0 auto 1.35rem;
+  color: var(--gold-ink);
+  font-size: .82rem;
+  letter-spacing: .24em;
+  text-shadow: 0 0 14px rgba(217, 183, 106, .34);
+}
+.card-map-astrology .it-solar-title::before,
+.card-map-astrology .it-solar-title::after {
+  content: "";
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(217, 183, 106, .72));
+}
+.card-map-astrology .it-solar-title::after {
+  background: linear-gradient(90deg, rgba(217, 183, 106, .72), transparent);
+}
+.card-map-astrology .it-solar-fields {
+  width: min(100%, 30rem);
+  margin: 0 auto;
+}
 @media (max-width: 420px) {
   .finder,
   .quadrations {
@@ -1513,27 +1546,25 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
 .finder-about-voice { margin-top: .1rem; }
 .finder-about .finder-about-voice { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .finder-about .finder-about-voice .astro-zodiac-tab { padding-inline: .35rem; letter-spacing: .1em; }
-.finder-modern-olney { margin: 0 auto; padding-top: 1rem; border-top: 1px solid var(--rule); text-align: center; }
+.finder-modern-olney { margin: 0 auto; padding-top: .55rem; text-align: center; }
 .finder-modern-olney-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: .65rem;
   min-height: var(--tap-target);
-  padding: .55rem .9rem;
-  border: 1px solid color-mix(in srgb, var(--gold) 42%, var(--rule-strong));
-  border-radius: var(--r-sm);
-  background: color-mix(in srgb, var(--gold) 7%, transparent);
-  color: var(--gold-ink);
-  font: 600 .62rem/1.2 var(--sans);
-  letter-spacing: .1em;
-  text-transform: uppercase;
+  padding: .35rem .6rem;
+  border: 0;
+  background: none;
+  color: var(--ink-muted);
+  font: 600 .72rem/1 var(--sans);
+  letter-spacing: .04em;
+  text-transform: none;
   cursor: pointer;
-  transition: background var(--ease), border-color var(--ease), color var(--ease), transform var(--ease);
+  transition: color var(--ease);
 }
-.finder-modern-olney-btn:hover { background: color-mix(in srgb, var(--gold) 15%, transparent); border-color: var(--gold); color: var(--gold); transform: translateY(-1px); }
-.finder-modern-olney-btn.is-active { background: color-mix(in srgb, var(--gold) 15%, transparent); border-color: var(--gold); color: var(--gold); }
-.finder-modern-olney-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+.finder-modern-olney-btn:hover { color: var(--gold); }
+.finder-modern-olney-btn.is-active { color: var(--ink-muted); }
+.finder-modern-olney-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: var(--r-sm); }
 .finder-about.is-joker .finder-modern-olney,
 .finder-about.is-relationship .finder-modern-olney { display: none; }
 .finder-modern-yenlo {
@@ -1805,11 +1836,25 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
   gap: .42rem;
 }
 .ls-date-item {
+  appearance: none;
+  border: 0;
+  border-radius: var(--r-sm);
+  padding: .04rem .14rem;
+  background: transparent;
   font-family: var(--mono);
   font-size: .68rem;
   line-height: 1.45;
   color: var(--muted);
   white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--ease), background var(--ease), box-shadow var(--ease);
+}
+.ls-date-item:hover,
+.ls-date-item:focus-visible {
+  color: var(--gold);
+  background: rgba(199,154,84,.12);
+  outline: none;
+  box-shadow: 0 0 0 1px rgba(217,183,106,.32);
 }
 .ls-stat-chips {
   display: flex;
@@ -1953,7 +1998,7 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
   display: grid;
   grid-template-columns: repeat(2, var(--ls-card-w));
   justify-content: center;
-  gap: var(--ls-card-w);
+  gap: calc(var(--ls-card-w) + var(--ls-card-gap));
   width: 100%;
 }
 .ls-zodiac-heading {
@@ -1967,23 +2012,24 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
 }
 .ls-zodiac-heading .ls-stat-label { margin: 0; }
 .astro-zodiac-toggle {
-  display: inline-flex;
-  width: auto;
-  min-height: 0;
-  margin: 0;
-  border: 1px solid var(--rule-strong);
-  border-radius: 999px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: min(100%, 15rem);
+  min-height: var(--tap-target);
+  margin: 0 auto .9rem;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-sm);
   overflow: hidden;
-  background: rgba(255,255,255,.03);
+  background: transparent;
 }
 .astro-zodiac-toggle .astro-zodiac-tab {
-  min-height: 1.9rem;
-  padding: .28rem .62rem;
-  letter-spacing: .1em;
+  min-height: var(--tap-target);
+  padding: 0 .75rem;
+  letter-spacing: .12em;
 }
 .astro-zodiac-toggle .astro-zodiac-tab::after { display: none; }
-.astro-zodiac-toggle .astro-zodiac-tab.is-active { background: color-mix(in srgb, var(--gold) 15%, transparent); }
-.astro-zodiac-toggle .astro-zodiac-tab + .astro-zodiac-tab { border-left: 1px solid var(--rule-strong); }
+.astro-zodiac-toggle .astro-zodiac-tab.is-active { background: color-mix(in srgb, var(--gold) 13%, transparent); }
+.astro-zodiac-toggle .astro-zodiac-tab + .astro-zodiac-tab { border-left: 1px solid var(--rule); }
 .astro-zodiac-rail {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2046,10 +2092,17 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
 .ct-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
   font-family: var(--sans);
   font-size: var(--text-xs);
   color: var(--text);
 }
+.ct-col-body,
+.ct-col-mind { width: 14.5%; }
+.ct-col-planet { width: 22%; }
+.ct-col-card { width: 11%; }
+.ct-col-sign { width: 16%; }
+.ct-col-degree { width: 22%; }
 .ct-table th {
   font-weight: 600;
   font-size: .58rem;
@@ -2082,21 +2135,14 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
   padding: .55rem 0 0;
   border-bottom: 0;
 }
-.ct-more-actions { display: flex; justify-content: center; align-items: center; gap: .35rem; flex-wrap: wrap; }
-.ct-astro-olney {
-  min-height: var(--tap-target);
-  padding: .35rem .6rem;
-  border: 0;
-  color: var(--ink-muted);
-  background: none;
-  font: 600 .6rem/1 var(--sans);
-  letter-spacing: .14em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: color var(--ease);
+.ct-more-actions {
+  display: grid;
+  justify-items: center;
+  gap: .35rem;
 }
-.ct-astro-olney:hover { color: var(--gold); }
-.ct-astro-olney:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: var(--r-sm); }
+.ct-astro-olney {
+  width: min(100%, 42rem);
+}
 .ct-more {
   margin: 0;
   text-align: center;
@@ -2125,6 +2171,17 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
 .ct-more summary:hover { color: var(--gold); }
 .ct-more summary:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: var(--r-sm); }
 .ct-more-body { margin-top: .55rem; text-align: left; }
+.ct-astro-olney summary {
+  font-size: .72rem;
+  letter-spacing: .04em;
+  text-transform: none;
+}
+.ct-astro-olney summary::after,
+.ct-astro-olney[open] summary::after {
+  content: "";
+  display: none;
+  margin-left: 0;
+}
 .ct-table-more { margin-top: 0; }
 .ct-gate { white-space: nowrap; }
 .astro-olney-list { display: grid; gap: .9rem; text-align: left; }
@@ -2149,7 +2206,21 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
 .astro-olney-suit-note strong { color: var(--gold-ink); }
 .astro-olney-row { display: grid; grid-template-columns: 2.6rem minmax(0, 1fr); gap: .7rem; align-items: start; }
 .astro-olney-glyph { color: var(--gold); font: 1.8rem/1 var(--serif); text-align: center; }
-.astro-olney-row h4 { margin: 0 0 .15rem; color: var(--gold-ink); font: 600 .68rem/1.2 var(--sans); letter-spacing: .12em; text-transform: uppercase; }
+.astro-olney-row h4 {
+  display: flex;
+  align-items: baseline;
+  gap: .45rem;
+  flex-wrap: wrap;
+  margin: 0 0 .15rem;
+  color: var(--gold-ink);
+  font: 600 .82rem/1.2 var(--sans);
+  letter-spacing: .01em;
+  text-transform: none;
+}
+.astro-olney-suit {
+  color: var(--muted);
+  font: 500 .68rem/1.2 var(--sans);
+}
 .astro-olney-row p { margin: 0; color: var(--secondary); font: .86rem/1.55 var(--serif); }
 .astro-olney-row strong { color: var(--text); }
 /* hexFigSVG paints its bars with var(--yang), whose global value (#1a1916) is
@@ -2159,8 +2230,26 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
    figure in the site overrides --yang for exactly this reason; this table just
    never did. Each column now tints its figure to its own accent, held well
    below the numbers so the glyphs stay ornament rather than shouting. */
-.ct-fig { display: inline-block; vertical-align: middle; margin-right: .28rem; }
-.ct-gl { font-variant-numeric: tabular-nums; color: var(--secondary); }
+.ct-gate { text-align: left; }
+.ct-gate-inner {
+  display: inline-grid;
+  grid-template-columns: 1.2rem 2.4rem;
+  align-items: center;
+  column-gap: .32rem;
+  vertical-align: middle;
+}
+.ct-fig {
+  display: inline-flex;
+  justify-content: flex-start;
+  align-items: center;
+  min-width: 1.2rem;
+}
+.ct-fig svg { display: block; max-width: 100%; height: auto; }
+.ct-gl {
+  justify-self: end;
+  font-variant-numeric: tabular-nums;
+  color: var(--secondary);
+}
 /* Design (Body) reads warm, Personality (Mind) reads as plain ink — the same
    pairing the old astrology page used. */
 .ct-d .ct-gl { color: var(--rose, #dc8d85); }
@@ -2181,6 +2270,16 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
   font-variant-numeric: tabular-nums;
 }
 .ct-cardchip.hearts, .ct-cardchip.diamonds { color: #a3242b; }
+.ct-card--birth-axis {
+  vertical-align: middle;
+}
+.ct-cardchip--birth {
+  min-width: 2.55rem;
+  min-height: 2.15rem;
+  padding: .18rem .42rem;
+  font-size: .82rem;
+  box-shadow: 0 0 0 1px rgba(217,183,106,.36), 0 0 14px rgba(217,183,106,.22);
+}
 .ct-nocard { color: var(--ink-muted); }
 .ct-sign { white-space: nowrap; color: var(--gold-ink); }
 .ct-deg {
@@ -2190,35 +2289,34 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
 }
 .ct-retro { margin-left: .25rem; color: var(--ink-muted); }
 .ct-note {
-  margin: .6rem 0 0;
+  max-width: 38rem;
+  margin: .6rem auto 0;
   font-size: .62rem;
   line-height: 1.5;
   color: var(--ink-muted);
   text-align: center;
 }
-@media (max-width: 520px) {
-  /* The table is the one place on this page that genuinely needs to scroll
-     sideways on a phone; the rail's swipe handler already skips gestures
-     that start inside a nested scroller. */
-  .ct-panel { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  .ct-table { min-width: 27rem; }
+@media (max-width: 560px) {
+  /* Keep the complete chart in view. Compact the contents themselves instead
+     of forcing a wider table, which previously pushed Degree out of view and
+     let the fixed-width gate figures spill into the neighbouring column. */
+  .ct-table { width: 100%; min-width: 0; font-size: .67rem; }
+  .ct-table th, .ct-table td { padding-left: .25rem; padding-right: .25rem; }
+  .ct-gate-inner { grid-template-columns: .95rem 1.9rem; column-gap: .18rem; }
+  .ct-fig { min-width: 0; width: .95rem; }
+  .ct-pg { width: .95em; }
+  .ct-cardchip { min-width: 1.8rem; padding-left: .2rem; padding-right: .2rem; }
+  .ct-retro { margin-left: .12rem; }
 }
-@media (max-width: 420px) {
-  /* On the smallest screens, keep all six columns visible rather than
-     making the Degree column sit beyond the initial scroll position. */
-  .ct-panel { overflow-x: hidden; }
-  .ct-table { width: 100%; min-width: 0; table-layout: fixed; font-size: .67rem; }
+@media (max-width: 380px) {
+  .ct-table { font-size: .62rem; }
+  .ct-table th { font-size: .51rem; letter-spacing: .07em; }
   .ct-table th, .ct-table td { padding-left: .13rem; padding-right: .13rem; }
-  .ct-table th:nth-child(1), .ct-table td:nth-child(1),
-  .ct-table th:nth-child(2), .ct-table td:nth-child(2) { width: 13%; }
-  .ct-table th:nth-child(3), .ct-table td:nth-child(3) { width: 24%; }
-  .ct-table th:nth-child(4), .ct-table td:nth-child(4) { width: 13%; }
-  .ct-table th:nth-child(5), .ct-table td:nth-child(5) { width: 17%; }
-  .ct-table th:nth-child(6), .ct-table td:nth-child(6) { width: 20%; }
-  .ct-fig { margin-right: .05rem; transform: scale(.78); transform-origin: right center; }
-  .ct-pg { width: .9em; }
-  .ct-cardchip { min-width: 1.65rem; padding-left: .15rem; padding-right: .15rem; }
-  .ct-retro { margin-left: .08rem; }
+  .ct-gate-inner { grid-template-columns: .8rem 1.65rem; column-gap: .08rem; }
+  .ct-fig { width: .8rem; }
+  .ct-pg { width: .85em; }
+  .ct-cardchip { min-width: 1.55rem; padding-left: .12rem; padding-right: .12rem; }
+  .ct-retro { margin-left: .06rem; }
 }
 
 .ls-prc-cardlet {
@@ -2255,6 +2353,41 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
   min-width: 0;
   width: 100%;
 }
+.ls-prc-card-row {
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  position: relative;
+  width: var(--ls-card-w);
+  max-width: var(--ls-card-w);
+}
+.ls-prc-card-row.has-cusp {
+  transform: none;
+}
+.ls-prc-card-row > .ls-prc-slot {
+  flex: 0 0 var(--ls-card-w);
+  width: var(--ls-card-w);
+}
+.ls-prc-cusp-slot {
+  position: absolute;
+  right: calc(100% + .8rem);
+  bottom: 0;
+  flex-basis: calc(var(--ls-card-w) * .72);
+  width: calc(var(--ls-card-w) * .72);
+  opacity: .86;
+}
+.ls-prc-cusp-slot .ls-stat-card {
+  width: calc(var(--ls-card-w) * .72);
+  max-width: calc(var(--ls-card-w) * .72);
+  min-inline-size: calc(var(--ls-card-w) * .72);
+}
+.ls-prc-cusp-slot .ls-planet-glyph {
+  font-size: .88em;
+}
+.ls-prc-cusp-slot .ls-planet-name,
+.ls-prc-cusp-slot .ls-zodiac-card-label {
+  font-size: .48rem;
+}
 .ls-zodiac-card-label {
   min-block-size: 2.4em;
   font-family: var(--sans);
@@ -2265,6 +2398,17 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
   text-align: center;
   text-transform: uppercase;
   color: var(--muted);
+}
+.ls-zodiac-card-label small {
+  display: block;
+  margin-top: .18rem;
+  font-family: var(--serif);
+  font-size: .8em;
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 1.1;
+  text-transform: none;
+  color: var(--secondary);
 }
 .ls-prc-slot .ls-zodiac-card-label {
   color: var(--gold-ink);
@@ -2419,6 +2563,15 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
     max-width: var(--ls-card-w);
     min-inline-size: var(--ls-card-w);
   }
+  .ls-prc-card-row { gap: 0; }
+  .ls-prc-card-row.has-cusp { transform: none; }
+  .ls-prc-cusp-slot { right: calc(100% + .5rem); }
+  .ls-prc-cusp-slot,
+  .ls-prc-cusp-slot .ls-stat-card {
+    width: calc(var(--ls-card-w) * .72);
+    max-width: calc(var(--ls-card-w) * .72);
+    min-inline-size: calc(var(--ls-card-w) * .72);
+  }
   .ls-decan-slot .ls-stat-card {
     width: calc(var(--ls-card-w) * .75);
     max-width: calc(var(--ls-card-w) * .75);
@@ -2434,9 +2587,29 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
 .ls-connections-wrap { margin: 0 auto; max-width: 620px; }
 .ls-connections-head {
   text-align: center;
-  margin: 0 0 1rem;
+  margin: .25rem auto 1.25rem;
+  max-width: 25rem;
 }
-.ls-connections-head .ls-title { margin-bottom: .3rem; }
+.ls-connections-head .ls-title {
+  display: grid;
+  grid-template-columns: minmax(2.5rem, 1fr) auto minmax(2.5rem, 1fr);
+  align-items: center;
+  gap: .8rem;
+  margin-bottom: .3rem;
+  font-size: .82rem;
+  letter-spacing: .24em;
+  color: var(--gold-ink);
+  text-shadow: 0 0 14px rgba(217, 183, 106, .34);
+}
+.ls-connections-head .ls-title::before,
+.ls-connections-head .ls-title::after {
+  content: "";
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(217, 183, 106, .72));
+}
+.ls-connections-head .ls-title::after {
+  background: linear-gradient(90deg, rgba(217, 183, 106, .72), transparent);
+}
 .ls-connection {
   margin: 0 auto 1.3rem;
   max-width: 620px;
@@ -2451,6 +2624,20 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
   color: var(--text);
 }
 .ls-connection-title b { color: var(--gold-ink); font-weight: 600; }
+.ls-connection--displacement .ls-col[data-planet="Karma"] .ls-planet-name {
+  color: var(--gold);
+  letter-spacing: .14em;
+}
+.ls-connection-note {
+  margin: -.35rem auto .75rem;
+  text-align: center;
+  font-family: var(--sans);
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
 .ls-connection-gloss {
   margin: .75rem auto 0;
   max-width: 26rem;
@@ -2507,6 +2694,8 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
 }
 .it-header { text-align: center; margin-bottom: 1rem; }
 .it-row-wrap {
+  --it-card-w: var(--ls-card-w);
+  --it-card-gap: .55rem;
   margin-top: 1rem;
   width: 100%;
   padding: var(--space-2);
@@ -2515,8 +2704,6 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
   -webkit-overflow-scrolling: touch;
 }
 .it-row {
-  --it-card-w: var(--ls-card-w);
-  --it-card-gap: .55rem;
   display: grid;
   grid-template-columns: repeat(5, minmax(0, var(--it-card-w)));
   gap: var(--it-card-gap);
@@ -2571,6 +2758,68 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
   min-block-size: 2.5em;
   line-height: 1.25;
   text-align: center;
+}
+.it-expand,
+.it-expand-placeholder {
+  display: grid;
+  place-items: center;
+  width: 1.45rem;
+  height: 1.2rem;
+  margin: .08rem auto 0;
+}
+.it-expand {
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--gold);
+  font: 700 .9rem/1 var(--sans);
+  cursor: pointer;
+}
+.it-expand:hover,
+.it-expand:focus-visible {
+  background: rgba(199,154,84,.12);
+  outline: 1px solid rgba(217,183,106,.55);
+}
+.it-sequence {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, calc(var(--it-card-w) * .78)));
+  justify-content: center;
+  gap: calc(var(--it-card-gap) * .72);
+  margin: .9rem auto 0;
+  max-width: calc((var(--it-card-w) * .78) * 7 + (var(--it-card-gap) * .72 * 6));
+}
+.it-seq-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .16rem;
+  min-width: 0;
+}
+.it-seq-head {
+  display: grid;
+  justify-items: center;
+  gap: .08rem;
+  min-height: 2.15rem;
+}
+.it-seq-card {
+  width: 100%;
+  box-shadow: 0 0 0 1px rgba(217,183,106,.18);
+}
+.it-seq-col.is-current .it-seq-card {
+  box-shadow: 0 0 0 2px var(--gold), 0 0 16px rgba(217,183,106,.48);
+}
+.it-seq-label {
+  font: 700 .5rem/1 var(--sans);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.it-seq-date {
+  min-height: 1.1em;
+  font: 600 .5rem/1.1 var(--sans);
+  letter-spacing: .04em;
+  color: var(--secondary);
+  white-space: nowrap;
 }
 .it-empty-note {
   max-width: 28rem;
@@ -2691,6 +2940,12 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
   .it-label { font-size: .55rem; }
   .it-planet-name { font-size: .62rem; }
   .it-sub { font-size: .52rem; }
+  .it-sequence {
+    grid-template-columns: repeat(7, minmax(0, calc(var(--it-card-w) * .74)));
+    gap: .16rem;
+    max-width: none;
+  }
+  .it-expand-placeholder { height: .8rem; }
   .it-reading {
     --it-reading-head-h: 3.4rem;
     padding: .9rem .8rem .9rem;

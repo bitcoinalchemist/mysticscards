@@ -6,8 +6,9 @@ site, no build step, no framework.
 **→ [mysticscards.space](https://mysticscards.space)**
 
 - **Mystics Cards** — a cardology finder: enter a birthday to find its cards,
-  read the Life Script and yearly cycles, and explore the Quadrations spread,
-  the four suits, and the planets.
+  read the Life Script and yearly cycles, explore the Quadrations spread, and
+  add birth time/place for astrology placements, gates, and related chart
+  correspondences.
 
 ## Built with
 
@@ -24,5 +25,7 @@ no bundler, no runtime dependencies, no build.
 
 - Court-card figures: Byron Knoll's CC0 playing-card artwork; see the
   third-party notices for the source link.
+- Astrology calculations: Astronomy Engine by Don Cross, MIT-licensed; see
+  the third-party notices for source and timezone-data notes.
 - The information button on the live site contains its visitor-facing legal
   notes, credits, disclaimer, and contact address.
