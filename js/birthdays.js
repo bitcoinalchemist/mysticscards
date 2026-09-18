@@ -107,7 +107,7 @@
       setAge(ageFromBirthYear(entry.year, entry.month, entry.day), { silent: true });
     }
     if (typeof window.loadDateInFinder !== 'function') return;
-    window.loadDateInFinder(entry.month, entry.day, target, { name: entry.name });
+    window.loadDateInFinder(entry.month, entry.day, target, { name: entry.name, year: entry.year });
     applySavedBirthDetails(entry, target);
     if (!options.keepTrayOpen && typeof window.closeFinderTray === 'function') window.closeFinderTray('bday');
   }

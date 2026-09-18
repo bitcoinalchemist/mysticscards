@@ -243,12 +243,12 @@
       // Personality Sun hexagram (gate) — hexagram only, computed from the
       // same birth instant. Owned by js/sun-gate.js; no-op if not loaded.
       var gatesBlock = (window.SunGate && typeof window.SunGate.html === 'function') ? window.SunGate.html(res.t, cardsHTML) : '';
-      // Full natal chart table (Body/Mind/Planet/Card/Sign/Degree), owned by
+      // Full natal chart table (Mind/Body, Planet, Card, Sign, Degree, House), owned by
       // js/chart-table.js. Only reachable from here, which is the point: it
       // needs a real birth instant (date + clock time + birthplace), and the
       // Moon's gate is meaningless without one. No-op if not loaded.
       var chartBlock = (window.ChartTable && typeof window.ChartTable.html === 'function')
-        ? window.ChartTable.html(res.t, solarCard) : '';
+        ? window.ChartTable.html(res.t, solarCard, tz) : '';
       var skyBlock = (window.Sky3D && typeof window.Sky3D.html === 'function') ? window.Sky3D.html() : '';
       var astroRail = skyBlock ?
         '<div class="astro-view-rail" data-astro-view-active="chart">' +
@@ -264,6 +264,7 @@
       out.innerHTML = verdictHTML + solarClockHTML + (gatesBlock || cardsHTML) + astroRail;
       bindSolCards(out);
       if (chartBlock && window.bindZodiacTabs) window.bindZodiacTabs(out);
+      if (chartBlock && window.ChartTable && typeof window.ChartTable.bindGateToggle === 'function') window.ChartTable.bindGateToggle(out);
       if (chartBlock && window.ChartTable && typeof window.ChartTable.bindAstroOlneyPopup === 'function') window.ChartTable.bindAstroOlneyPopup(out);
       if (skyBlock && window.Sky3D) {
         var skyRoot = out.querySelector('.sky3d-block');

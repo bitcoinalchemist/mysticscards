@@ -63,6 +63,7 @@
   let _finderOverride = null;
   let _finderSnapshot = null;
   let _finderBirthLabel = '';
+  let _finderBirthYear = null;
   let _transitionSource = null;
   // When a snapshot is restored (reset button), this remembers which side
   // the overridden card came from so the solo→triptych entrance sends that
@@ -83,7 +84,8 @@
         relOn: !!(dom.root && dom.root.classList.contains('rel-on')),
         you: {
           month: dom.you && dom.you.month ? dom.you.month.value : '',
-          day: dom.you && dom.you.day ? dom.you.day.value : ''
+          day: dom.you && dom.you.day ? dom.you.day.value : '',
+          year: _finderBirthYear
         },
         partner: {
           month: dom.partner && dom.partner.month ? dom.partner.month.value : '',
@@ -97,6 +99,8 @@
       const snap = _finderSnapshot;
       if (dom.you.month) dom.you.month.value = snap.you.month || '';
       if (dom.you.day) dom.you.day.value = snap.you.day || '';
+      _finderBirthYear = Number.isInteger(snap.you.year) ? snap.you.year : null;
+      window.finderBirthYear = _finderBirthYear;
       if (dom.partner.month) dom.partner.month.value = snap.partner.month || '';
       if (dom.partner.day) dom.partner.day.value = snap.partner.day || '';
       if (dom.you.month) syncMonthInput(dom.you.month);
@@ -811,6 +815,13 @@
     if (!dom || !dom.you) return;
     if (dom.you.month) dom.you.month.value = '';
     if (dom.you.day) dom.you.day.value = '';
+    _finderBirthYear = null;
+    window.finderBirthYear = null;
+  }
+
+  function clearFinderBirthYear() {
+    _finderBirthYear = null;
+    window.finderBirthYear = null;
   }
 
   function clearYouTransientState() {
@@ -1116,6 +1127,8 @@
     if (!isPartner) {
       _finderBirthLabel = options.name ? String(options.name).trim() : '';
       window.finderBirthLabel = _finderBirthLabel;
+      _finderBirthYear = Number.isInteger(options.year) ? options.year : null;
+      window.finderBirthYear = _finderBirthYear;
       clearYouTransientState();
     }
     syncSlotDate(slot, month, day);
@@ -1126,6 +1139,7 @@
   window.refreshFinderGridHighlights = refreshFinderGridHighlights;
   window.loadDateInFinder = loadDateInFinder;
   window.finderBirthLabel = _finderBirthLabel;
+  window.finderBirthYear = _finderBirthYear;
   // Small read-only helpers the new finder-adjacent modules (birthdays,
   // calendar, solar-value calculator) need but that otherwise live only in
   // this file's closure.
@@ -1149,10 +1163,10 @@
     applySharedFinderState();
     runFinderUpdate({ animate: false });
 
-    dom.you.month.addEventListener('input', function () { clearFinderOverride(); discardFinderSnapshot(); syncDayInput(dom.you.day, +this.value); find(); });
-    dom.you.month.addEventListener('change', function () { clearFinderOverride(); discardFinderSnapshot(); normalizeMonthInput(this); syncDayInput(dom.you.day, +this.value); find(); });
-    dom.you.day.addEventListener('input', function () { clearFinderOverride(); discardFinderSnapshot(); syncDayInput(this, +dom.you.month.value); find(); });
-    dom.you.day.addEventListener('change', function () { clearFinderOverride(); discardFinderSnapshot(); normalizeDayInput(this, +dom.you.month.value); find(); });
+    dom.you.month.addEventListener('input', function () { clearFinderBirthYear(); clearFinderOverride(); discardFinderSnapshot(); syncDayInput(dom.you.day, +this.value); find(); });
+    dom.you.month.addEventListener('change', function () { clearFinderBirthYear(); clearFinderOverride(); discardFinderSnapshot(); normalizeMonthInput(this); syncDayInput(dom.you.day, +this.value); find(); });
+    dom.you.day.addEventListener('input', function () { clearFinderBirthYear(); clearFinderOverride(); discardFinderSnapshot(); syncDayInput(this, +dom.you.month.value); find(); });
+    dom.you.day.addEventListener('change', function () { clearFinderBirthYear(); clearFinderOverride(); discardFinderSnapshot(); normalizeDayInput(this, +dom.you.month.value); find(); });
     wireSelectAllOnFocus(dom.you.day);
     wireSelectAllOnFocus(dom.you.month);
     wireDatePair(dom.you.day, dom.you.month);

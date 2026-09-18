@@ -543,6 +543,41 @@
     </section>`;
   }
 
+  const CHINESE_ANIMALS = [
+    'Rat', 'Ox', 'Tiger', 'Rabbit', 'Dragon', 'Snake',
+    'Horse', 'Goat', 'Monkey', 'Rooster', 'Dog', 'Pig'
+  ];
+  const CHINESE_ELEMENTS = ['Wood', 'Fire', 'Earth', 'Metal', 'Water'];
+
+  function chineseYearProfile(year, month, day) {
+    if (!Number.isInteger(year) || year < 1900 || year > 9999) return null;
+    try {
+      const date = new Date(Date.UTC(year, month - 1, day, 12));
+      const parts = new Intl.DateTimeFormat('en-u-ca-chinese', {
+        year: 'numeric', month: 'numeric', day: 'numeric', timeZone: 'UTC'
+      }).formatToParts(date);
+      const yearPart = parts.find(function (part) { return part.type === 'relatedYear'; });
+      const lunarYear = yearPart ? parseInt(yearPart.value, 10) : NaN;
+      if (!Number.isInteger(lunarYear)) return null;
+      const cycleIndex = ((lunarYear - 1984) % 60 + 60) % 60;
+      const stemIndex = cycleIndex % 10;
+      const animal = CHINESE_ANIMALS[cycleIndex % 12];
+      const element = CHINESE_ELEMENTS[Math.floor(stemIndex / 2)];
+      const polarity = stemIndex % 2 === 0 ? 'Yang' : 'Yin';
+      return { lunarYear, animal, element, polarity };
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function chineseAstrologyHTML(profile) {
+    if (!profile) return '';
+    return `<section class="ls-chinese-panel" aria-labelledby="lsChineseAstrologyTitle">
+      <h3 class="ls-stat-label" id="lsChineseAstrologyTitle">Chinese Astrology</h3>
+      <div class="ls-chinese-title"><span>${profile.polarity} ${profile.element}</span><strong>${profile.animal}</strong></div>
+    </section>`;
+  }
+
   function zodiacStatsHTML(card, script) {
     const date = selectedBirthDateForCard(card);
     if (!date) return '';
@@ -551,6 +586,8 @@
     const siderealDate = shiftedDate(date.month, date.day, SIDEREAL_LAHIRI_DAY_SHIFT);
     const siderealSign = zodiacForDate(siderealDate.month, siderealDate.day);
     const cuspSign = tropicalCuspSignForDate(sign, date.month, date.day);
+    const birthYear = Number.isInteger(window.finderBirthYear) ? window.finderBirthYear : null;
+    const chinese = birthYear == null ? null : chineseYearProfile(birthYear, date.month, date.day);
 
     const tropicalHTML = prcCardletHTML('Tropical', sign, 'Tropical sun sign', script, card, { cuspSign });
     const siderealHTML = siderealSign
@@ -564,6 +601,7 @@
         ${tropicalHTML}
         ${siderealHTML}
       </div>
+      ${chineseAstrologyHTML(chinese)}
     </div>`;
   }
 
@@ -914,36 +952,40 @@
     ${birthStatsHTML(card, script)}`;
   }
 
-  // Split the generated reading into the compact birth data at the top and
-  // the interpretive card map below. Quadration Chart Position closes the map.
+  // Split the generated reading between Card Map's date/zodiac context and
+  // About's cardology details. Quadration Chart Position closes About's group.
   function clearAboutLifeScript() {
     clearPlanetInfo();
-    const target = document.getElementById('fAboutLifeScript');
+    const mapTarget = document.getElementById('fAboutLifeScript');
+    const aboutTarget = document.getElementById('fAboutCardology');
     const topTarget = document.getElementById('fAboutModernStats');
     const planetInfo = document.getElementById('fAboutPlanetInfo');
     // The panel is moved into the Quadration Chart Position stat block after
     // each render. Detach
     // it before clearing that block so later card selections can still reuse it.
     if (planetInfo) planetInfo.remove();
-    if (target) target.innerHTML = '';
+    if (mapTarget) mapTarget.innerHTML = '';
+    if (aboutTarget) aboutTarget.innerHTML = '';
     if (topTarget) topTarget.innerHTML = '';
-    if (planetInfo && target) target.appendChild(planetInfo);
-    return target;
+    if (planetInfo && aboutTarget) aboutTarget.appendChild(planetInfo);
+    return aboutTarget;
   }
 
   function splitAboutLifeScript(root) {
-    const target = document.getElementById('fAboutLifeScript');
+    const mapTarget = document.getElementById('fAboutLifeScript');
+    const aboutTarget = document.getElementById('fAboutCardology');
     const topTarget = document.getElementById('fAboutModernStats');
     const inner = root && root.querySelector('.ls-inner');
-    if (!target || !topTarget || !inner) return;
+    if (!mapTarget || !aboutTarget || !topTarget || !inner) return;
     const planetInfo = document.getElementById('fAboutPlanetInfo');
-    target.innerHTML = '';
+    mapTarget.innerHTML = '';
+    aboutTarget.innerHTML = '';
     topTarget.innerHTML = '';
     const header = inner.querySelector('.ls-header');
     const row = inner.querySelector('.ls-row');
     const stats = inner.querySelector('.ls-stats');
     if (!row && !stats) {
-      while (inner.firstChild) target.appendChild(inner.firstChild);
+      while (inner.firstChild) aboutTarget.appendChild(inner.firstChild);
       return;
     }
     if (stats) {
@@ -961,9 +1003,9 @@
       if (topStats.children.length) topTarget.appendChild(topStats);
 
       const zodiac = stats.querySelector('.ls-zodiac-block');
-      if (zodiac) target.appendChild(zodiac);
+      if (zodiac) mapTarget.appendChild(zodiac);
 
-      if (header) target.appendChild(header);
+      if (header) aboutTarget.appendChild(header);
 
       if (row) {
         const rulingCardsBlock = document.createElement('section');
@@ -971,17 +1013,17 @@
         rulingCardsBlock.setAttribute('aria-label', 'Life Script');
         rulingCardsBlock.innerHTML = '<h3 class="ls-stat-label">Life Script</h3>';
         rulingCardsBlock.appendChild(row);
-        target.appendChild(rulingCardsBlock);
+        aboutTarget.appendChild(rulingCardsBlock);
       }
 
       const lowerStats = document.createElement('div');
       lowerStats.className = 'ls-stats ls-stats--about';
       if (statBlocks.Displacements) lowerStats.appendChild(statBlocks.Displacements);
-      if (lowerStats.children.length) target.appendChild(lowerStats);
+      if (lowerStats.children.length) aboutTarget.appendChild(lowerStats);
 
       if (statBlocks['Quadration Chart Position']) {
         if (planetInfo) statBlocks['Quadration Chart Position'].appendChild(planetInfo);
-        target.appendChild(statBlocks['Quadration Chart Position']);
+        aboutTarget.appendChild(statBlocks['Quadration Chart Position']);
       }
     }
   }
@@ -1059,6 +1101,7 @@
     stage.innerHTML = '<div class="ls-inner">' + panelHTML(card) + '</div>';
     splitAboutLifeScript(stage);
     bindLifeScriptCardClicks(document.getElementById('fAboutLifeScript'));
+    bindLifeScriptCardClicks(document.getElementById('fAboutCardology'));
     bindLifeScriptCardClicks(document.getElementById('fAboutModernStats'));
     bindLifeScriptDateClicks(document.getElementById('fAboutModernStats'));
     return true;
@@ -1066,17 +1109,21 @@
 
   function trimLifeDetailsForRelationship() {
     const topTarget = document.getElementById('fAboutModernStats');
-    const target = document.getElementById('fAboutLifeScript');
+    const targets = [
+      document.getElementById('fAboutLifeScript'),
+      document.getElementById('fAboutCardology')
+    ].filter(Boolean);
     if (topTarget) {
       topTarget.querySelectorAll('.ls-zodiac-block').forEach(function (block) { block.remove(); });
     }
-    if (!target) return;
-    target.querySelectorAll('.ls-zodiac-block, .ls-header, .ls-ruling-cards-block').forEach(function (block) { block.remove(); });
-    target.querySelectorAll('.ls-stat-block').forEach(function (block) {
-      const label = block.querySelector('.ls-stat-label');
-      if (label && label.textContent.trim() === 'Displacements') block.remove();
+    targets.forEach(function (target) {
+      target.querySelectorAll('.ls-zodiac-block, .ls-header, .ls-ruling-cards-block').forEach(function (block) { block.remove(); });
+      target.querySelectorAll('.ls-stat-block').forEach(function (block) {
+        const label = block.querySelector('.ls-stat-label');
+        if (label && label.textContent.trim() === 'Displacements') block.remove();
+      });
+      target.querySelectorAll('.ls-stats:empty').forEach(function (block) { block.remove(); });
     });
-    target.querySelectorAll('.ls-stats:empty').forEach(function (block) { block.remove(); });
   }
 
   function bindLifeScriptCardClicks(root) {
