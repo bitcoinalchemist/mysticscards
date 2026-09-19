@@ -1,3 +1,15 @@
+/* Local font files keep the installed app independent of third-party CDNs. */
+@font-face { font-family: 'Inter'; font-style: normal; font-weight: 300; font-display: swap; src: url('../assets/fonts/inter-300.ttf') format('truetype'); }
+@font-face { font-family: 'Inter'; font-style: normal; font-weight: 400; font-display: swap; src: url('../assets/fonts/inter-400.ttf') format('truetype'); }
+@font-face { font-family: 'Inter'; font-style: normal; font-weight: 500; font-display: swap; src: url('../assets/fonts/inter-500.ttf') format('truetype'); }
+@font-face { font-family: 'Inter'; font-style: normal; font-weight: 600; font-display: swap; src: url('../assets/fonts/inter-600.ttf') format('truetype'); }
+@font-face { font-family: 'Lora'; font-style: normal; font-weight: 400; font-display: swap; src: url('../assets/fonts/lora-400.ttf') format('truetype'); }
+@font-face { font-family: 'Lora'; font-style: normal; font-weight: 500; font-display: swap; src: url('../assets/fonts/lora-500.ttf') format('truetype'); }
+@font-face { font-family: 'Lora'; font-style: normal; font-weight: 600; font-display: swap; src: url('../assets/fonts/lora-600.ttf') format('truetype'); }
+@font-face { font-family: 'Lora'; font-style: normal; font-weight: 700; font-display: swap; src: url('../assets/fonts/lora-700.ttf') format('truetype'); }
+@font-face { font-family: 'Lora'; font-style: italic; font-weight: 400; font-display: swap; src: url('../assets/fonts/lora-400-italic.ttf') format('truetype'); }
+@font-face { font-family: 'Lora'; font-style: italic; font-weight: 500; font-display: swap; src: url('../assets/fonts/lora-500-italic.ttf') format('truetype'); }
+
 :root {
   --bg:            #100c1e;
   --surface:       #221a3d;
@@ -1420,6 +1432,15 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
   letter-spacing: .12em;
   text-transform: uppercase;
   color: var(--muted);
+}
+.finder-about-card-note {
+  grid-column: 1 / -1;
+  justify-self: center;
+  margin: .35rem 0 0;
+  font: italic 400 .9rem/1.4 var(--serif);
+  letter-spacing: .03em;
+  color: var(--text);
+  text-align: center;
 }
 .finder-about-suit-keywords,
 .finder-about-rank-keywords {

@@ -1,10 +1,10 @@
 /*
  * sw.js — offline support for mysticscards.space
- * Network-first for same-origin; cache-first for Google Fonts.
+ * Network-first for same-origin requests.
  * PRECACHE lists every deployed file.
  */
 // Cache-key bump on every deployed change.
-const CACHE = 'mysticscards-275';
+const CACHE = 'mysticscards-277';
 const PRECACHE = [
   './',
   'index.html',
@@ -42,6 +42,16 @@ const PRECACHE = [
   'assets/icon-512.png',
   'assets/icon-512-maskable.png',
   'assets/og-image.png',
+  'assets/fonts/inter-300.ttf',
+  'assets/fonts/inter-400.ttf',
+  'assets/fonts/inter-500.ttf',
+  'assets/fonts/inter-600.ttf',
+  'assets/fonts/lora-400.ttf',
+  'assets/fonts/lora-500.ttf',
+  'assets/fonts/lora-600.ttf',
+  'assets/fonts/lora-700.ttf',
+  'assets/fonts/lora-400-italic.ttf',
+  'assets/fonts/lora-500-italic.ttf',
   'assets/cards/JC.webp',
   'assets/cards/JD.webp',
   'assets/cards/JH.webp',
@@ -92,19 +102,6 @@ self.addEventListener('fetch', (e) => {
             return Response.error();
           })
         )
-    );
-  } else if (url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com') {
-    e.respondWith(
-      caches.match(req).then((hit) =>
-        hit ||
-        fetch(req).then((res) => {
-          if (res && (res.ok || res.type === 'opaque')) {
-            const copy = res.clone();
-            caches.open(CACHE).then((c) => c.put(req, copy));
-          }
-          return res;
-        })
-      )
     );
   }
 });

@@ -54,6 +54,9 @@
     Q: 12,
     K: 13
   };
+  const CARD_NOTES = {
+    J_hearts: 'The Christ Principle'
+  };
 
   let _renderMode = 'empty';
   let dom = null;
@@ -149,6 +152,7 @@
         modern:      document.getElementById('fAboutModern'),
         cardHeading: document.getElementById('fAboutCardHeading'),
         cardValue:   document.getElementById('fAboutCardValue'),
+        cardNote:    document.getElementById('fAboutCardNote'),
         connections: document.getElementById('fRelationshipConnections'),
         longform:    document.getElementById('fAboutLongform'),
         personality: document.getElementById('fAboutPersonality'),
@@ -608,6 +612,10 @@
     box.root.classList.remove('is-joker', 'is-empty', 'is-relationship');
     if (!card) {
       if (box.cardHeading) box.cardHeading.textContent = '';
+      if (box.cardNote) {
+        box.cardNote.textContent = '';
+        box.cardNote.hidden = true;
+      }
       if (box.cardValue) {
         box.cardValue.textContent = '';
         box.cardValue.removeAttribute('aria-label');
@@ -617,6 +625,11 @@
     }
     if (box.connections && !rel) box.connections.innerHTML = '';
     if (box.cardHeading) box.cardHeading.textContent = cardName(card);
+    if (box.cardNote) {
+      const note = !rel ? CARD_NOTES[`${card.rank}_${card.suit}`] : '';
+      box.cardNote.textContent = note || '';
+      box.cardNote.hidden = !note;
+    }
     if (box.cardValue) {
       const cardIndex = typeof CARDS !== 'undefined'
         ? CARDS.findIndex(c => c.rank === card.rank && c.suit === card.suit)
