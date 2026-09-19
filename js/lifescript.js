@@ -44,6 +44,7 @@
   const TEXT_VARIATION = '\uFE0E';
   ZODIAC.forEach(function (sign) { sign.glyph += TEXT_VARIATION; });
   const SIDEREAL_LAHIRI_DAY_SHIFT = -24;
+  const ASTRO_ZODIAC_NAMES = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
   const PLANETARY_ENERGIES = {
     Sun: 'self-expression, confidence, and the way a person is called to shine',
     Moon: 'emotional needs, belonging, and instinctive responses',
@@ -290,24 +291,24 @@
   // Leo's ruler (Sun) resolves to the birth card itself
   // (see derivedCardFor), so it only ever fires when both people share
   // the exact same card.
-  function zodiacKindConnection(fromCard, fromDate, toCard, kind) {
+  function zodiacKindConnection(fromCard, fromDate, toCard, kind, exactTropicalSign) {
     if (!fromDate) return null;
     let sign;
     if (kind === 'sidereal') {
       const sd = shiftedDate(fromDate.month, fromDate.day, SIDEREAL_LAHIRI_DAY_SHIFT);
       sign = zodiacForDate(sd.month, sd.day);
     } else {
-      sign = zodiacForDate(fromDate.month, fromDate.day);
+      sign = exactTropicalSign || zodiacForDate(fromDate.month, fromDate.day);
     }
     if (!sign || sign.ruler === 'Moon') return null;
     const key = `${fromCard.rank}_${fromCard.suit}`;
     const script = (typeof LIFE_SCRIPTS !== 'undefined' ? LIFE_SCRIPTS : {})[key];
     const cc = cardForRuler(sign.ruler, script, fromCard);
     if (!cc || cc.rank !== toCard.rank || cc.suit !== toCard.suit) return null;
-    return { planet: sign.ruler, sign: sign.name, glyph: sign.glyph, kind };
+    return { planet: sign.ruler, sign: sign.name, glyph: sign.glyph, kind, exact: kind === 'tropical' && !!exactTropicalSign };
   }
 
-  function prcSignForDate(date, kind) {
+  function prcSignForDate(date, kind, exactTropicalSign) {
     if (!date) return null;
     if (kind === 'sidereal') {
       const sd = shiftedDate(date.month, date.day, SIDEREAL_LAHIRI_DAY_SHIFT);
@@ -317,7 +318,7 @@
       const sign = zodiacForDate(date.month, date.day);
       return tropicalCuspSignForDate(sign, date.month, date.day);
     }
-    return zodiacForDate(date.month, date.day);
+    return exactTropicalSign || zodiacForDate(date.month, date.day);
   }
 
   function prcKindLabel(kind) {
@@ -333,12 +334,12 @@
     return rulingPathConnection(fromCard, fromDate, toCard, spread, 'tropical');
   }
 
-  function rulingPathConnection(fromCard, fromDate, toCard, spread, kind) {
+  function rulingPathConnection(fromCard, fromDate, toCard, spread, kind, exactTropicalSign) {
     const checker = spread === 'Spiritual Spread'
       ? window.spiritSpreadConnection
       : window.lifeScriptConnection;
     if (!fromDate || typeof checker !== 'function') return null;
-    const sign = prcSignForDate(fromDate, kind);
+    const sign = prcSignForDate(fromDate, kind, exactTropicalSign);
     if (!sign) return null;
     const key = `${fromCard.rank}_${fromCard.suit}`;
     const script = (typeof LIFE_SCRIPTS !== 'undefined' ? LIFE_SCRIPTS : {})[key];
@@ -354,6 +355,7 @@
       sign: sign.name,
       glyph: sign.glyph,
       kind: kind || 'tropical',
+      exact: (kind || 'tropical') === 'tropical' && !!exactTropicalSign,
       rulingCard
     };
   }
@@ -362,9 +364,9 @@
     return rulingDerivedConnection(fromCard, fromDate, toCard, spread, planet, 'tropical');
   }
 
-  function rulingDerivedConnection(fromCard, fromDate, toCard, spread, planet, kind) {
+  function rulingDerivedConnection(fromCard, fromDate, toCard, spread, planet, kind, exactTropicalSign) {
     if (!fromDate || !planet) return null;
-    const sign = prcSignForDate(fromDate, kind);
+    const sign = prcSignForDate(fromDate, kind, exactTropicalSign);
     if (!sign) return null;
     const key = `${fromCard.rank}_${fromCard.suit}`;
     const script = (typeof LIFE_SCRIPTS !== 'undefined' ? LIFE_SCRIPTS : {})[key];
@@ -381,6 +383,7 @@
       sign: sign.name,
       glyph: sign.glyph,
       kind: kind || 'tropical',
+      exact: (kind || 'tropical') === 'tropical' && !!exactTropicalSign,
       rulingCard
     };
   }
@@ -389,24 +392,24 @@
     return rulingCardForKind(card, date, 'tropical');
   }
 
-  function rulingCardForKind(card, date, kind) {
+  function rulingCardForKind(card, date, kind, exactTropicalSign) {
     if (!date) return null;
-    const sign = prcSignForDate(date, kind);
+    const sign = prcSignForDate(date, kind, exactTropicalSign);
     if (!sign) return null;
     const key = `${card.rank}_${card.suit}`;
     const script = (typeof LIFE_SCRIPTS !== 'undefined' ? LIFE_SCRIPTS : {})[key];
     const rulingCard = cardForRuler(sign.ruler, script, card);
     if (!rulingCard || (rulingCard.rank === card.rank && rulingCard.suit === card.suit)) return null;
-    return { rulingCard: rulingCard, ruler: sign.ruler, sign: sign.name, glyph: sign.glyph, kind: kind || 'tropical' };
+    return { rulingCard: rulingCard, ruler: sign.ruler, sign: sign.name, glyph: sign.glyph, kind: kind || 'tropical', exact: (kind || 'tropical') === 'tropical' && !!exactTropicalSign };
   }
 
   function prcAsDerivedConnection(fromCard, otherCard, otherDate, spread, planet) {
     return prcAsDerivedConnectionKind(fromCard, otherCard, otherDate, spread, planet, 'tropical');
   }
 
-  function prcAsDerivedConnectionKind(fromCard, otherCard, otherDate, spread, planet, kind) {
+  function prcAsDerivedConnectionKind(fromCard, otherCard, otherDate, spread, planet, kind, exactTropicalSign) {
     if (!planet) return null;
-    const prc = rulingCardForKind(otherCard, otherDate, kind);
+    const prc = rulingCardForKind(otherCard, otherDate, kind, exactTropicalSign);
     if (!prc) return null;
     const match = spread === 'Spiritual Spread'
       ? spiritDerivedConnection(planet, fromCard, prc.rulingCard)
@@ -419,6 +422,7 @@
       sign: prc.sign,
       glyph: prc.glyph,
       kind: kind || 'tropical',
+      exact: !!prc.exact,
       rulingCard: prc.rulingCard
     };
   }
@@ -1362,17 +1366,422 @@
     </section>`;
   }
 
+  /*
+   * Connection result model
+   * -----------------------
+   * calculateRelationshipConnections() is deliberately DOM-free apart from
+   * the two optional Finder dates. Each result says who owns the checked
+   * spread, which role is in that spread, the seat, direction, and every
+   * zodiac source that produced the same connection. Rendering below only
+   * groups and presents those results. Public API:
+   * window.calculateRelationshipConnections(card, partner, options)
+   */
+  function personLabel(side) {
+    if (side === 'you') return window.finderBirthLabel || 'You';
+    return window.finderPartnerLabel || 'They';
+  }
+
+  function possessivePerson(side) {
+    const label = personLabel(side);
+    if (side === 'you' && label === 'You') return 'Your';
+    if (side !== 'you' && label === 'They') return 'Their';
+    return /s$/i.test(label) ? `${label}'` : `${label}'s`;
+  }
+
+  function connectionModel(side, ownerCard, matchCard, ownerRole, matchRole, spread, seat, variant, extra) {
+    const result = {
+      side, ownerCard, matchCard, ownerRole, matchRole, spread,
+      seat: seat || null, planet: seat && seat.planet, idx: seat && seat.idx,
+      type: ownerRole === 'birth' && matchRole === 'birth' ? 'birth' : 'ruling',
+      sourceVariants: variant ? [variant] : []
+    };
+    return Object.assign(result, extra || {});
+  }
+
+  function addConnection(results, result) {
+    if (!result) return;
+    // Tropical and sidereal are alternate sources for one established
+    // connection. A cusp is deliberately kept separate so it can remain an
+    // optional possibility rather than silently strengthening that result.
+    const sourceBucket = result.sourceVariants[0] && result.sourceVariants[0].kind === 'cusp' ? 'cusp' : 'standard';
+    const key = [result.type, result.side, result.ownerRole, result.matchRole,
+      result.spread, result.planet || result.displacement || '',
+      result.ownerCard.rank, result.ownerCard.suit, result.matchCard.rank, result.matchCard.suit, sourceBucket].join('|');
+    const found = results.find(function (item) { return item._key === key; });
+    if (found) {
+      result.sourceVariants.forEach(function (variant) {
+        if (!found.sourceVariants.some(function (old) { return old.kind === variant.kind && old.sign === variant.sign && old.ruler === variant.ruler; })) found.sourceVariants.push(variant);
+      });
+      return;
+    }
+    result._key = key;
+    results.push(result);
+  }
+
+  function prcAsSeatConnection(fromCard, otherCard, otherDate, spread, kind, exactTropicalSign) {
+    const prc = rulingCardForKind(otherCard, otherDate, kind, exactTropicalSign);
+    const checker = spread === 'Spiritual Spread' ? window.spiritSpreadConnection : window.lifeScriptConnection;
+    if (!prc || typeof checker !== 'function') return null;
+    const seat = checker(fromCard, prc.rulingCard);
+    if (!seat) return null;
+    return Object.assign(seat, prc, { spread });
+  }
+
+  function variantFrom(result, kind) {
+    return result ? { kind: kind, sign: result.sign, glyph: result.glyph, ruler: result.ruler, exact: !!result.exact } : null;
+  }
+
+  function exactTropicalSign(details, card) {
+    if (!details || !details.year || !details.time || !details.place ||
+        !window.SolarTime || typeof window.SolarTime.birthInstant !== 'function') return Promise.resolve(null);
+    if (typeof window.solarValue === 'function' && window.solarValue(details.month, details.day) !== card.sv) return Promise.resolve(null);
+    return window.SolarTime.birthInstant(details).then(function (instant) {
+      if (!instant || !window.Astronomy || typeof window.Astronomy.Ecliptic !== 'function') return null;
+      const longitude = window.Astronomy.Ecliptic(window.Astronomy.GeoVector(window.Astronomy.Body.Sun, instant.t, true)).elon;
+      const signName = ASTRO_ZODIAC_NAMES[Math.floor((((longitude % 360) + 360) % 360) / 30)];
+      const sign = ZODIAC.find(function (item) { return item.name === signName; });
+      return sign ? Object.assign({}, sign, { exact: true }) : null;
+    }).catch(function () { return null; });
+  }
+
+  function resolveExactTropicalSigns(card, partner) {
+    return Promise.all([
+      exactTropicalSign(window.finderBirthDetails, card),
+      exactTropicalSign(window.finderPartnerBirthDetails, partner)
+    ]).then(function (signs) { return { you: signs[0], them: signs[1] }; });
+  }
+
+  function prcPairVariant(kind, ownerPrc, matchPrc) {
+    const owner = personLabel('you');
+    const match = personLabel('them');
+    return {
+      kind: kind,
+      exact: !!(ownerPrc.exact || matchPrc.exact),
+      label: `${owner} ${ownerPrc.glyph} ${ownerPrc.sign} · ${match} ${matchPrc.glyph} ${matchPrc.sign}`,
+      ownerSign: ownerPrc.sign,
+      ownerGlyph: ownerPrc.glyph,
+      matchSign: matchPrc.sign,
+      matchGlyph: matchPrc.glyph
+    };
+  }
+
+  function addPrcToPrcConnections(results, yourCard, partnerCard, yourDate, partnerDate, yourExact, partnerExact) {
+    ['tropical', 'sidereal', 'cusp'].forEach(function (kind) {
+      const yourPrc = kind === 'cusp' && yourExact ? null : rulingCardForKind(yourCard, yourDate, kind, yourExact);
+      const partnerPrc = kind === 'cusp' && partnerExact ? null : rulingCardForKind(partnerCard, partnerDate, kind, partnerExact);
+      if (!yourPrc || !partnerPrc) return;
+      const variant = prcPairVariant(kind, yourPrc, partnerPrc);
+      if (yourPrc.rulingCard.rank === partnerPrc.rulingCard.rank && yourPrc.rulingCard.suit === partnerPrc.rulingCard.suit) {
+        addConnection(results, connectionModel('you', yourPrc.rulingCard, partnerPrc.rulingCard, 'ruling', 'ruling', 'Same ruling card', { planet: 'Same PRC' }, variant, { type: 'prc', samePrc: true }));
+      }
+      [
+        { side: 'you', owner: yourPrc.rulingCard, match: partnerPrc.rulingCard },
+        { side: 'them', owner: partnerPrc.rulingCard, match: yourPrc.rulingCard }
+      ].forEach(function (pair) {
+        ['Earthly Spread', 'Spiritual Spread'].forEach(function (spread) {
+          const checker = spread === 'Spiritual Spread' ? window.spiritSpreadConnection : window.lifeScriptConnection;
+          const seat = typeof checker === 'function' ? checker(pair.owner, pair.match) : null;
+          if (seat) addConnection(results, connectionModel(pair.side, pair.owner, pair.match, 'ruling', 'ruling', spread, seat, variant, { type: 'prc' }));
+          ['Moon', 'Pluto'].forEach(function (planet) {
+            const derived = spread === 'Spiritual Spread' ? spiritDerivedConnection(planet, pair.owner, pair.match) : derivedConnection(planet, pair.owner, pair.match);
+            if (derived) addConnection(results, connectionModel(pair.side, pair.owner, pair.match, 'ruling', 'ruling', spread, derived, variant, { type: 'prc' }));
+          });
+        });
+        displacementConnections(pair.owner, pair.match).forEach(function (match) {
+          const displacer = match.kind === 'displaces' ? pair.owner : pair.match;
+          const displaced = match.kind === 'displaces' ? pair.match : pair.owner;
+          addConnection(results, connectionModel(pair.side, displacer, displaced, 'ruling', 'ruling', 'Displacement', null, variant, { type: 'prc', displacement: 'displaces' }));
+        });
+      });
+    });
+  }
+
+  // Moon intentionally shares Mercury's matching card in these spread
+  // extensions. Keep both meanings, but make the visitor read one connection
+  // rather than two visually identical results.
+  function mergeMercuryMoonConnections(results) {
+    const sourceKey = function (result) {
+      return result.sourceVariants.map(function (source) {
+        return [source.kind, source.sign || '', source.ruler || '', source.label || ''].join(':');
+      }).sort().join('|');
+    };
+    const sameCard = function (left, right) { return left.rank === right.rank && left.suit === right.suit; };
+    const used = {};
+    return results.reduce(function (merged, result, index) {
+      if (used[index]) return merged;
+      if (result.planet !== 'Mercury' && result.planet !== 'Moon') {
+        merged.push(result);
+        return merged;
+      }
+      const otherIndex = results.findIndex(function (other, candidateIndex) {
+        return candidateIndex !== index && !used[candidateIndex] &&
+          ((result.planet === 'Mercury' && other.planet === 'Moon') || (result.planet === 'Moon' && other.planet === 'Mercury')) &&
+          result.type === other.type && result.spread === other.spread &&
+          result.ownerRole === other.matchRole && result.matchRole === other.ownerRole &&
+          sameCard(result.ownerCard, other.matchCard) && sameCard(result.matchCard, other.ownerCard) &&
+          sourceKey(result) === sourceKey(other);
+      });
+      if (otherIndex < 0) {
+        merged.push(result);
+        return merged;
+      }
+      const mercury = result.planet === 'Mercury' ? result : results[otherIndex];
+      mercury.planets = ['Mercury', 'Moon'];
+      mercury.planet = 'Mercury / Moon';
+      used[index] = true;
+      used[otherIndex] = true;
+      merged.push(mercury);
+      return merged;
+    }, []);
+  }
+
+  function addCurrentYearlyConnections(results, card, partner, options) {
+    const currentCycle = window.currentYearlyCycleForBirth;
+    const recurringAges = window.yearlyCycleAgesForCard;
+    const yourDetails = options.yourBirthDetails === undefined ? window.finderBirthDetails : options.yourBirthDetails;
+    const partnerDetails = options.partnerBirthDetails === undefined ? window.finderPartnerBirthDetails : options.partnerBirthDetails;
+    if (typeof currentCycle !== 'function' || typeof recurringAges !== 'function') return { missingBirthYears: true, available: 0 };
+    const pairs = [
+      { side: 'you', owner: card, match: partner, details: yourDetails, matchDate: options.partnerDate, matchExactTropicalSign: options.partnerTropicalSign || null },
+      { side: 'them', owner: partner, match: card, details: partnerDetails, matchDate: options.yourDate, matchExactTropicalSign: options.youTropicalSign || null }
+    ];
+    let available = 0;
+    pairs.forEach(function (pair) {
+      if (!pair.details || !Number.isInteger(Number(pair.details.year)) || Number(pair.details.year) <= 0) return;
+      const cycle = currentCycle(pair.owner, pair.details);
+      if (!cycle || !cycle.card) return;
+      available++;
+      const targets = [{ card: pair.match, role: 'birth', variant: null }];
+      if (pair.matchDate) {
+        const prc = rulingCardForKind(pair.match, pair.matchDate, 'tropical', pair.matchExactTropicalSign);
+        if (prc) targets.push({ card: prc.rulingCard, role: 'ruling', variant: variantFrom(prc, 'tropical') });
+      }
+      const yearlyTargets = targets.map(function (target) {
+        const matchingAges = recurringAges(pair.owner, target.card, 90);
+        const currentMatch = cycle.card.rank === target.card.rank && cycle.card.suit === target.card.suit;
+        return {
+          card: target.card,
+          role: target.role,
+          sign: target.variant && target.variant.sign,
+          currentMatch: currentMatch,
+          matchingAges: matchingAges,
+          recurrenceAges: matchingAges.filter(function (age) { return age !== cycle.age; })
+        };
+      });
+      addConnection(results, connectionModel(pair.side, cycle.card, pair.match, 'yearly', 'cycle', 'Current Yearly card', { planet: cycle.planet }, null, {
+        type: 'yearly',
+        yearly: {
+          age: cycle.age,
+          planet: cycle.planet,
+          cycleStartAge: cycle.cycleStartAge,
+          cycleEndAge: cycle.cycleEndAge,
+          targets: yearlyTargets
+        }
+      }));
+    });
+    return { missingBirthYears: available < pairs.length, available: available };
+  }
+
+  function calculateRelationshipConnections(card, partner, options) {
+    options = options || {};
+    if (!card || !partner || card.suit === 'joker' || partner.suit === 'joker') return { results: [], missingBirthdays: false, joker: true };
+    const yourDate = options.yourDate === undefined ? selectedBirthDateForCard(card) : options.yourDate;
+    const partnerDate = options.partnerDate === undefined ? selectedPartnerDateForCard(partner) : options.partnerDate;
+    const results = [];
+    const pairs = [
+      { side: 'you', owner: card, match: partner, ownerDate: yourDate, matchDate: partnerDate, exactTropicalSign: options.youTropicalSign || null, matchExactTropicalSign: options.partnerTropicalSign || null },
+      { side: 'them', owner: partner, match: card, ownerDate: partnerDate, matchDate: yourDate, exactTropicalSign: options.partnerTropicalSign || null, matchExactTropicalSign: options.youTropicalSign || null }
+    ];
+    pairs.forEach(function (pair) {
+      ['Earthly Spread', 'Spiritual Spread'].forEach(function (spread) {
+        const checker = spread === 'Spiritual Spread' ? window.spiritSpreadConnection : window.lifeScriptConnection;
+        const seat = typeof checker === 'function' ? checker(pair.owner, pair.match) : null;
+        if (seat) addConnection(results, connectionModel(pair.side, pair.owner, pair.match, 'birth', 'birth', spread, seat));
+        ['Moon', 'Pluto'].forEach(function (planet) {
+          const derived = spread === 'Spiritual Spread' ? spiritDerivedConnection(planet, pair.owner, pair.match) : derivedConnection(planet, pair.owner, pair.match);
+          if (derived) addConnection(results, connectionModel(pair.side, pair.owner, pair.match, 'birth', 'birth', spread, derived));
+        });
+      });
+      displacementConnections(pair.owner, pair.match).forEach(function (match) {
+        const displacer = match.kind === 'displaces' ? pair.owner : pair.match;
+        const displaced = match.kind === 'displaces' ? pair.match : pair.owner;
+        addConnection(results, connectionModel(pair.side, displacer, displaced, 'birth', 'birth', 'Displacement', null, null, { displacement: 'displaces' }));
+      });
+      if (!pair.ownerDate) return;
+      ['tropical', 'sidereal', 'cusp'].forEach(function (kind) {
+        ['Earthly Spread', 'Spiritual Spread'].forEach(function (spread) {
+          const path = kind === 'cusp' && pair.exactTropicalSign ? null : rulingPathConnection(pair.owner, pair.ownerDate, pair.match, spread, kind, pair.exactTropicalSign);
+          if (path) addConnection(results, connectionModel(pair.side, path.rulingCard, pair.match, 'ruling', 'birth', spread, path, variantFrom(path, kind), { personCard: pair.owner }));
+          ['Moon', 'Pluto'].forEach(function (planet) {
+            const derived = kind === 'cusp' && pair.exactTropicalSign ? null : rulingDerivedConnection(pair.owner, pair.ownerDate, pair.match, spread, planet, kind, pair.exactTropicalSign);
+            if (derived) addConnection(results, connectionModel(pair.side, derived.rulingCard, pair.match, 'ruling', 'birth', spread, derived, variantFrom(derived, kind), { personCard: pair.owner }));
+          });
+          // This is the mirror role: their PRC is in this person's birth-card
+          // spread. It must include the ordinary Mercury–Neptune seats as
+          // well as the pre-existing Moon/Pluto extensions.
+          const mirror = kind === 'cusp' && pair.matchExactTropicalSign ? null : prcAsSeatConnection(pair.owner, pair.match, pair.matchDate, spread, kind, pair.matchExactTropicalSign);
+          if (mirror) addConnection(results, connectionModel(pair.side, pair.owner, mirror.rulingCard, 'birth', 'ruling', spread, mirror, variantFrom(mirror, kind), { personCard: pair.match }));
+          ['Moon', 'Pluto'].forEach(function (planet) {
+            const derivedMirror = kind === 'cusp' && pair.matchExactTropicalSign ? null : prcAsDerivedConnectionKind(pair.owner, pair.match, pair.matchDate, spread, planet, kind, pair.matchExactTropicalSign);
+            if (derivedMirror) addConnection(results, connectionModel(pair.side, pair.owner, derivedMirror.rulingCard, 'birth', 'ruling', spread, derivedMirror, variantFrom(derivedMirror, kind), { personCard: pair.match }));
+          });
+        });
+      });
+    });
+    // Direct zodiac ruling-card matches require both actual birthdays, as in
+    // the original implementation; the PRC spread paths above need only the
+    // date for the person whose PRC is being resolved.
+    if (yourDate && partnerDate) pairs.forEach(function (pair) {
+      ['tropical', 'sidereal'].forEach(function (kind) {
+        const direct = zodiacKindConnection(pair.owner, pair.ownerDate, pair.match, kind, pair.exactTropicalSign);
+        if (direct) addConnection(results, connectionModel(pair.side, pair.owner, pair.match, 'birth', 'ruling', 'Ruling card', direct, variantFrom(direct, kind), { personCard: pair.owner }));
+      });
+    });
+    if (yourDate && partnerDate) addPrcToPrcConnections(results, card, partner, yourDate, partnerDate, options.youTropicalSign || null, options.partnerTropicalSign || null);
+    const yearlyStatus = addCurrentYearlyConnections(results, card, partner, Object.assign({}, options, { yourDate: yourDate, partnerDate: partnerDate }));
+    return { results: mergeMercuryMoonConnections(results), missingBirthdays: !yourDate || !partnerDate, missingYearlyBirthYears: yearlyStatus.missingBirthYears, yearlyAvailable: yearlyStatus.available, joker: false };
+  }
+
+  function sourceLabels(result) {
+    return result.sourceVariants.filter(function (source) { return source.kind === 'sidereal'; }).map(function (source) {
+      return `Sidereal (birthday approximation)${source.label ? ` ${source.label}` : source.sign ? ` ${source.glyph} ${source.sign}` : ''}`;
+    }).join(' · ');
+  }
+
+  function connectionSummaryHTML(result) {
+    if (result.yearly) {
+      const owner = possessivePerson(result.side);
+      const match = possessivePerson(result.side === 'you' ? 'them' : 'you');
+      const targetHTML = result.yearly.targets.map(function (target) {
+        const targetRole = target.role === 'birth' ? 'birth card' : `${target.sign ? `${target.sign} ` : ''}planetary ruling card`;
+        return `<p><b>${match} ${targetRole} ${target.card.rank}${target.card.sym}</b><span>${target.currentMatch ? 'Current match' : 'No current match'}</span></p>`;
+      }).join('');
+      return `<p class="ls-connection-title"><b>${owner} current Yearly card ${result.ownerCard.rank}${result.ownerCard.sym}</b>.</p><div class="ls-cycle-targets">${targetHTML}</div><p class="ls-connection-context">Age ${result.yearly.age} · ${result.yearly.planet} · Birthday-to-birthday</p>`;
+    }
+    if (result.samePrc) {
+      const source = result.sourceVariants[0] || {};
+      const yourSign = source.ownerSign ? `${source.ownerSign} ` : '';
+      const theirSign = source.matchSign ? `${source.matchSign} ` : '';
+      return `<p class="ls-connection-title"><b>${possessivePerson('you')} ${yourSign}planetary ruling card and ${possessivePerson('them')} ${theirSign}planetary ruling card are both ${result.ownerCard.rank}${result.ownerCard.sym}</b>.</p>`;
+    }
+    if (result.displacement) return `<p class="ls-connection-title"><b>${fullCardName(result.ownerCard)}</b> displaces <b>${fullCardName(result.matchCard)}</b>.</p>`;
+    const owner = possessivePerson(result.side);
+    const match = possessivePerson(result.side === 'you' ? 'them' : 'you');
+    const zodiacTitle = function (side) {
+      const source = result.sourceVariants[0];
+      if (!source) return '';
+      if (source.ownerSign) return side === 'you' ? `${source.ownerSign} ` : `${source.matchSign} `;
+      return source.sign ? `${source.sign} ` : '';
+    };
+    const ownerRole = result.ownerRole === 'birth' ? 'birth card' : `${zodiacTitle(result.side)}planetary ruling card`;
+    const matchRole = result.matchRole === 'birth' ? 'birth card' : `${zodiacTitle(result.side === 'you' ? 'them' : 'you')}planetary ruling card`;
+    return `<p class="ls-connection-title"><b>${owner} ${ownerRole} ${result.ownerCard.rank}${result.ownerCard.sym}</b> → <b>${match} ${matchRole} ${result.matchCard.rank}${result.matchCard.sym}</b>.</p><p class="ls-connection-context">${result.spread} · ${result.planet}</p>`;
+  }
+
+  function connectionDiagramHTML(result) {
+    if (result.yearly) return `<div class="ls-row ls-row--single">${singleSeatHTML(result.yearly.planet, result.ownerCard, result.ownerCard, { label: 'Yearly', title: 'Current Yearly card' })}</div>`;
+    if (result.samePrc) return `<div class="ls-row ls-row--single">${singleSeatHTML('PRC', result.ownerCard, result.ownerCard, { label: 'PRC', symbol: '✦', title: 'Shared planetary ruling card' })}</div>`;
+    if (result.displacement) return `<div class="ls-row ls-row--single">${singleSeatHTML('Karma', result.ownerCard, result.ownerCard, { symbol: '↔', label: 'Karma', title: 'Karmic displacement' })}</div>`;
+    if (result.spread === 'Ruling card') return `<div class="ls-row ls-row--single">${singleSeatHTML(result.planet, result.matchCard, result.matchCard)}</div>`;
+    const single = result.planet === 'Moon' || result.planet === 'Pluto';
+    const row = result.spread === 'Spiritual Spread'
+      ? (single ? spiritDerivedSeatHTML(result.planet, result.ownerCard, result.matchCard) : spiritRowHTML(result.ownerCard, result.matchCard))
+      : (single ? derivedSeatHTML(result.planet, result.ownerCard, result.matchCard) : scriptRowHTML(result.ownerCard, result.matchCard));
+    return `<div class="ls-row${single ? ' ls-row--single' : ''}">${row}</div>`;
+  }
+
+  function connectionSectionModelHTML(result) {
+    const gloss = result.displacement
+      ? 'This is a displacement connection: one card occupies the other’s karmic exchange point in the Life Spread.'
+      : ((window.PLANET_CONN_TEXT || {})[result.planet] || '');
+    const labels = sourceLabels(result);
+    const source = labels ? `<p class="ls-connection-note">${labels}</p>` : '';
+    const pairedGloss = result.yearly
+      ? `<div class="ls-connection-gloss ls-connection-gloss--pair">${result.yearly.targets.map(function (target) {
+        const targetName = target.role === 'birth' ? 'Birth-card timing.' : 'Planetary ruling-card timing.';
+        const ages = target.currentMatch ? target.recurrenceAges : target.matchingAges;
+        return `<p><strong>${targetName}</strong> ${target.currentMatch ? 'Other matching ages' : 'Matching ages'} from 0–90: ${ages.length ? ages.map(function (age) { return `age ${age}`; }).join(', ') : 'none'}.</p>`;
+      }).join('')}</div>`
+      : result.planets
+      ? `<div class="ls-connection-gloss ls-connection-gloss--pair"><p><strong>Mercury aspect.</strong> ${(window.PLANET_CONN_TEXT || {}).Mercury || ''}</p><p><strong>Moon aspect.</strong> ${(window.PLANET_CONN_TEXT || {}).Moon || ''}</p></div>`
+      : `<p class="ls-connection-gloss">${gloss}</p>`;
+    return `<section class="ls-connection">${connectionSummaryHTML(result)}${source}<details class="ls-connection-details"><summary aria-label="Show spread and interpretation"><span aria-hidden="true">⌄</span></summary>${connectionDiagramHTML(result)}${pairedGloss}</details></section>`;
+  }
+
+  function relationshipConnectionsHTML(model, options) {
+    options = options || {};
+    const showSidereal = options.showSidereal === true;
+    const visible = model.results.map(function (result) {
+      if (showSidereal || !result.sourceVariants.length) return result;
+      const variants = result.sourceVariants.filter(function (source) { return source.kind !== 'sidereal'; });
+      return variants.length ? Object.assign({}, result, { sourceVariants: variants }) : null;
+    }).filter(Boolean);
+    const birth = visible.filter(function (result) { return result.type === 'birth'; });
+    const ruling = visible.filter(function (result) { return result.type === 'ruling'; });
+    const prc = visible.filter(function (result) { return result.type === 'prc'; });
+    const yearly = visible.filter(function (result) { return result.type === 'yearly'; });
+    const cusp = visible.filter(function (result) { return (result.type === 'ruling' || result.type === 'prc') && result.sourceVariants.length && result.sourceVariants.every(function (source) { return source.kind === 'cusp'; }); });
+    const coreRuling = ruling.filter(function (result) { return cusp.indexOf(result) < 0; });
+    const corePrc = prc.filter(function (result) { return cusp.indexOf(result) < 0; });
+    const group = function (title, entries) { return entries.length ? `<section class="ls-connection-group"><h4>${title}</h4>${entries.map(connectionSectionModelHTML).join('')}</section>` : ''; };
+    const yearlyGroup = yearly.length
+      ? yearly.map(connectionSectionModelHTML).join('')
+      : '<p class="ls-connection-empty">Add a saved birthday with a birth year for either person to check that person’s current Yearly card and matching ages.</p>';
+    const cuspDetails = cusp.length ? `<details class="ls-cusp-connections"><summary>Possible cusp connections (${cusp.length})</summary>${cusp.map(connectionSectionModelHTML).join('')}</details>` : '';
+    const message = visible.length ? '' : '<p class="ls-connection-empty">No connections found within the available connection types. This does not indicate compatibility.</p>';
+    const yearlyRequirement = model.missingYearlyBirthYears && model.yearlyAvailable ? '<p class="ls-connection-empty">Add the other person’s saved birth year to check their current Yearly card too.</p>' : '';
+    const connectionInfo = model.missingBirthdays
+      ? 'Add both birthdays to check direct ruling-card matches. PRC paths use the available birthday for that person. Sidereal labels use the existing −24-day birthday approximation, not a birth-time calculation.'
+      : 'Sidereal labels use the existing −24-day birthday approximation, not a birth-time calculation. Cusp entries are alternatives at the displayed tropical boundary.';
+    const siderealToggle = `<label class="ls-sidereal-toggle"><input type="checkbox" data-connection-sidereal${showSidereal ? ' checked' : ''}><span aria-hidden="true"></span>Show sidereal connections</label>`;
+    const info = `<details class="ls-connection-info"><summary aria-label="About connection types and zodiac sources">i</summary><p>${connectionInfo}</p><p><strong>Earthly Spread.</strong> Everyday expression: how the connection may show up through practical life, shared circumstances and visible relating.</p><p><strong>Spiritual Spread.</strong> Inner development: the meaning, growth and subtler learning the connection may invite.</p></details>`;
+    return `<div class="ls-connections-wrap"><div class="ls-connections-head"><h3 class="ls-title">Connections</h3>${siderealToggle}${info}</div>${message}${group('Birth card connections', birth)}${group('Birth card to PRC connections', coreRuling)}${group('PRC to PRC connections', corePrc)}${cuspDetails}</div><section class="ls-cycles-wrap"><div class="ls-cycles-head"><h3 class="ls-title">Cycles</h3></div>${yearlyRequirement}${yearlyGroup}</section>`;
+  }
+
+  function renderConnectionModel(root, inner, model) {
+    const showSidereal = root.dataset.showSidereal === 'true';
+    inner.innerHTML = relationshipConnectionsHTML(model, { showSidereal });
+    bindLifeScriptCardClicks(inner);
+    root._connectionModel = model;
+    if (root.dataset.connectionToggleBound === 'true') return;
+    root.dataset.connectionToggleBound = 'true';
+    root.addEventListener('change', function (event) {
+      const toggle = event.target.closest('[data-connection-sidereal]');
+      if (!toggle || !root.contains(toggle) || !root._connectionModel) return;
+      root.dataset.showSidereal = toggle.checked ? 'true' : 'false';
+      const currentInner = root.querySelector('.ls-inner') || root;
+      renderConnectionModel(root, currentInner, root._connectionModel);
+    });
+  }
+
   function renderRelationshipConnections(card, partner) {
     const root = document.getElementById('fRelationshipConnections');
     if (!root) return false;
     clearAboutLifeScript();
     const inner = root.querySelector('.ls-inner') || root;
     root.classList.remove('is-empty');
-    if (!card || !partner || card.suit === 'joker' || partner.suit === 'joker') {
+    const model = calculateRelationshipConnections(card, partner);
+    if (model.joker) {
       root.classList.add('is-empty');
-      inner.innerHTML = '';
+      inner.innerHTML = '<p class="ls-connection-empty">Connections are not calculated for Joker selections.</p>';
       return false;
     }
+    root.dataset.showSidereal = 'false';
+    renderConnectionModel(root, inner, model);
+    const renderToken = (root._connectionRenderToken || 0) + 1;
+    root._connectionRenderToken = renderToken;
+    resolveExactTropicalSigns(card, partner).then(function (signs) {
+      if (root._connectionRenderToken !== renderToken || (!signs.you && !signs.them)) return;
+      const exactModel = calculateRelationshipConnections(card, partner, {
+        youTropicalSign: signs.you,
+        partnerTropicalSign: signs.them
+      });
+      renderConnectionModel(root, root.querySelector('.ls-inner') || root, exactModel);
+    });
+    return model.results.length > 0;
+
+    /* Legacy assembly retained below temporarily for reference during the
+       rollout; unreachable after the result-model renderer above. */
 
     const lsForward     = typeof window.lifeScriptConnection === 'function' ? window.lifeScriptConnection(card, partner) : null;
     const lsBackward    = typeof window.lifeScriptConnection === 'function' ? window.lifeScriptConnection(partner, card) : null;
@@ -1508,5 +1917,6 @@
   window.renderLifeScript = renderLifeScript;
   window.trimLifeDetailsForRelationship = trimLifeDetailsForRelationship;
   window.renderRelationshipConnections = renderRelationshipConnections;
+  window.calculateRelationshipConnections = calculateRelationshipConnections;
   window.bindZodiacTabs = bindZodiacTabs;
 })();

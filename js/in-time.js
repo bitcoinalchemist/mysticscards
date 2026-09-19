@@ -26,6 +26,12 @@
 // PUBLIC on window:
 //   window.renderInTime(card) — populates the inline `#fInTime` section. Returns TRUE
 //     when there's real content; FALSE for the Joker.
+//   window.yearlyCycleCardAtAge(card, age) — the established Yearly card
+//     calculation for a card and whole-number age, without rendering.
+//   window.currentYearlyCycleForBirth(card, birthDetails[, referenceDate]) —
+//     resolves the active birthday-to-birthday Yearly card for a saved birth.
+//   window.yearlyCycleAgesForCard(card, targetCard[, maxAge]) — age-based
+//     Yearly-card recurrences, used by relationship connections.
 
 (function () {
   'use strict';
@@ -337,6 +343,54 @@
     return deck[(p + 1 + posIdx) % 52];
   }
 
+  // Keep the relationship feature on precisely the same Yearly mathematics
+  // used by the Cycles panel: one seven-year deck, then one planet position
+  // for each age within that deck.
+  function cardIndex(card) {
+    if (!card || card.suit === 'joker') return -1;
+    if (Number.isInteger(card.sv) && card.sv >= 1 && card.sv <= 52) return card.sv - 1;
+    return CARDS.findIndex(function (candidate) { return candidate.rank === card.rank && candidate.suit === card.suit; });
+  }
+
+  function yearlyCycleCardAtAge(card, age) {
+    const birthIdx = cardIndex(card);
+    if (birthIdx < 0 || !Number.isInteger(age) || age < 0) return null;
+    const spreadIdx = Math.floor(age / 7);
+    const position = age % 7;
+    const idx = pcReadCard(spreadIdx, birthIdx, position);
+    return {
+      idx: idx,
+      card: CARDS[idx],
+      age: age,
+      planet: SPREAD_PLANETS[position],
+      cycleStartAge: age - position,
+      cycleEndAge: age - position + 6
+    };
+  }
+
+  function currentYearlyCycleForBirth(card, birthDetails, referenceDate) {
+    const details = birthDetails || {};
+    const year = Number(details.year);
+    const month = Number(details.month);
+    const day = Number(details.day);
+    if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day) || month < 1 || month > 12 || day < 1 || day > 31) return null;
+    const referenceMs = referenceDate instanceof Date ? referenceDate.getTime() : Date.now();
+    const age = lastBdayYearOf(referenceMs, month, day) - year;
+    return age < 0 ? null : yearlyCycleCardAtAge(card, age);
+  }
+
+  function yearlyCycleAgesForCard(card, targetCard, maxAge) {
+    const targetIdx = cardIndex(targetCard);
+    const limit = Number.isInteger(maxAge) && maxAge >= 0 ? maxAge : 90;
+    if (targetIdx < 0) return [];
+    const ages = [];
+    for (let age = 0; age <= limit; age++) {
+      const cycle = yearlyCycleCardAtAge(card, age);
+      if (cycle && cycle.idx === targetIdx) ages.push(age);
+    }
+    return ages;
+  }
+
   // Local-midnight epoch (ms) — keeps viewDate math stable so day
   // counts survive DST + timezone drift.
   function localMidnight(date) {
@@ -549,7 +603,8 @@
 
     const tIdx = pcReadCard(tSpread, birthIdx, tPos);
     const cIdx = pcReadCard(cSpread, birthIdx, cPos);
-    const yIdx = pcReadCard(ySpread, birthIdx, yPos);
+    const yearlyCycle = yearlyCycleCardAtAge(card, age);
+    const yIdx = yearlyCycle ? yearlyCycle.idx : null;
     const fIdx = pcReadCard(fSpread, birthIdx, fPos);
     const dIdx = pcReadCard(dSpread, birthIdx, dPos);
 
@@ -652,5 +707,8 @@
 
   window.renderInTime = renderInTime;
   window.refreshInTime = function () { renderInTime(_lastCard); };
+  window.yearlyCycleCardAtAge = yearlyCycleCardAtAge;
+  window.currentYearlyCycleForBirth = currentYearlyCycleForBirth;
+  window.yearlyCycleAgesForCard = yearlyCycleAgesForCard;
   document.addEventListener('DOMContentLoaded', wireDateNav);
 })();

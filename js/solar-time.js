@@ -123,6 +123,20 @@
     });
   }
 
+  // Resolve the exact birth instant for other Finder features that need a
+  // real tropical position (not merely the calendar-date approximation).
+  // The same DST-aware time-zone calculation powers the natal chart.
+  function birthInstant(birth) {
+    if (!birth || !birth.year || !birth.month || !birth.day || !birth.time || !birth.place) return Promise.resolve(null);
+    var tz = zoneFor(birth.place);
+    var hm = String(birth.time).split(':');
+    if (!tz || hm.length !== 2) return Promise.resolve(null);
+    return solarDate({
+      year: birth.year, month: birth.month, day: birth.day,
+      hour: +hm[0] || 0, minute: +hm[1] || 0
+    }, tz).then(function (result) { return { t: result.t, tz: tz }; });
+  }
+
   // ── Solar Time stats sub-panel (#fSolar) ─────────────────────────
   var RANK_NAMES = { A: 'Ace', '2': 'Two', '3': 'Three', '4': 'Four', '5': 'Five',
     '6': 'Six', '7': 'Seven', '8': 'Eight', '9': 'Nine', '10': 'Ten',
@@ -348,6 +362,6 @@
     if (p) p.addEventListener('input', render);
   }
 
-  window.SolarTime = { solarDate: solarDate, zoneFor: zoneFor, lonFor: lonFor, refresh: render };
+  window.SolarTime = { solarDate: solarDate, birthInstant: birthInstant, zoneFor: zoneFor, lonFor: lonFor, refresh: render };
   document.addEventListener('DOMContentLoaded', wire);
 })();

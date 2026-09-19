@@ -129,7 +129,10 @@
     if (typeof window.loadDateInFinder !== 'function') return;
     const reveal = function () {
       _birthLoadTimer = null;
-      window.loadDateInFinder(entry.month, entry.day, target, { name: entry.name, year: entry.year });
+      window.loadDateInFinder(entry.month, entry.day, target, {
+        name: entry.name, year: entry.year,
+        birthDetails: { year: entry.year, month: entry.month, day: entry.day, time: entry.time, place: entry.place }
+      });
       applySavedBirthDetails(entry, target);
     };
     if (options.keepTrayOpen || typeof window.closeFinderTray !== 'function') {

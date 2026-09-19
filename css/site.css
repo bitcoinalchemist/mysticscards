@@ -143,7 +143,7 @@ body.starry { background: transparent; }
 .castfield-stage .mini .side.front { transform: translateZ(.5px); }
 .castfield-stage .mini .card-back {
   transform: rotateY(180deg) translateZ(.5px);
-  background: #211735 url("../assets/card-back-square-mini.webp") center / 100% 100% no-repeat;
+  background: #211735 url("../assets/card-back-celestial.png") center bottom / 96% auto no-repeat;
 }
 .castfield-stage .mini .card-back::before,
 .castfield-stage .mini .card-back .cb-coin { display: none; }
@@ -524,6 +524,13 @@ body.starry .site-header.scrolled {
   box-shadow: inset 0 1px 2px rgba(0,0,0,.85);
   border: 1px solid #5a4220;
 }
+/* Shared celestial artwork replaces the older CSS-drawn back. */
+.card-back {
+  background: #211735 url("../assets/card-back-celestial-main.png") center bottom / 96% auto no-repeat;
+  border-color: rgba(221,187,120,.34);
+}
+.card-back::before,
+.card-back .cb-coin { display: none; }
 
 .spread-grid {
   display: grid;
@@ -1159,7 +1166,7 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
   transform: perspective(650px) rotateY(0deg); transform-style: preserve-3d;
 }
 .finder-deck-card .card-back {
-  background: #211735 url("../assets/card-back-square-mini.webp") center / 100% 100% no-repeat;
+  background: #211735 url("../assets/card-back-celestial-main.png") center bottom / 96% auto no-repeat;
 }
 .finder-deck-card .card-back::before,
 .finder-deck-card .card-back .cb-coin { display: none; }
@@ -1171,7 +1178,9 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
 .finder-card-handoff { position: fixed; z-index: 100; pointer-events: none; perspective: 700px; }
 .finder-card-handoff-flip { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; animation: finder-card-flip .56s cubic-bezier(.2,.7,.2,1) forwards; }
 .finder-card-handoff-side { position: absolute; inset: 0; overflow: hidden; border-radius: var(--card-radius); backface-visibility: hidden; -webkit-backface-visibility: hidden; }
-.finder-card-handoff-back .card-back { background: #211735 url("../assets/card-back-square-mini.webp") center / 100% 100% no-repeat; }
+.finder-card-handoff-back .card-back {
+  background: #211735 url("../assets/card-back-celestial-main.png") center bottom / 96% auto no-repeat;
+}
 .finder-card-handoff-back .card-back::before,
 .finder-card-handoff-back .cb-coin { display: none; }
 .finder-card-handoff-front { transform: rotateY(180deg); }
@@ -2662,13 +2671,16 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
   font-family: var(--serif); font-size: 1rem; line-height: 1.7;
   color: var(--secondary); text-align: center;
 }
-.ls-connections-wrap { margin: 0 auto; max-width: 620px; }
-.ls-connections-head {
+.ls-connections-wrap,
+.ls-cycles-wrap { margin: 0 auto; max-width: 620px; }
+.ls-connections-head,
+.ls-cycles-head {
   text-align: center;
   margin: .25rem auto 1.25rem;
   max-width: 25rem;
 }
-.ls-connections-head .ls-title {
+.ls-connections-head .ls-title,
+.ls-cycles-head .ls-title {
   display: grid;
   grid-template-columns: minmax(2.5rem, 1fr) auto minmax(2.5rem, 1fr);
   align-items: center;
@@ -2680,17 +2692,88 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
   text-shadow: 0 0 14px rgba(217, 183, 106, .34);
 }
 .ls-connections-head .ls-title::before,
-.ls-connections-head .ls-title::after {
+.ls-connections-head .ls-title::after,
+.ls-cycles-head .ls-title::before,
+.ls-cycles-head .ls-title::after {
   content: "";
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(217, 183, 106, .72));
 }
-.ls-connections-head .ls-title::after {
+.ls-sidereal-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: .48rem;
+  min-height: var(--tap-target);
+  color: var(--secondary);
+  cursor: pointer;
+  font: 600 .64rem/1.2 var(--sans);
+  letter-spacing: .05em;
+}
+.ls-sidereal-toggle input {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  opacity: 0;
+}
+.ls-sidereal-toggle span {
+  position: relative;
+  inline-size: 1.8rem;
+  block-size: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(255,255,255,.04);
+  transition: background var(--ease), border-color var(--ease);
+}
+.ls-sidereal-toggle span::after {
+  content: "";
+  position: absolute;
+  inset: .16rem auto .16rem .16rem;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: transform var(--ease), background var(--ease);
+}
+.ls-sidereal-toggle input:checked + span { border-color: var(--gold); background: rgba(199,154,84,.14); }
+.ls-sidereal-toggle input:checked + span::after { background: var(--gold); transform: translateX(.76rem); }
+.ls-sidereal-toggle input:focus-visible + span { outline: 2px solid var(--gold); outline-offset: 3px; }
+.ls-connection-info { margin: -.18rem auto 0; }
+.ls-connection-info > summary {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 1.1rem;
+  block-size: 1.1rem;
+  margin: 0 auto;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  color: var(--secondary);
+  cursor: pointer;
+  font: 600 .7rem/1 var(--serif);
+  list-style: none;
+}
+.ls-connection-info > summary::-webkit-details-marker { display: none; }
+.ls-connection-info > summary:hover { border-color: var(--secondary); color: var(--text); }
+.ls-connection-info > summary:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+.ls-connection-info > p {
+  max-width: 30rem;
+  margin: .5rem auto 0;
+  color: var(--muted);
+  font: .76rem/1.55 var(--sans);
+  text-align: center;
+}
+.ls-connection-info > p + p { margin-top: .35rem; }
+.ls-connection-info strong { color: var(--secondary); }
+.ls-connections-head .ls-title::after,
+.ls-cycles-head .ls-title::after {
   background: linear-gradient(90deg, rgba(217, 183, 106, .72), transparent);
 }
 .ls-connection {
-  margin: 0 auto 1.3rem;
+  margin: 0 auto var(--space-4);
   max-width: 620px;
+  padding: var(--space-4) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--surface) 58%, transparent);
+  box-shadow: var(--sh-sm);
 }
 .ls-connection:last-child { margin-bottom: 0; }
 .ls-connection-title {
@@ -2701,9 +2784,20 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
   line-height: 1.45;
   color: var(--text);
 }
-.ls-connection-title b { color: var(--gold-ink); font-weight: 600; }
+.ls-connection-title b { color: var(--text); font-weight: 600; }
+.ls-cycle-targets { margin: -.25rem 0 .75rem; text-align: center; }
+.ls-cycle-targets p { margin: .3rem 0 0; color: var(--text); font: .84rem/1.4 var(--serif); }
+.ls-cycle-targets span { display: block; margin-top: .12rem; color: var(--secondary); font: 600 .6rem/1.3 var(--sans); letter-spacing: .08em; text-transform: uppercase; }
+.ls-connection-context {
+  margin: -.38rem 0 .75rem;
+  color: var(--secondary);
+  font: 600 .67rem/1.35 var(--sans);
+  letter-spacing: .08em;
+  text-align: center;
+  text-transform: uppercase;
+}
 .ls-connection--displacement .ls-col[data-planet="Karma"] .ls-planet-name {
-  color: var(--gold);
+  color: var(--secondary);
   letter-spacing: .14em;
 }
 .ls-connection--displacement .ls-col[data-planet="Karma"] .ls-planet-glyph {
@@ -2729,6 +2823,78 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
   line-height: 1.65;
   color: var(--secondary);
 }
+.ls-connection-gloss--pair { font-style: normal; }
+.ls-connection-gloss--pair p { margin: 0 0 .8rem; }
+.ls-connection-gloss--pair p:last-child { margin-bottom: 0; }
+.ls-connection-gloss--pair strong { color: var(--text); font-family: var(--sans); font-size: .7em; letter-spacing: .05em; text-transform: uppercase; }
+.ls-connection-group { margin: 1.35rem 0; }
+.ls-connection-group > h4 {
+  margin: 0 0 .8rem;
+  color: var(--gold);
+  font: 600 .68rem/1.2 var(--sans);
+  letter-spacing: .14em;
+  text-align: center;
+  text-transform: uppercase;
+}
+.ls-connection-details,
+.ls-cusp-connections,
+.ls-prc-connections {
+  margin: .35rem auto 0;
+  max-width: 620px;
+}
+.ls-connection-details > summary,
+.ls-cusp-connections > summary,
+.ls-prc-connections > summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tap-target);
+  color: var(--secondary);
+  cursor: pointer;
+  font: 600 .66rem/1.2 var(--sans);
+  letter-spacing: .08em;
+  list-style: none;
+  text-align: center;
+  text-transform: uppercase;
+}
+.ls-connection-details > summary::-webkit-details-marker,
+.ls-cusp-connections > summary::-webkit-details-marker,
+.ls-prc-connections > summary::-webkit-details-marker { display: none; }
+.ls-connection-details > summary::after,
+.ls-cusp-connections > summary::after,
+.ls-prc-connections > summary::after { content: "+"; margin-left: .45rem; font-size: .9rem; }
+.ls-connection-details[open] > summary::after,
+.ls-cusp-connections[open] > summary::after,
+.ls-prc-connections[open] > summary::after { content: "−"; }
+.ls-connection-details > summary {
+  inline-size: var(--tap-target);
+  margin-inline: auto;
+  padding: 0;
+}
+.ls-connection-details > summary::after { display: none; }
+.ls-connection-details > summary span {
+  color: var(--secondary);
+  font: 1.35rem/.8 var(--sans);
+  transition: transform var(--ease), color var(--ease);
+}
+.ls-connection-details > summary:hover span { color: var(--text); }
+.ls-connection-details[open] > summary span { transform: rotate(180deg); }
+.ls-connection-details > summary:hover,
+.ls-cusp-connections > summary:hover,
+.ls-prc-connections > summary:hover { color: var(--text); }
+.ls-connection-details > summary:focus-visible,
+.ls-cusp-connections > summary:focus-visible,
+.ls-prc-connections > summary:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: var(--r-sm); }
+.ls-connection-details[open] { margin-top: .2rem; }
+.ls-connection-assumption,
+.ls-connection-empty {
+  max-width: 34rem;
+  margin: 0 auto 1rem;
+  color: var(--muted);
+  font: .76rem/1.55 var(--sans);
+  text-align: center;
+}
+.ls-connection-empty { color: var(--secondary); }
 .ls-card.ls-conn-pick {
   border-color: var(--gold);
   box-shadow: 0 0 0 2px var(--gold), 0 0 0 4px rgba(205,168,95,.18),

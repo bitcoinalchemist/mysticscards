@@ -66,6 +66,9 @@
   let _finderOverride = null;
   let _finderSnapshot = null;
   let _finderBirthLabel = '';
+  let _finderPartnerLabel = '';
+  let _finderBirthDetails = null;
+  let _finderPartnerBirthDetails = null;
   let _finderBirthYear = null;
   let _transitionSource = null;
   let _deckHandoff = null;
@@ -827,6 +830,10 @@
     if (!dom || !dom.partner) return;
     if (dom.partner.month) dom.partner.month.value = '';
     if (dom.partner.day) dom.partner.day.value = '';
+    _finderPartnerLabel = '';
+    window.finderPartnerLabel = _finderPartnerLabel;
+    _finderPartnerBirthDetails = null;
+    window.finderPartnerBirthDetails = _finderPartnerBirthDetails;
   }
 
   function clearYouInputs() {
@@ -840,6 +847,8 @@
   function clearFinderBirthYear() {
     _finderBirthYear = null;
     window.finderBirthYear = null;
+    _finderBirthDetails = null;
+    window.finderBirthDetails = null;
   }
 
   function clearYouTransientState() {
@@ -1238,11 +1247,18 @@
     const slot = isPartner ? dom.partner : dom.you;
     if (!slot.month || !slot.day) return;
     if (isPartner && !getFinderUiState().relOn) setRelationshipMode(true);
-    if (!isPartner) {
+    if (isPartner) {
+      _finderPartnerLabel = options.name ? String(options.name).trim() : '';
+      window.finderPartnerLabel = _finderPartnerLabel;
+      _finderPartnerBirthDetails = options.birthDetails || null;
+      window.finderPartnerBirthDetails = _finderPartnerBirthDetails;
+    } else {
       _finderBirthLabel = options.name ? String(options.name).trim() : '';
       window.finderBirthLabel = _finderBirthLabel;
       _finderBirthYear = Number.isInteger(options.year) ? options.year : null;
       window.finderBirthYear = _finderBirthYear;
+      _finderBirthDetails = options.birthDetails || null;
+      window.finderBirthDetails = _finderBirthDetails;
       clearYouTransientState();
     }
     syncSlotDate(slot, month, day);
@@ -1258,6 +1274,9 @@
   window.refreshFinderGridHighlights = refreshFinderGridHighlights;
   window.loadDateInFinder = loadDateInFinder;
   window.finderBirthLabel = _finderBirthLabel;
+  window.finderPartnerLabel = _finderPartnerLabel;
+  window.finderBirthDetails = _finderBirthDetails;
+  window.finderPartnerBirthDetails = _finderPartnerBirthDetails;
   window.finderBirthYear = _finderBirthYear;
   // Small read-only helpers the new finder-adjacent modules (birthdays,
   // calendar, solar-value calculator) need but that otherwise live only in
@@ -1290,15 +1309,15 @@
     wireSelectAllOnFocus(dom.you.month);
     wireDatePair(dom.you.day, dom.you.month);
     if (dom.partner.month && dom.partner.day) {
-      dom.partner.month.addEventListener('input', function () { syncDayInput(dom.partner.day, +this.value); find(); });
-      dom.partner.month.addEventListener('change', function () { normalizeMonthInput(this); syncDayInput(dom.partner.day, +this.value); find(); });
+      dom.partner.month.addEventListener('input', function () { _finderPartnerLabel = ''; _finderPartnerBirthDetails = null; window.finderPartnerLabel = ''; window.finderPartnerBirthDetails = null; syncDayInput(dom.partner.day, +this.value); find(); });
+      dom.partner.month.addEventListener('change', function () { _finderPartnerLabel = ''; _finderPartnerBirthDetails = null; window.finderPartnerLabel = ''; window.finderPartnerBirthDetails = null; normalizeMonthInput(this); syncDayInput(dom.partner.day, +this.value); find(); });
       wireSelectAllOnFocus(dom.partner.day);
       wireSelectAllOnFocus(dom.partner.month);
       wireDatePair(dom.partner.day, dom.partner.month);
     }
     if (dom.partner.day) {
-      dom.partner.day.addEventListener('input', function () { syncDayInput(this, +dom.partner.month.value); find(); });
-      dom.partner.day.addEventListener('change', function () { normalizeDayInput(this, +dom.partner.month.value); find(); });
+      dom.partner.day.addEventListener('input', function () { _finderPartnerLabel = ''; _finderPartnerBirthDetails = null; window.finderPartnerLabel = ''; window.finderPartnerBirthDetails = null; syncDayInput(this, +dom.partner.month.value); find(); });
+      dom.partner.day.addEventListener('change', function () { _finderPartnerLabel = ''; _finderPartnerBirthDetails = null; window.finderPartnerLabel = ''; window.finderPartnerBirthDetails = null; normalizeDayInput(this, +dom.partner.month.value); find(); });
     }
     if (dom.resetBtn) {
       dom.resetBtn.addEventListener('click', function () {

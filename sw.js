@@ -5,7 +5,7 @@
  * PRECACHE lists every deployed file.
  */
 // Cache-key bump on every deployed change.
-const CACHE = 'mysticscards-299';
+const CACHE = 'mysticscards-322';
 const PRECACHE = [
   './',
   'index.html',
@@ -38,6 +38,8 @@ const PRECACHE = [
   'assets/favicon.svg',
   'assets/apple-touch-icon.png',
   'assets/card-back-square-mini.webp',
+  'assets/card-back-celestial.png',
+  'assets/card-back-celestial-main.png',
   'assets/icon-192.png',
   'assets/icon-512.png',
   'assets/icon-512-maskable.png',
