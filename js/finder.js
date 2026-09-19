@@ -68,6 +68,9 @@
   let _finderBirthLabel = '';
   let _finderBirthYear = null;
   let _transitionSource = null;
+  let _deckHandoff = null;
+  let _deckHandoffPending = false;
+  let _deckHandoffRevision = 0;
   // When a snapshot is restored (reset button), this remembers which side
   // the overridden card came from so the solo→triptych entrance sends that
   // card back to its own slot instead of always replaying the left-card
@@ -131,6 +134,8 @@
     return {
       root,
       results: root.querySelector('.finder-results'),
+      deck: document.getElementById('finderDeck'),
+      todayBtn: document.getElementById('finderTodayBtn'),
       relBtn: document.getElementById('fRelToggle'),
       resetBtn: document.getElementById('fDateReset'),
       shareBtn: document.getElementById('finderShareBtn'),
@@ -850,11 +855,22 @@
     slot.day.value = String(day);
   }
 
+  function sameFinderCard(first, second) {
+    return !!first && !!second && first.rank === second.rank &&
+      first.suit === second.suit && first.sv === second.sv;
+  }
+
   function runFinderUpdate(options) {
     options = options || {};
     const state = readFinderState();
+    // Completing a two-digit day shifts focus to the month field, which
+    // raises a follow-up change event for the same card. Let its reveal
+    // finish instead of treating that harmless event as a cancellation.
+    const keepsActiveReveal = (_deckHandoff || _deckHandoffPending) && state.targetMode === 'solo' &&
+      _renderMode === 'solo' && sameFinderCard(state.you, _selectedCard);
+    if (!keepsActiveReveal) cancelDeckCardHandoff();
     const animation = options.animate === false ? null : captureAnimationContext(state.targetMode);
-    renderFinderState(state);
+    renderFinderState(state, options);
     if (window.SolarTime && typeof window.SolarTime.refresh === 'function') {
       window.SolarTime.refresh();
     }
@@ -1039,11 +1055,26 @@
     }
   }
 
-  function renderFinderState(state) {
+  function renderFinderState(state, options) {
+    options = options || {};
+    const previousCard = _selectedCard;
+    const primaryCardChanged = !!state.you && !sameFinderCard(state.you, previousCard);
+    // Reveal every meaningful solo-card change in the result's own position.
+    // Relationship-mode transitions retain their separate multi-card motion.
+    const shouldCardReveal = !!state.you && state.targetMode === 'solo' && _renderMode !== 'triptych' &&
+      (primaryCardChanged || options.deckReveal === true);
     renderResult(dom.you.result, state.you);
     renderResult(dom.composite.result, state.comp);
     renderResult(dom.partner.result, state.partner);
     if (dom.results) dom.results.classList.toggle('triptych', state.targetMode === 'triptych');
+    if (dom.root) {
+      const hasSelection = !!state.you;
+      dom.root.classList.toggle('finder-has-selection', hasSelection);
+      if (!hasSelection) {
+        dom.root.classList.remove('finder-is-revealing');
+      }
+    }
+    if (dom.todayBtn) dom.todayBtn.tabIndex = state.you ? -1 : 0;
     _selectedCard = state.you;
     _selectedPartner = state.partner;
     _selectedComposite = state.targetMode === 'triptych' ? state.comp : null;
@@ -1056,6 +1087,18 @@
       updateGridPick(state.partner, 'secondary');
     }
     _renderMode = state.targetMode;
+    if (shouldCardReveal && options.animate !== false && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      const revealRevision = _deckHandoffRevision;
+      _deckHandoffPending = true;
+      requestAnimationFrame(function () {
+        // A second frame lets a fast two-digit entry settle on its final
+        // value before measuring and starting the sole visible flip.
+        if (revealRevision !== _deckHandoffRevision) return;
+        requestAnimationFrame(function () {
+          if (revealRevision === _deckHandoffRevision) playDeckCardHandoff();
+        });
+      });
+    }
     updateResetButton();
     // Each selected card opens on About. Card map and personal Cycles are
     // separate panels; Cycles needs a single birthday context.
@@ -1080,6 +1123,64 @@
         }
       }
     }
+  }
+
+  function cancelDeckCardHandoff() {
+    _deckHandoffRevision += 1;
+    _deckHandoffPending = false;
+    if (!_deckHandoff) return;
+    window.clearTimeout(_deckHandoff.fallback);
+    window.removeEventListener('resize', _deckHandoff.cancel);
+    window.removeEventListener('scroll', _deckHandoff.cancel, true);
+    _deckHandoff.node.remove();
+    if (dom && dom.root) dom.root.classList.remove('finder-is-revealing');
+    _deckHandoff = null;
+  }
+
+  function playDeckCardHandoff() {
+    _deckHandoffPending = false;
+    const resultCard = dom && dom.you && dom.you.result && dom.you.result.querySelector('.spread-card');
+    if (!resultCard) return;
+    const target = resultCard.getBoundingClientRect();
+    if (!target.width || !target.height) return;
+    const reveal = document.createElement('div');
+    reveal.className = 'finder-card-handoff';
+    reveal.setAttribute('aria-hidden', 'true');
+    // Start and finish at the result's settled rectangle. Moving from the
+    // deck after it has left normal flow made the card appear to flip beside
+    // the result on some viewport sizes.
+    reveal.style.left = target.left + 'px';
+    reveal.style.top = target.top + 'px';
+    reveal.style.width = target.width + 'px';
+    reveal.style.height = target.height + 'px';
+    const flip = document.createElement('div');
+    flip.className = 'finder-card-handoff-flip';
+    const back = document.createElement('div');
+    back.className = 'finder-card-handoff-side finder-card-handoff-back';
+    back.innerHTML = '<div class="card-back"><span class="cb-coin"></span></div>';
+    const front = document.createElement('div');
+    front.className = 'finder-card-handoff-side finder-card-handoff-front';
+    front.appendChild(resultCard.cloneNode(true));
+    flip.appendChild(back);
+    flip.appendChild(front);
+    reveal.appendChild(flip);
+    document.body.appendChild(reveal);
+    if (dom && dom.root) dom.root.classList.add('finder-is-revealing');
+    // A cancelled animation can still deliver a queued completion event.
+    // Tie callbacks to this exact handoff so an earlier digit cannot tear
+    // down the new card's reveal.
+    let handoff;
+    const finish = function () {
+      if (_deckHandoff === handoff) cancelDeckCardHandoff();
+    };
+    const cancel = function () {
+      if (_deckHandoff === handoff) cancelDeckCardHandoff();
+    };
+    flip.addEventListener('animationend', finish, { once: true });
+    handoff = { node: reveal, cancel: cancel, fallback: window.setTimeout(finish, 750) };
+    _deckHandoff = handoff;
+    window.addEventListener('resize', cancel, { once: true });
+    window.addEventListener('scroll', cancel, { capture: true, once: true });
   }
 
   function find() {
@@ -1145,7 +1246,12 @@
       clearYouTransientState();
     }
     syncSlotDate(slot, month, day);
-    runFinderUpdate();
+    runFinderUpdate({ animate: options.animate, deckReveal: options.deckReveal === true });
+  }
+
+  function loadTodayInFinder() {
+    const today = new Date();
+    loadDateInFinder(today.getMonth() + 1, today.getDate(), 'self', { deckReveal: true });
   }
 
   window.loadCardInFinder = loadCardInFinder;
@@ -1203,6 +1309,7 @@
       });
     }
     if (dom.relBtn) dom.relBtn.addEventListener('click', toggleRel);
+    if (dom.todayBtn) dom.todayBtn.addEventListener('click', loadTodayInFinder);
     if (dom.shareBtn) dom.shareBtn.addEventListener('click', shareFinderLink);
 
     window.addEventListener('mc-voice-toggle', function () {

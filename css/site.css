@@ -1138,6 +1138,9 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
 .finder-rel-toggle:hover { border-color: var(--gold); color: var(--gold); }
 .finder-rel-toggle.on { border-color: var(--gold); color: var(--gold); background: rgba(199,154,84,.08); }
 
+.finder {
+  --finder-card-w: clamp(5.75rem, 24vw, 7.5rem);
+}
 .finder-results {
   display: flex;
   justify-content: center; align-items: flex-start; gap: clamp(.75rem, 4vw, 1.5rem);
@@ -1145,6 +1148,36 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
   margin-top: 1.5rem;
   position: relative;
 }
+.finder-deck {
+  display: grid; justify-items: center; gap: .72rem;
+  margin: 1.5rem auto 0;
+}
+.finder-deck-card {
+  position: relative; width: var(--finder-card-w); aspect-ratio: 5 / 7;
+  display: block; padding: 0; border: 0; border-radius: var(--card-radius); background: transparent; cursor: pointer;
+  box-shadow: 0 0 0 1.5px var(--gold), 0 0 14px 2px rgba(199,154,84,.24);
+  transform: perspective(650px) rotateY(0deg); transform-style: preserve-3d;
+}
+.finder-deck-card .card-back {
+  background: #211735 url("../assets/card-back-square-mini.webp") center / 100% 100% no-repeat;
+}
+.finder-deck-card .card-back::before,
+.finder-deck-card .card-back .cb-coin { display: none; }
+.finder-deck-card:hover { box-shadow: 0 0 0 1.5px var(--gold-ink), 0 0 18px 3px rgba(199,154,84,.36); }
+.finder-deck-card:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; }
+.finder.finder-has-selection .finder-deck { position: absolute; visibility: hidden; pointer-events: none; }
+.finder.finder-has-selection .finder-results { margin-top: 1.5rem; }
+.finder.finder-is-revealing .finder-result.has-card { opacity: 0; }
+.finder-card-handoff { position: fixed; z-index: 100; pointer-events: none; perspective: 700px; }
+.finder-card-handoff-flip { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; animation: finder-card-flip .56s cubic-bezier(.2,.7,.2,1) forwards; }
+.finder-card-handoff-side { position: absolute; inset: 0; overflow: hidden; border-radius: var(--card-radius); backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.finder-card-handoff-back .card-back { background: #211735 url("../assets/card-back-square-mini.webp") center / 100% 100% no-repeat; }
+.finder-card-handoff-back .card-back::before,
+.finder-card-handoff-back .cb-coin { display: none; }
+.finder-card-handoff-front { transform: rotateY(180deg); }
+.finder-card-handoff-front .spread-card { width: 100%; height: 100%; }
+@keyframes finder-card-flip { to { transform: rotateY(180deg); } }
+@media (prefers-reduced-motion: reduce) { .finder-deck, .finder-deck-card, .finder-result, .finder-card-handoff-flip { transition: none; animation: none !important; } }
 .finder-results.triptych {
   --triptych-side-w: clamp(3.2rem, 14vw, 3.9rem);
   --triptych-main-w: clamp(5.75rem, 24vw, 7.5rem);
@@ -1154,7 +1187,6 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
   gap: .28rem;
 }
 .finder-result {
-  --finder-card-w: clamp(5.75rem, 24vw, 7.5rem);
   display: none;
   flex-direction: column; align-items: center; gap: .55rem;
   inline-size: var(--finder-card-w);
@@ -2011,13 +2043,17 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
   background: rgba(253,250,245,.88);
   color: var(--card-dark);
 }
-.ls-prc-grid {
-  display: grid;
-  grid-template-columns: repeat(2, var(--ls-card-w));
-  justify-content: center;
-  gap: calc(var(--ls-card-w) + var(--ls-card-gap));
-  width: 100%;
+.ls-prc-tabs { display: flex; justify-content: center; gap: .3rem; margin-bottom: .72rem; }
+.ls-prc-tab {
+  min-height: var(--tap-target); border: 1px solid var(--border); border-radius: 999px; padding: .35rem .72rem;
+  background: transparent; color: var(--muted); cursor: pointer; font: 600 .62rem/1 var(--sans); letter-spacing: .08em; text-transform: uppercase;
 }
+.ls-prc-tab:hover,
+.ls-prc-tab.is-active { border-color: var(--gold); background: rgba(199,154,84,.08); color: var(--gold-ink); }
+.ls-prc-tab:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.ls-prc-panel { display: grid; justify-items: center; gap: .75rem; }
+.ls-prc-energy { max-width: 30rem; text-align: center; }
+.ls-prc-energy p { margin: 0; color: var(--secondary); font: .82rem/1.55 var(--serif); }
 .ls-zodiac-heading {
   display: flex;
   flex-direction: column;
@@ -2669,6 +2705,9 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
 .ls-connection--displacement .ls-col[data-planet="Karma"] .ls-planet-name {
   color: var(--gold);
   letter-spacing: .14em;
+}
+.ls-connection--displacement .ls-col[data-planet="Karma"] .ls-planet-glyph {
+  color: var(--gold);
 }
 .ls-connection-note {
   margin: -.35rem auto .75rem;
@@ -3461,6 +3500,8 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
 .ba-num { width: 3.4rem; text-align: center; }
 .ba-year { width: 4.4rem; text-align: center; }
 .ba-name { flex: 1; min-width: 8rem; }
+.birth-tags-field { margin-top: .62rem; }
+.ba-tags { width: 100%; }
 .birth-more-toggle {
   margin: .58rem auto 0;
   display: block;
@@ -3516,6 +3557,18 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
   background: rgba(255,255,255,.035); color: var(--text); font: .8rem var(--sans);
 }
 .bday-search input:focus { border-color: var(--gold); outline: 0; box-shadow: 0 0 0 2px rgba(199,154,84,.16); }
+.bday-tag-filters { display: flex; flex-wrap: wrap; gap: .4rem; margin: 0 0 .75rem; }
+.bday-tag-filter,
+.birth-tag {
+  border: 1px solid var(--border); border-radius: 999px; background: transparent; color: var(--secondary);
+  font: 600 .58rem/1 var(--sans); letter-spacing: .04em;
+}
+.bday-tag-filter { min-height: 1.75rem; padding: .35rem .55rem; cursor: pointer; }
+.bday-tag-filter:hover,
+.bday-tag-filter.is-active { border-color: var(--gold); color: var(--gold-ink); background: rgba(199,154,84,.08); }
+.bday-tag-filter:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.birth-tags { display: flex; flex-wrap: wrap; gap: .28rem; margin-top: .32rem; }
+.birth-tag { padding: .25rem .42rem; color: var(--gold-ink); }
 
 .bday-list { display: flex; flex-direction: column; gap: .4rem; margin-bottom: .85rem; }
 .birth-empty { text-align: center; color: var(--muted); font-size: .85rem; padding: 1.5rem 0; }

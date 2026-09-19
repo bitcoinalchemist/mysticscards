@@ -44,6 +44,18 @@
   const TEXT_VARIATION = '\uFE0E';
   ZODIAC.forEach(function (sign) { sign.glyph += TEXT_VARIATION; });
   const SIDEREAL_LAHIRI_DAY_SHIFT = -24;
+  const PLANETARY_ENERGIES = {
+    Sun: 'self-expression, confidence, and the way a person is called to shine',
+    Moon: 'emotional needs, belonging, and instinctive responses',
+    Mercury: 'thought, language, learning, and exchange',
+    Venus: 'attraction, values, harmony, and what is worth tending',
+    Mars: 'initiative, courage, desire, and decisive action',
+    Jupiter: 'growth, meaning, confidence, and widening possibility',
+    Saturn: 'responsibility, boundaries, patience, and lasting structure',
+    Uranus: 'change, originality, freedom, and awakening',
+    Neptune: 'imagination, intuition, sensitivity, and spiritual longing',
+    Pluto: 'transformation, power, truth, and deep renewal'
+  };
 
   // Decan tables — 3 decans per sign, 36 total.
   //
@@ -528,18 +540,27 @@
     return zodiacCardSlotHTML({ primary: 'Cusp', secondary: `${sign.glyph} ${sign.name}` }, ruler, script, birthCard, title, 'ls-prc-slot ls-prc-cusp-slot');
   }
 
-  function prcCardletHTML(kind, sign, signTitle, script, birthCard, opts) {
+  function prcCardletHTML(sign, signTitle, script, birthCard, opts) {
     opts = opts || {};
     const cuspHTML = opts.cuspSign ? cuspCardSlotHTML(opts.cuspSign, script, birthCard) : '';
     return `<section class="ls-prc-cardlet">
       <div class="ls-prc-sign">
-        <span class="ls-zodiac-kind">${kind}</span>
         <span class="ls-stat-chip" title="${signTitle}">${sign.glyph} ${sign.name}</span>
       </div>
       <div class="ls-prc-card-row${cuspHTML ? ' has-cusp' : ''}">
         ${cuspHTML}
         ${rulingCardSlotHTML(sign, script, birthCard)}
       </div>
+    </section>`;
+  }
+
+  function prcEnergyHTML(sign, script, birthCard) {
+    const ruler = sign.ruler;
+    const rulingCard = cardForRuler(ruler, script, birthCard);
+    const cardName = rulingCard ? fullCardName(rulingCard) : 'this ruling card';
+    const energy = PLANETARY_ENERGIES[ruler] || 'a distinctive thread in the reading';
+    return `<section class="ls-prc-energy">
+      <p><strong>${ruler}</strong> speaks to ${energy}. Here, <strong>${cardName}</strong> is the card through which that energy is expressed.</p>
     </section>`;
   }
 
@@ -589,18 +610,26 @@
     const birthYear = Number.isInteger(window.finderBirthYear) ? window.finderBirthYear : null;
     const chinese = birthYear == null ? null : chineseYearProfile(birthYear, date.month, date.day);
 
-    const tropicalHTML = prcCardletHTML('Tropical', sign, 'Tropical sun sign', script, card, { cuspSign });
+    const tropicalHTML = prcCardletHTML(sign, 'Tropical sun sign', script, card, { cuspSign });
     const siderealHTML = siderealSign
-      ? prcCardletHTML('Sidereal', siderealSign, 'Sidereal sign, Lahiri-style birthday approximation', script, card)
+      ? prcCardletHTML(siderealSign, 'Sidereal sign, Lahiri-style birthday approximation', script, card)
       : '';
     return `<div class="ls-stat-block ls-zodiac-block">
       <div class="ls-zodiac-heading">
         <h3 class="ls-stat-label">Planetary Ruling Cards</h3>
       </div>
-      <div class="ls-prc-grid">
-        ${tropicalHTML}
-        ${siderealHTML}
+      <div class="ls-prc-tabs" role="tablist" aria-label="Planetary ruling card zodiac">
+        <button type="button" class="ls-prc-tab is-active" role="tab" aria-selected="true" aria-controls="prcTropicalPanel" id="prcTropicalTab" data-prc-tab="tropical">Tropical</button>
+        <button type="button" class="ls-prc-tab" role="tab" aria-selected="false" aria-controls="prcSiderealPanel" id="prcSiderealTab" data-prc-tab="sidereal">Sidereal</button>
       </div>
+      <section class="ls-prc-panel" id="prcTropicalPanel" role="tabpanel" aria-labelledby="prcTropicalTab" data-prc-panel="tropical">
+        ${tropicalHTML}
+        ${prcEnergyHTML(sign, script, card)}
+      </section>
+      <section class="ls-prc-panel" id="prcSiderealPanel" role="tabpanel" aria-labelledby="prcSiderealTab" data-prc-panel="sidereal" hidden>
+        ${siderealHTML}
+        ${siderealSign ? prcEnergyHTML(siderealSign, script, card) : ''}
+      </section>
       ${chineseAstrologyHTML(chinese)}
     </div>`;
   }
@@ -906,10 +935,12 @@
   // 7-card row. Used for Moon and Pluto (single derived seats)
   // and for the zodiac-ruler connection (a single ruling card for
   // whichever planet governs the person's sign, via cardForRuler).
-  function singleSeatHTML(planet, cc, highlight) {
+  function singleSeatHTML(planet, cc, highlight, options) {
     if (!cc) return '';
-    const label = planet.slice(0, 3).toUpperCase();
-    const sym = SPREAD_PLANET_SYM[planet];
+    options = options || {};
+    const label = options.label || planet.slice(0, 3).toUpperCase();
+    const sym = options.symbol || SPREAD_PLANET_SYM[planet];
+    const title = options.title || planet;
     const isPick = highlight && cc.rank === highlight.rank && cc.suit === highlight.suit;
     const face = typeof spreadCardPips === 'function'
       ? spreadCardPips(cc)
@@ -918,8 +949,8 @@
       ? CARDS.findIndex(function (x) { return x.rank === cc.rank && x.suit === cc.suit; })
       : -1;
     return `<div class="ls-col" data-planet="${planet}">
-      <span class="ls-planet-glyph" title="${planet}">${sym}</span>
-      <span class="ls-planet-name" title="${planet}">${label}</span>
+      <span class="ls-planet-glyph" title="${title}">${sym}</span>
+      <span class="ls-planet-name" title="${title}">${label}</span>
       <div class="spread-card ls-card ${cc.suit}${isPick ? ' ls-conn-pick' : ''}" data-idx="${cardIdx}" role="button" tabindex="0" aria-label="Load ${fullCardName(cc)} in finder">${face}</div>
     </div>`;
   }
@@ -1082,6 +1113,40 @@
     sync(primary.dataset.zodiacActive || 'tropical', null);
   }
 
+  function bindPrcTabs(root) {
+    if (!root || root.dataset.prcBound === 'true') return;
+    if (!root.querySelector('[data-prc-tab]') || !root.querySelector('[data-prc-panel]')) return;
+    root.dataset.prcBound = 'true';
+    function select(kind, focus) {
+      const tabs = Array.prototype.slice.call(root.querySelectorAll('[data-prc-tab]'));
+      const panels = Array.prototype.slice.call(root.querySelectorAll('[data-prc-panel]'));
+      tabs.forEach(function (tab) {
+        const active = tab.dataset.prcTab === kind;
+        tab.classList.toggle('is-active', active);
+        tab.setAttribute('aria-selected', active ? 'true' : 'false');
+        tab.tabIndex = active ? 0 : -1;
+      });
+      panels.forEach(function (panel) { panel.hidden = panel.dataset.prcPanel !== kind; });
+      if (focus) focus.focus();
+    }
+    root.addEventListener('click', function (event) {
+      const tab = event.target.closest('[data-prc-tab]');
+      if (tab) select(tab.dataset.prcTab, null);
+    });
+    root.addEventListener('keydown', function (event) {
+      const tab = event.target.closest('[data-prc-tab]');
+      if (!tab) return;
+      const tabs = Array.prototype.slice.call(root.querySelectorAll('[data-prc-tab]'));
+      const i = tabs.indexOf(tab);
+      let next = null;
+      if (event.key === 'ArrowRight' || event.key === 'ArrowDown') next = tabs[(i + 1) % tabs.length];
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') next = tabs[(i + tabs.length - 1) % tabs.length];
+      if (event.key === 'Home') next = tabs[0];
+      if (event.key === 'End') next = tabs[tabs.length - 1];
+      if (next) { event.preventDefault(); select(next.dataset.prcTab, next); }
+    });
+  }
+
   function renderLifeScript(card) {
     clearAboutLifeScript();
     if (!card) return false;
@@ -1104,6 +1169,7 @@
     bindLifeScriptCardClicks(document.getElementById('fAboutCardology'));
     bindLifeScriptCardClicks(document.getElementById('fAboutModernStats'));
     bindLifeScriptDateClicks(document.getElementById('fAboutModernStats'));
+    bindPrcTabs(document.getElementById('fAboutLifeScript'));
     return true;
   }
 
@@ -1289,7 +1355,9 @@
   function displacementConnectionSectionHTML(result) {
     return `<section class="ls-connection ls-connection--displacement">
       <p class="ls-connection-title"><b>${fullCardName(result.displacer)}</b> displaces <b>${fullCardName(result.displaced)}</b>.</p>
-      <div class="ls-row ls-row--single">${singleSeatHTML('Karma', result.displacer, result.displacer)}</div>
+      <div class="ls-row ls-row--single">${singleSeatHTML('Karma', result.displacer, result.displacer, {
+        symbol: '↔', label: 'Karma', title: 'Karmic displacement'
+      })}</div>
       <p class="ls-connection-gloss">This is a displacement connection: one card occupies the other's karmic exchange point in the Life Spread. It can feel consequential, as though the relationship asks both people to notice what is being inherited, exchanged, or worked through rather than simply chosen.</p>
     </section>`;
   }
