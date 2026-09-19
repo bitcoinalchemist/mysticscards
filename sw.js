@@ -1,10 +1,11 @@
 /*
  * sw.js — offline support for mysticscards.space
- * Network-first for same-origin requests.
+ * The installed app shell is cache-first; other same-origin requests refresh
+ * from the network when available and fall back to the cache offline.
  * PRECACHE lists every deployed file.
  */
 // Cache-key bump on every deployed change.
-const CACHE = 'mysticscards-277';
+const CACHE = 'mysticscards-278';
 const PRECACHE = [
   './',
   'index.html',
@@ -85,7 +86,14 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(req.url);
 
   if (url.origin === location.origin) {
-    const bypass = req.mode === 'navigate' || /\.(?:html|css|js)$/.test(url.pathname);
+    if (req.mode === 'navigate') {
+      e.respondWith(
+        caches.match('index.html').then((shell) => shell || fetch(req))
+      );
+      return;
+    }
+
+    const bypass = /\.(?:html|css|js)$/.test(url.pathname);
     e.respondWith(
       fetch(req, bypass ? { cache: 'reload' } : {})
         .then((res) => {
