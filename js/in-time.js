@@ -100,6 +100,44 @@
     const mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()];
     return `${d.getDate()} ${mo} ${d.getFullYear()}`;
   }
+  function escapeHTML(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, function (char) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char];
+    });
+  }
+  function favoriteBirthdays() {
+    if (!window.CardsStore || typeof window.CardsStore.loadBirths !== 'function') return [];
+    return window.CardsStore.loadBirths().filter(function (entry) {
+      return entry && entry.favorite && Number.isInteger(Number(entry.id)) &&
+        Number.isInteger(Number(entry.year)) && Number.isInteger(Number(entry.month)) && Number.isInteger(Number(entry.day));
+    }).sort(function (a, b) {
+      return String(a.name || '').localeCompare(String(b.name || ''), undefined, { sensitivity: 'base' });
+    });
+  }
+  function favoriteListHTML() {
+    const favorites = favoriteBirthdays();
+    if (!favorites.length) return `<p class="it-wheel-favorites-empty">No favourites saved yet.</p><button type="button" data-it-open-favorites>Open contacts</button>`;
+    return favorites.map(function (entry) {
+      const month = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][Number(entry.month) - 1];
+      return `<button type="button" class="it-wheel-favorite" data-it-favorite-id="${Number(entry.id)}"><span>${escapeHTML(entry.name || 'Unnamed contact')}</span><small>${Number(entry.day)} ${month} ${Number(entry.year)}</small></button>`;
+    }).join('');
+  }
+  function renderCycleFavorites() {
+    const host = document.getElementById('itFavorites');
+    if (!host) return;
+    host.innerHTML = favoriteListHTML();
+  }
+  function loadFavoriteBirthday(id) {
+    const entry = favoriteBirthdays().find(function (item) { return String(item.id) === String(id); });
+    if (!entry || typeof window.loadDateInFinder !== 'function') return;
+    const age = Math.max(0, lastBdayYearOf(Date.now(), Number(entry.month), Number(entry.day)) - Number(entry.year));
+    if (typeof setAge === 'function') setAge(age, { silent: true });
+    window.loadDateInFinder(Number(entry.month), Number(entry.day), 'self', {
+      name: entry.name,
+      year: Number(entry.year),
+      birthDetails: { year: Number(entry.year), month: Number(entry.month), day: Number(entry.day) }
+    });
+  }
   function isoFromMs(ms) {
     const d = new Date(ms);
     const y = d.getFullYear();
@@ -186,20 +224,9 @@
     const nextMs = shiftedHorizonMs(active, dir);
     if (typeof nextMs === 'number') setViewDate(nextMs);
   }
-  function dateNavHTML(age) {
-    const selectedAge = typeof age === 'number' && age >= 0
-      ? age
-      : (typeof currentAge === 'number' && currentAge >= 0 ? currentAge : 0);
+  function dateNavHTML() {
     return `<div class="it-date-shell">
       <div class="it-date-head">
-        <div class="it-age-control">
-          <span class="it-age-label">Age</span>
-          <div class="age-controls">
-            <button class="age-btn it-age-btn" type="button" data-it-age="-1" aria-label="Previous age">−</button>
-            <input class="age-input it-age-input" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" value="${selectedAge}" aria-label="Cycles age (0–89)" title="Set Cycles age" />
-            <button class="age-btn it-age-btn" type="button" data-it-age="1" aria-label="Next age">+</button>
-          </div>
-        </div>
         <div class="it-date-row">
           <button class="it-date-label" type="button" title="Pick a date" aria-label="Pick a date">
             <span class="it-date-age">Date</span>
@@ -208,6 +235,8 @@
           <button class="it-date-today${isViewingToday() ? '' : ' visible'}" type="button" title="Reset to today">↻ Today</button>
         </div>
       </div>
+      <button class="it-date-favorites-toggle" type="button" data-it-favorites-toggle data-it-date-favorites-toggle aria-label="Show favourite birthdays" aria-expanded="false" aria-controls="itDateFavorites">☆</button>
+      <div class="it-date-favorites" id="itDateFavorites" aria-label="Favourite birthdays" hidden>${favoriteListHTML()}</div>
       <input class="it-date-input" type="date" tabindex="-1" aria-hidden="true" value="${isoFromMs(viewDate)}" />
     </div>`;
   }
@@ -220,21 +249,46 @@
     let readingWheelCanRearm = false;
     let readingWheelDirection = 0;
     let readingWheelTimer = null;
-    function commitAgeInput(ageInput) {
-      const age = parseInt(ageInput.value, 10);
-      if (Number.isInteger(age)) setAge(age);
-      else ageInput.value = String(typeof currentAge === 'number' ? currentAge : 0);
+    function closeFavoriteMenus(focusToggle) {
+      root.querySelectorAll('.it-favorites, .it-date-favorites').forEach(function (menu) {
+        const wasOpen = !menu.hidden;
+        menu.hidden = true;
+        const toggle = root.querySelector('[data-it-favorites-toggle][aria-controls="' + menu.id + '"]');
+        if (toggle) {
+          toggle.setAttribute('aria-expanded', 'false');
+          toggle.setAttribute('aria-label', 'Show favourite birthdays');
+          if (focusToggle && wasOpen) toggle.focus({ preventScroll: true });
+        }
+      });
     }
     root.addEventListener('click', function (ev) {
+      const favoritesToggle = ev.target.closest('[data-it-favorites-toggle]');
+      if (favoritesToggle) {
+        const favorites = document.getElementById(favoritesToggle.getAttribute('aria-controls'));
+        if (favorites) {
+          const open = favorites.hidden;
+          closeFavoriteMenus(false);
+          favorites.hidden = !open;
+          favoritesToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+          favoritesToggle.setAttribute('aria-label', open ? 'Hide favourite birthdays' : 'Show favourite birthdays');
+        }
+        return;
+      }
+      const wheelFavorite = ev.target.closest('[data-it-favorite-id]');
+      if (wheelFavorite) {
+        const id = wheelFavorite.getAttribute('data-it-favorite-id');
+        closeFavoriteMenus(false);
+        loadFavoriteBirthday(id);
+        return;
+      }
+      if (ev.target.closest('[data-it-open-favorites]')) {
+        if (typeof window.showAppView === 'function') window.showAppView('finder');
+        if (typeof window.openBirthPanel === 'function') window.openBirthPanel();
+        return;
+      }
       const focusBtn = ev.target.closest('[data-it-focus]');
       if (focusBtn) {
         setActiveFocus(focusBtn.getAttribute('data-it-focus') || IT_DEFAULT_FOCUS, { syncToStart: true });
-        return;
-      }
-      const ageBtn = ev.target.closest('[data-it-age]');
-      if (ageBtn) {
-        const delta = parseInt(ageBtn.getAttribute('data-it-age') || '0', 10);
-        if (delta) setAge((typeof currentAge === 'number' ? currentAge : 0) + delta);
         return;
       }
       const cycleBtn = ev.target.closest('[data-it-cycle]');
@@ -254,8 +308,6 @@
       }
       const todayBtn = ev.target.closest('.it-date-today');
       if (todayBtn) { setViewDate(Date.now()); return; }
-      const ageInput = ev.target.closest('.it-age-input');
-      if (ageInput) return;
       const label = ev.target.closest('.it-date-label');
       if (label) {
         const input = root.querySelector('.it-date-input');
@@ -267,25 +319,21 @@
         input.click();
       }
     });
+    root.addEventListener('keydown', function (ev) {
+      if (ev.key !== 'Escape') return;
+      const openMenu = root.querySelector('.it-favorites:not([hidden]), .it-date-favorites:not([hidden])');
+      if (openMenu) closeFavoriteMenus(true);
+    });
+    root.addEventListener('pointerdown', function (ev) {
+      const openMenu = root.querySelector('.it-favorites:not([hidden]), .it-date-favorites:not([hidden])');
+      if (!openMenu || openMenu.contains(ev.target) || ev.target.closest('[data-it-favorites-toggle]')) return;
+      closeFavoriteMenus(false);
+    });
     root.addEventListener('change', function (ev) {
-      const ageInput = ev.target.closest('.it-age-input');
-      if (ageInput) {
-        commitAgeInput(ageInput);
-        return;
-      }
       const input = ev.target.closest('.it-date-input');
       if (!input || !input.value) return;
       const [y, m, d] = input.value.split('-').map(Number);
       setViewDate(new Date(y, m - 1, d).getTime());
-    });
-    root.addEventListener('keydown', function (ev) {
-      const ageInput = ev.target.closest('.it-age-input');
-      if (!ageInput) return;
-      if (ev.key === 'Enter') { ev.preventDefault(); commitAgeInput(ageInput); }
-      if (ev.key === 'ArrowUp' || ev.key === 'ArrowDown') {
-        ev.preventDefault();
-        setAge((parseInt(ageInput.value, 10) || 0) + (ev.key === 'ArrowUp' ? 1 : -1));
-      }
     });
     root.addEventListener('touchstart', function (ev) {
       if (ev.touches.length !== 1 || !ev.target.closest('.it-reading') || ev.target.closest('button, input')) {
@@ -425,7 +473,61 @@
 
   function missingDateHTML() {
     return `<p class="it-lede">This section needs a birthday context.</p>
-    <p class="it-empty-note">Add a <b>DD/MM</b>, load a saved birthday, or pick a calendar date to see the age-based cycle cards for this selection.</p>`;
+    <p class="it-empty-note">Add a <b>DD/MM</b>, load a contact, or pick a calendar date to see the age-based cycle cards for this selection.</p>`;
+  }
+
+  // Build the 45-card displacement wheel from the same relationship mapping
+  // used in Life Script. Following the displaced-by link from J♦ gives the
+  // printed order J♦ → J♣ → 10♥ and returns to J♦ after all 45 cards.
+  function displacementWheelSVG() {
+    if (typeof slDisplacedBy !== 'function' || !Array.isArray(SPREAD_CARDS)) return '';
+    const start = SPREAD_CARDS.findIndex(function (card) { return card.rank === 'J' && card.suit === 'diamonds'; });
+    if (start < 0) return '';
+
+    const cards = [];
+    const seen = new Set();
+    let idx = start;
+    while (!seen.has(idx) && cards.length < 52) {
+      seen.add(idx);
+      cards.push(SPREAD_CARDS[idx]);
+      idx = slDisplacedBy(idx);
+    }
+    if (cards.length !== 45 || idx !== start) return '';
+
+    const center = 260;
+    const radius = 205;
+    const cardW = 22;
+    const cardH = 32;
+    const cardMarkup = cards.map(function (card, position) {
+      const angle = -Math.PI / 2 + (position * Math.PI * 2 / cards.length);
+      const degrees = angle * 180 / Math.PI + 90;
+      const x = center + Math.cos(angle) * radius;
+      const y = center + Math.sin(angle) * radius;
+      const shade = card.suit === 'hearts' || card.suit === 'diamonds' ? 'red' : 'dark';
+      return `<g class="it-wheel-card it-wheel-card--${shade}" transform="translate(${x.toFixed(2)} ${y.toFixed(2)}) rotate(${degrees.toFixed(2)})" aria-hidden="true">
+        <rect x="${-cardW / 2}" y="${-cardH / 2}" width="${cardW}" height="${cardH}" rx="2" />
+        <text x="0" y="2.7" text-anchor="middle">${card.rank}${card.sym}</text>
+      </g>`;
+    }).join('');
+
+    return `<svg class="it-displacement-wheel-svg" viewBox="0 0 520 520" role="img" aria-labelledby="itWheelTitle itWheelDescription">
+      <title id="itWheelTitle">45-card displacement wheel</title>
+      <desc id="itWheelDescription">A circle of 45 cards ordered by displacement relationships. The seven fixed and semi-fixed cards are excluded.</desc>
+      <circle class="it-wheel-orbit" cx="${center}" cy="${center}" r="${radius}" />
+      <circle class="it-wheel-core" cx="${center}" cy="${center}" r="93" />
+      <text class="it-wheel-center-prompt" x="${center}" text-anchor="middle">
+        <tspan x="${center}" y="${center - 15}">Choose a birthday</tspan>
+        <tspan x="${center}" y="${center}">in Finder to reveal</tspan>
+        <tspan x="${center}" y="${center + 15}">your personal cycles.</tspan>
+      </text>
+      ${cardMarkup}
+    </svg>`;
+  }
+
+  function initDisplacementWheel() {
+    const host = document.getElementById('itDisplacementWheel');
+    if (host) host.innerHTML = displacementWheelSVG();
+    renderCycleFavorites();
   }
 
   function readingKey(card) {
@@ -580,7 +682,7 @@
       // Scrolled to before this birth date — nothing to compute, but keep
       // the nav bar live so the reader can scroll back into range.
       return `<p class="it-lede">That date is before this birthday.</p>
-      ${dateNavHTML(null)}`;
+      ${dateNavHTML()}`;
     }
 
     // Date math (UTC to avoid DST drift on day counts)
@@ -659,7 +761,7 @@
       </div>`;
     }).join('');
 
-    return `${dateNavHTML(age)}
+    return `${dateNavHTML()}
     <div class="it-row-wrap">
       <div class="it-row">${rowHTML}</div>
       ${thirteenYearSequenceHTML(birthIdx, tSpread, tPos, tCycleStart)}
@@ -675,6 +777,7 @@
   function renderInTime(card) {
     const root = document.getElementById('fInTime');
     if (!root) return false;
+    renderCycleFavorites();
     const inner = root.querySelector('.it-inner') || root;
     root.classList.remove('is-empty');
     _lastCard = card || null;
@@ -689,10 +792,10 @@
     const focused = document.activeElement;
     let focusSelector = null;
     if (focused && inner.contains(focused)) {
-      ['data-it-focus', 'data-it-age', 'data-it-cycle'].forEach(function (attr) {
+      ['data-it-focus', 'data-it-cycle'].forEach(function (attr) {
         if (focused.hasAttribute(attr)) focusSelector = '[' + attr + '="' + focused.getAttribute(attr) + '"]';
       });
-      ['it-age-input', 'it-date-label', 'it-date-input', 'it-date-today'].forEach(function (name) {
+      ['it-date-label', 'it-date-input', 'it-date-today'].forEach(function (name) {
         if (focused.classList.contains(name)) focusSelector = '.' + name;
       });
     }
@@ -710,5 +813,7 @@
   window.yearlyCycleCardAtAge = yearlyCycleCardAtAge;
   window.currentYearlyCycleForBirth = currentYearlyCycleForBirth;
   window.yearlyCycleAgesForCard = yearlyCycleAgesForCard;
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initDisplacementWheel, { once: true });
+  else initDisplacementWheel();
   document.addEventListener('DOMContentLoaded', wireDateNav);
 })();

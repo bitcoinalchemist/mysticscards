@@ -14,27 +14,25 @@ function buildSpreadGrid(gridEl, opts) {
 
   let html = '';
   html += '<div class="crown-row">';
+  html += '<div class="spread-label-corner" aria-hidden="true"></div>';
   html += '<div class="crown-side crown-joker"></div>';
   for (let i = 51; i >= 49; i--) html += `<div class="sl-seat" data-pos="${i}"></div>`;
-  html += '<div class="crown-side crown-controls">';
-  html += '<div class="q-crown-control-box">';
-  html += '<div class="q-crown-age" role="group" aria-label="Age">';
-  html += '<div class="age-controls">';
-  html += '<button type="button" class="age-btn" id="ageDown" aria-label="Previous age">−</button>';
-  html += '<input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" id="ageInput" class="age-input" value="0" aria-label="Age (0–89)">';
-  html += '<button type="button" class="age-btn" id="ageUp" aria-label="Next age">+</button>';
-  html += '</div></div>';
-  html += '<button type="button" class="q-menu-toggle" id="qMenu" aria-expanded="false" aria-controls="qControlsMenu">';
-  html += '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10M14 4v6M7 14v6"/></svg><span>Menu</span>';
-  html += '</button></div></div>';
+  html += '<div class="crown-side crown-controls" aria-hidden="true"></div>';
+  html += '<div class="spread-label-corner" aria-hidden="true"></div>';
   html += '</div>';
-  for (let row = 0; row < 7; row++)
+  for (let row = 0; row < 7; row++) {
+    html += '<div class="spread-label-corner" aria-hidden="true"></div>';
     for (let col = 6; col >= 0; col--)
       html += `<div class="sl-seat" data-pos="${row * 7 + col}"></div>`;
+    const planet = SPREAD_PLANETS[row];
+    html += `<div class="spread-row-label planet-row-label" data-planet="${planet}" role="img" aria-label="${planet} row">${SPREAD_PLANET_SYM[planet]}</div>`;
+  }
+  html += '<div class="spread-label-corner" aria-hidden="true"></div>';
   [6,5,4,3,2,1,0].forEach((col) => {
     const pname = SPREAD_PLANETS[col];
     html += `<div class="spread-col-label planet-col-label" data-planet="${pname}">${SPREAD_PLANET_SYM[pname]}</div>`;
   });
+  html += '<div class="spread-label-corner" aria-hidden="true"></div>';
   gridEl.innerHTML = html;
 
   const seats = {};
@@ -154,6 +152,7 @@ function buildSpreadGrid(gridEl, opts) {
       for (const k in cards) {
         cards[k].classList.remove('ls-pick');
         cards[k].style.removeProperty('--ls-i');
+        cards[k].style.removeProperty('--ls-color');
       }
       if (!rank || suit === 'joker' || typeof LIFE_SCRIPTS === 'undefined') return;
       const script = LIFE_SCRIPTS[`${rank}_${suit}`];
@@ -164,6 +163,7 @@ function buildSpreadGrid(gridEl, opts) {
         if (idx < 0 || !cards[idx]) return;
         cards[idx].classList.add('ls-pick');
         cards[idx].style.setProperty('--ls-i', i);
+        cards[idx].style.setProperty('--ls-color', ['#e58b8b', '#e5b56f', '#d8d86f', '#8fcf91', '#7fc5d7', '#9da5e8', '#c99bdc'][i] || '#cda85f');
       });
     },
     cardEl(idx) { return cards[idx]; },

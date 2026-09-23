@@ -18,6 +18,7 @@
   var K_SOLAR  = 'mysticscards_showSolarValues';
   var K_QSIZE  = 'mysticscards_quadSize';
   var K_BIRTHS = 'mysticscards_births';
+  var K_CONTACT_TAGS = 'mysticscards_contactTags';
 
   window.CardsStore = {
     getQuadAlt:  function ()   { return _flag(K_ALT); },
@@ -44,6 +45,10 @@
     loadBirths: function () {
       try { return JSON.parse(_getCompat(K_BIRTHS)) || []; } catch (e) { return []; }
     },
-    saveBirths: function (list) { _set(K_BIRTHS, JSON.stringify(list)); }
+    saveBirths: function (list) { _set(K_BIRTHS, JSON.stringify(list)); },
+    loadContactTags: function () {
+      try { return JSON.parse(_get(K_CONTACT_TAGS)) || []; } catch (e) { return []; }
+    },
+    saveContactTags: function (tags) { _set(K_CONTACT_TAGS, JSON.stringify(tags)); }
   };
 })();

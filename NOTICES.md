@@ -14,6 +14,8 @@ content outside the CC BY-NC 4.0 license.
 - The cardology **reading texts** (the "Sage voice"), including the per-card,
   per-planet, and period readings.
 - The original **"Quinta Essentia" Joker artwork** (`assets/cards/JOKER.webp`).
+- An inactive **magnetism-inspired Joker concept** (`assets/cards/JOKER-magnetism.jpg`),
+  retained as a design draft and not used on the site.
 
 It does **not** cover the source code (MIT, see `LICENSE`) or the third-party
 material below.
@@ -51,8 +53,8 @@ rights and are not intended to be reproduced here.
 
 ### Astronomy Engine
 
-The restored astrology and solar-time features use `js/astronomy.js`, a
-vendored browser build of Astronomy Engine by Don Cross.
+The Solar Time feature uses `js/astronomy.js`, a vendored browser build of
+Astronomy Engine by Don Cross.
 
 - Project: <https://github.com/cosinekitty/astronomy>
 - License: MIT License

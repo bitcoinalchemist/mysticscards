@@ -55,8 +55,25 @@
     K: 13
   };
   const CARD_NOTES = {
-    J_hearts: 'The Christ Principle'
+    J_hearts: 'The Christ Principle',
+    A_clubs: 'Nail Hole',
+    '2_hearts': 'Nail Hole',
+    A_spades: 'The Magi Card',
+    K_spades: 'The Kingly Power'
   };
+
+  function pianoNoteForCard(card) {
+    if (!card || !Array.isArray(SPREAD_CARDS)) return '';
+    const position = SPREAD_CARDS.findIndex(function (entry) {
+      return entry.rank === card.rank && entry.suit === card.suit;
+    });
+    if (position < 0) return '';
+    if (position === 49) return 'C8';
+    if (position === 50) return 'B0';
+    if (position === 51) return 'A0';
+    const descendingWhiteNotes = ['B', 'A', 'G', 'F', 'E', 'D', 'C'];
+    return descendingWhiteNotes[position % 7] + (7 - Math.floor(position / 7));
+  }
 
   let _renderMode = 'empty';
   let dom = null;
@@ -159,8 +176,8 @@
         root:        document.getElementById('fAbout'),
         modern:      document.getElementById('fAboutModern'),
         cardHeading: document.getElementById('fAboutCardHeading'),
-        cardValue:   document.getElementById('fAboutCardValue'),
         cardNote:    document.getElementById('fAboutCardNote'),
+        facts:       document.getElementById('fAboutCardFacts'),
         connections: document.getElementById('fRelationshipConnections'),
         longform:    document.getElementById('fAboutLongform'),
         personality: document.getElementById('fAboutPersonality'),
@@ -170,9 +187,7 @@
       panels: {
         wrap: document.getElementById('fPanels'),
         tabs: document.querySelectorAll('[data-reading-tab]'),
-        about: document.getElementById('fAbout'),
-        map: document.getElementById('fCardMap'),
-        cycles: document.getElementById('fInTime')
+        about: document.getElementById('fAbout')
       }
     };
   }
@@ -180,16 +195,14 @@
   function setReadingTab(name, options) {
     if (!dom || !dom.panels || !dom.panels.wrap) return;
     options = options || {};
-    const relationship = dom.panels.wrap.classList.contains('is-relationship');
-    if (name === 'cycles' && relationship) name = 'about';
-    const panels = { about: dom.panels.about, map: dom.panels.map, cycles: dom.panels.cycles };
+    const panels = { about: dom.panels.about };
     Object.keys(panels).forEach(function (key) {
       const panel = panels[key];
-      if (panel) panel.hidden = key !== name || (key === 'cycles' && relationship);
+      if (panel) panel.hidden = key !== name;
     });
     Array.from(dom.panels.tabs || []).forEach(function (tab) {
       const active = tab.dataset.readingTab === name;
-      const unavailable = tab.dataset.readingTab === 'cycles' && relationship;
+      const unavailable = false;
       tab.hidden = unavailable;
       tab.classList.toggle('is-active', active);
       tab.setAttribute('aria-selected', active ? 'true' : 'false');
@@ -329,6 +342,10 @@
       text: 'The King brings the cycle to mature authority, activating what the preceding ranks have developed. He represents leadership, initiative, sound command, and the responsibility to build for more than personal advantage. At his best, the King leads through mastery and cooperation; his challenge is to exercise power without hardening into domination, pride, or certainty that no longer listens.'
     }
   };
+
+  // Shared reference data used by the Info panel.
+  window.CARD_SUIT_READINGS = SUIT_READINGS;
+  window.CARD_RANK_READINGS = RANK_READINGS;
 
   function populateMonth(sel) {
     if (!sel) return;
@@ -586,8 +603,8 @@
     result.classList.add('has-card');
     result.innerHTML = resultHTML(card);
     const face = result.querySelector('.spread-card');
-    const isSideRelationshipCard = result.id === 'fResult' || result.id === 'fpResult';
-    if (face && typeof window.loadCardInFinder === 'function' && card.suit !== 'joker' && isSideRelationshipCard) {
+    const isFinderResultCard = result.id === 'fResult' || result.id === 'frResult' || result.id === 'fpResult';
+    if (face && typeof window.loadCardInFinder === 'function' && card.suit !== 'joker' && isFinderResultCard) {
       const open = function (e) {
         if (e) e.preventDefault();
         window.loadCardInFinder(card.sv - 1, result);
@@ -603,6 +620,37 @@
         face.onclick = null;
         face.onmousedown = null;
       }
+    }
+  }
+
+  // Return the Chinese lunisolar zodiac animal for a Gregorian birth date.
+  // Intl's Chinese calendar applies the Lunar New Year boundary, so January
+  // and early-February birthdays are not assigned from the Gregorian year.
+  function chineseZodiacAnimal(year, month, day) {
+    if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day) ||
+        month < 1 || month > 12 || day < 1 || day > 31 ||
+        typeof Intl === 'undefined' || typeof Intl.DateTimeFormat !== 'function') return null;
+    const date = new Date(Date.UTC(year, month - 1, day, 12));
+    if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return null;
+    try {
+      const formatter = new Intl.DateTimeFormat('en-u-ca-chinese', { year: 'numeric', timeZone: 'UTC' });
+      const yearName = formatter.formatToParts(date).filter(function (part) { return part.type === 'yearName'; })[0];
+      if (!yearName) return null;
+      const yearParts = yearName.value.toLowerCase().split('-');
+      const stems = {
+        jia: ['Yang', 'Wood'], yi: ['Yin', 'Wood'], bing: ['Yang', 'Fire'], ding: ['Yin', 'Fire'],
+        wu: ['Yang', 'Earth'], ji: ['Yin', 'Earth'], geng: ['Yang', 'Metal'], xin: ['Yin', 'Metal'],
+        ren: ['Yang', 'Water'], gui: ['Yin', 'Water']
+      };
+      const animals = {
+        zi: 'Rat', chou: 'Ox', yin: 'Tiger', mao: 'Rabbit', chen: 'Dragon', si: 'Snake',
+        wu: 'Horse', wei: 'Goat', shen: 'Monkey', you: 'Rooster', xu: 'Dog', hai: 'Pig'
+      };
+      const stem = stems[yearParts[0]];
+      const animal = animals[yearParts[1]];
+      return stem && animal ? { polarity: stem[0], element: stem[1], animal: animal } : null;
+    } catch (_) {
+      return null;
     }
   }
 
@@ -624,10 +672,6 @@
         box.cardNote.textContent = '';
         box.cardNote.hidden = true;
       }
-      if (box.cardValue) {
-        box.cardValue.textContent = '';
-        box.cardValue.removeAttribute('aria-label');
-      }
       box.root.classList.add('is-empty');
       return false;
     }
@@ -637,15 +681,6 @@
       const note = !rel ? CARD_NOTES[`${card.rank}_${card.suit}`] : '';
       box.cardNote.textContent = note || '';
       box.cardNote.hidden = !note;
-    }
-    if (box.cardValue) {
-      const cardIndex = typeof CARDS !== 'undefined'
-        ? CARDS.findIndex(c => c.rank === card.rank && c.suit === card.suit)
-        : -1;
-      const cardValue = Number.isInteger(card.sv) ? card.sv : cardIndex + 1;
-      box.cardValue.textContent = cardValue > 0 ? cardValue : '';
-      if (cardValue > 0) box.cardValue.setAttribute('aria-label', `Solar Value ${cardValue}`);
-      else box.cardValue.removeAttribute('aria-label');
     }
     const key       = `${card.rank}_${card.suit === 'joker' ? 'joker' : card.suit}`;
     const jokerKey  = card.suit === 'joker' ? '✦_joker' : null;
@@ -701,7 +736,35 @@
     const paras = personality
       ? personality.split(/\n\n+/).map(p => `<p>${p}</p>`).join('')
       : '';
-    if (box.personality) box.personality.innerHTML = paras;
+    if (box.personality) box.personality.innerHTML = paras
+      ? '<h3 class="finder-about-subtitle">About</h3>' + paras
+      : '';
+    if (box.facts) {
+      const seasons = { hearts: 'Spring', clubs: 'Summer', diamonds: 'Autumn', spades: 'Winter' };
+      const suit = !rel && card.suit !== 'joker' ? SUIT_READINGS[card.suit] : null;
+      const rankValue = !rel && card.suit !== 'joker' ? RANK_VALUES[card.rank] : null;
+      const birthYear = Number.isInteger(_finderBirthYear) ? _finderBirthYear : null;
+      const birthMonth = dom.you.month ? parseInt(dom.you.month.value, 10) : NaN;
+      const birthDay = dom.you.day ? parseInt(dom.you.day.value, 10) : NaN;
+      const chineseProfile = birthYear === null ? null : chineseZodiacAnimal(birthYear, birthMonth, birthDay);
+      const chineseValue = chineseProfile
+        ? `${chineseProfile.polarity} ${chineseProfile.element} ${chineseProfile.animal}`
+        : (birthYear === null ? 'Add birth year' : 'Unavailable');
+      const pianoNote = pianoNoteForCard(card);
+      box.facts.innerHTML = suit
+        ? `<h3 class="ls-stat-label">Details</h3>
+           <div class="finder-card-facts-grid">
+             <div><span>Solar value</span><strong>${card.sv}</strong></div>
+             <div><span>Season</span><strong>${seasons[card.suit]}</strong></div>
+             <div><span>Element</span><strong>${suit.element}</strong></div>
+             <div><span>Rank value</span><strong>${rankValue}</strong></div>
+            <div><span>Piano note</span><strong>${pianoNote}</strong></div>
+             <div title="Chinese year element, polarity, and animal"><span>Chinese astrology</span><strong>${chineseValue}</strong></div>
+           </div>
+           `
+        : '';
+      box.facts.hidden = !suit;
+    }
     if (box.suit) {
       const suit = !rel && card.suit !== 'joker' ? SUIT_READINGS[card.suit] : null;
       box.suit.innerHTML = suit
@@ -1109,8 +1172,8 @@
       });
     }
     updateResetButton();
-    // Each selected card opens on About. Card map and personal Cycles are
-    // separate panels; Cycles needs a single birthday context.
+    // Each selected card opens on About; personal Cycles needs a single
+    // birthday context.
     const isSolo = state.targetMode === 'solo';
     const isRelationship = state.targetMode === 'triptych' && !!state.comp;
     if (dom.panels.wrap) {

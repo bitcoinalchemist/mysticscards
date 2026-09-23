@@ -1,7 +1,6 @@
-// solar-time.js — Solar-day birth-card correction for the Life Script stats.
+// solar-time.js — Optional solar-day birth-card correction.
 //
-// Added 2026-07-11, adapting the earlier "Super" astrology.html "Solar
-// Day" feature. Given a birth date + clock time + birthplace, it uses the
+// Given a birth date + clock time + birthplace, it uses the
 // Astronomy Engine to find the Sun's lower transits (solar midnights) at
 // the birth longitude; the solar day is named by the LOCAL DATE AT SOLAR
 // NOON, and THAT date gives the birth card. A birth close to midnight can
@@ -137,7 +136,7 @@
     }, tz).then(function (result) { return { t: result.t, tz: tz }; });
   }
 
-  // ── Solar Time stats sub-panel (#fSolar) ─────────────────────────
+  // ── Solar Time adjustment (#fSolar) ──────────────────────────────
   var RANK_NAMES = { A: 'Ace', '2': 'Two', '3': 'Three', '4': 'Four', '5': 'Five',
     '6': 'Six', '7': 'Seven', '8': 'Eight', '9': 'Nine', '10': 'Ten',
     J: 'Jack', Q: 'Queen', K: 'King' };
@@ -222,11 +221,9 @@
     var out = el('solOut');
     if (!out) return;
     var renderToken = ++_renderToken;
-    var oldSky = out.querySelector('[data-sky-root]');
-    if (oldSky && typeof oldSky._skyCleanup === 'function') oldSky._skyCleanup();
     var birth = activeBirth();
     if (!birth) {
-      out.innerHTML = '<p class="sol-hint">Set a birth date first — a DD/MM plus an age, or a saved birthday.</p>';
+      out.innerHTML = '<p class="sol-hint">Set a birth date first — a DD/MM plus an age, or a contact.</p>';
       return;
     }
     var placeEl = el('solPlace'), timeEl = el('solTime');
@@ -254,87 +251,16 @@
         verdictHTML = '<p class="sol-verdict">Clock and sun agree: this birth belongs to <strong>' + fmtD(res.civil) + '</strong>.</p>';
         cardsHTML = '<div class="sol-cards">' + cardTile(solarCard, 'Birth card', false) + '</div>';
       }
-      // Personality Sun hexagram (gate) — hexagram only, computed from the
-      // same birth instant. Owned by js/sun-gate.js; no-op if not loaded.
-      var gatesBlock = (window.SunGate && typeof window.SunGate.html === 'function') ? window.SunGate.html(res.t, cardsHTML) : '';
-      // Full natal chart table (Mind/Body, Planet, Card, Sign, Degree, House), owned by
-      // js/chart-table.js. Only reachable from here, which is the point: it
-      // needs a real birth instant (date + clock time + birthplace), and the
-      // Moon's gate is meaningless without one. No-op if not loaded.
-      var chartBlock = (window.ChartTable && typeof window.ChartTable.html === 'function')
-        ? window.ChartTable.html(res.t, solarCard, tz) : '';
-      var skyBlock = (window.Sky3D && typeof window.Sky3D.html === 'function') ? window.Sky3D.html() : '';
-      var astroRail = skyBlock ?
-        '<div class="astro-view-rail" data-astro-view-active="chart">' +
-          '<div class="astro-view-tabs" role="tablist" aria-label="Astrology view">' +
-            '<button type="button" class="astro-zodiac-tab astro-view-tab is-active" id="astroChartTab" role="tab" aria-selected="true" aria-controls="astroChartPanel" data-astro-view="chart">Natal Chart</button>' +
-            '<button type="button" class="astro-zodiac-tab astro-view-tab" id="astroSkyTab" role="tab" aria-selected="false" aria-controls="astroSkyPanel" data-astro-view="sky">3D Map</button>' +
-          '</div>' +
-          '<div class="astro-view-panel" id="astroChartPanel" role="tabpanel" tabindex="0" aria-labelledby="astroChartTab" data-astro-view-panel="chart">' + chartBlock + '</div>' +
-          '<div class="astro-view-panel astro-view-block" id="astroSkyPanel" role="tabpanel" tabindex="0" aria-labelledby="astroSkyTab" data-astro-view-panel="sky" hidden>' + skyBlock + '</div>' +
-        '</div>' : chartBlock;
       var solarClockHTML = '<p class="sol-true-time">True solar time at birth: <strong>' +
         fmtClock(res.solarTimeMin) + '</strong>.</p>';
-      out.innerHTML = verdictHTML + solarClockHTML + (gatesBlock || cardsHTML) + astroRail;
+      out.innerHTML = verdictHTML + solarClockHTML + cardsHTML;
       bindSolCards(out);
-      if (chartBlock && window.bindZodiacTabs) window.bindZodiacTabs(out);
-      if (chartBlock && window.ChartTable && typeof window.ChartTable.bindGateToggle === 'function') window.ChartTable.bindGateToggle(out);
-      if (chartBlock && window.ChartTable && typeof window.ChartTable.bindAstroOlneyPopup === 'function') window.ChartTable.bindAstroOlneyPopup(out);
-      if (skyBlock && window.Sky3D) {
-        var skyRoot = out.querySelector('.sky3d-block');
-        // The zone is handed over too: Sky3D's ground view stands the camera
-        // on the plane at the birth place, reading [lat, lon] from TZ_COORDS.
-        // It falls back to the pole when a zone has no coordinates.
-        window.Sky3D.bind(skyRoot, res.t, tz);
-      }
-      bindAstroViewRail(out);
     }).catch(function (e) {
       if (renderToken !== _renderToken) return;
       out.innerHTML = '<p class="sol-hint">Could not compute solar time (' + (e && e.message ? e.message : 'error') + ').</p>';
     });
   }
 
-  function bindAstroViewRail(root) {
-    var rail = root && root.querySelector('[data-astro-view-active]');
-    if (!rail || rail.dataset.astroViewBound === 'true') return;
-    rail.dataset.astroViewBound = 'true';
-    var tabs = Array.prototype.slice.call(rail.querySelectorAll('[data-astro-view]'));
-    function sync(view, focus) {
-      rail.dataset.astroViewActive = view;
-      tabs.forEach(function (tab) {
-        var on = tab.dataset.astroView === view;
-        tab.classList.toggle('is-active', on);
-        tab.setAttribute('aria-selected', on ? 'true' : 'false');
-        tab.tabIndex = on ? 0 : -1;
-      });
-      rail.querySelectorAll('[data-astro-view-panel]').forEach(function (panel) {
-        panel.hidden = panel.dataset.astroViewPanel !== view;
-      });
-      if (view === 'sky') {
-        var skyRoot = rail.querySelector('[data-sky-root]');
-        // The rail owns the view now: opening 3D Map should also start the
-        // viewer, while an already-open scene is left running for quick tab
-        // returns instead of being toggled closed.
-        if (skyRoot && skyRoot.hidden && window.Sky3D && typeof window.Sky3D.open === 'function') {
-          skyRoot.hidden = false;
-          window.Sky3D.open(skyRoot.closest('.sky3d-block'), skyRoot._skyTime, skyRoot._skyZone);
-        }
-      }
-      if (focus) focus.focus();
-    }
-    tabs.forEach(function (tab) {
-      tab.addEventListener('click', function () { sync(tab.dataset.astroView, null); });
-      tab.addEventListener('keydown', function (event) {
-        var i = tabs.indexOf(tab), next = null;
-        if (event.key === 'ArrowRight' || event.key === 'ArrowDown') next = tabs[(i + 1) % tabs.length];
-        if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') next = tabs[(i + tabs.length - 1) % tabs.length];
-        if (event.key === 'Home') next = tabs[0];
-        if (event.key === 'End') next = tabs[tabs.length - 1];
-        if (next) { event.preventDefault(); sync(next.dataset.astroView, next); }
-      });
-    });
-    sync('chart', null);
-  }
 
   function populateZones() {
     var dl = el('solZoneList');
@@ -354,9 +280,19 @@
     var panel = el('fSolar'), body = el('solBody');
     if (!panel) return;
     populateZones();
-    panel.classList.add('open');
-    if (body) body.hidden = false;
-    render();
+    var button = el('fSolarToggle');
+    function setOpen(open) {
+      panel.hidden = !open;
+      panel.classList.toggle('open', open);
+      if (button) {
+        button.classList.toggle('is-active', open);
+        button.setAttribute('aria-expanded', open ? 'true' : 'false');
+      }
+      if (body) body.hidden = !open;
+      if (open) render();
+    }
+    if (button) button.addEventListener('click', function () { setOpen(panel.hidden); });
+    setOpen(false);
     var t = el('solTime'), p = el('solPlace');
     if (t) t.addEventListener('input', render);
     if (p) p.addEventListener('input', render);

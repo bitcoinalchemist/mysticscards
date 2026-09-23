@@ -99,18 +99,40 @@
     '</header>';
 
   var infoContent =
-        '<h2 class="info-inline-title" id="shInfoTitle">About Mystics Cards</h2>' +
         '<div class="info-inline-content">' +
-          '<section><h3>Explore the cards</h3><p>Enter a birthday to find its card, Life Script, and personal cycles. Add a second birthday to see the card connections between two people. Quadrations in the Finder utilities offers another way to explore the deck.</p></section>' +
+          '<section class="info-kb-group info-start-group" aria-labelledby="infoStartHeading"><h3 id="infoStartHeading">Start here</h3>' +
+          '<p class="info-kb-intro">A birthday anchors the reading. Finder shows the card and its patterns, Cycles follows the cards through time, and Spreads is a reference for where they sit in the larger chart.</p>' +
+          '<ol class="info-start-steps">' +
+          '<li><span class="info-start-number" aria-hidden="true">1</span><div><h4>Start with your birth card</h4><p>Enter a day and month in Finder. The reading brings together the card’s character, its Life Script across seven planetary positions, and related patterns such as rulerships and displacements. Add a second birthday to compare two people.</p></div></li>' +
+          '<li><span class="info-start-number" aria-hidden="true">2</span><div><h4>See the cycles over time</h4><p>Cycles follows the card pattern across 13-year, 7-year, yearly, 52-day, and daily periods. Select a period and move the date to see which card is active at that point in the timeline.</p></div></li>' +
+          '<li><span class="info-start-number" aria-hidden="true">3</span><div><h4>Use Spreads as a chart reference</h4><p>Spreads is the 52-card Quadration chart. Use it to look up the arrangement at an age; when a birth card is selected, its seven-card Life Script pattern is highlighted. Options can show Solar Values or displacement links, or simplify cards to pips.</p></div></li>' +
+          '</ol></section>' +
+          '<div class="info-kb-group"><h3>Understanding cardology</h3>' +
+          '<details class="info-kb-item" open><summary>Birth cards and cardology</summary><div><p>Cardology uses a standard deck as a symbolic map of personal themes and cycles. A birth date identifies a birth card; its suit and rank provide a starting point for a reading, alongside the card’s Life Script and other correspondences.</p><p>Mystics Cards presents these meanings as a reflective language, not as scientific findings or certain predictions. The site brings traditional card correspondences together with its own explanatory writing.</p></div></details>' +
+          '<details class="info-kb-item"><summary>The Life Script</summary><div><p>The Life Script is the seven-card reading linked to a birth card. Each card occupies one of seven planetary positions, from Mercury through Neptune. Each position adds a theme to the reading, and the cards are also considered together as one pattern.</p><p>Finder presents the Life Script with the birth card’s reading. In the Spreads chart, those same seven cards are highlighted within the wider 52-card arrangement.</p></div></details>' +
+          '<details class="info-kb-item"><summary>Cycles through time</summary><div><p>Cycles follows the changing card pattern across five horizons: 13-Year, 7-Year, Yearly, 52-Day, and Daily. Each horizon has its own sequence. Select a period and move the viewed date to see which card is active at that point in the timeline.</p></div></details>' +
+          '<details class="info-kb-item"><summary>Planetary Ruling Cards</summary><div><p>A Planetary Ruling Card (PRC) connects a birthday’s zodiac sign with the playing card associated with that sign’s planetary ruler. The birth card and PRC are related but distinct parts of the reading. In Finder, choose Tropical or Sidereal to view the corresponding sign and ruling card. Scorpio shows both Mars and Pluto as rulers.</p><p>Birthdays near a sign boundary may also show a cusp alternative. If you know the birth time and place, Solar Time can check whether the solar day changes the birth card.</p></div></details>' +
+          '<details class="info-kb-item"><summary>Displacements</summary><div><p>A displacement is a relationship between two cards: one occupies the place associated with the other in the Life Script pattern. The displaced card remains part of the pattern; the cards are read together to consider how their themes meet.</p><p>Finder shows the cards a selected card displaces and the card that displaces it. Fixed cards hold their own place and have no separate displacement partner.</p></div></details>' +
+          '<details class="info-kb-item"><summary>Piano note correspondence</summary><div><p>Each card is assigned one white-key note in the standard 88-key piano range. Follow the Spiritual Spread order from A♥ through 10♠ to map 49 cards down from B7 to C1. The three crown cards are J♠ at C8, Q♠ at B0, and K♠ at A0. Together, the assignments use all 52 white keys once; Finder Details shows the note for the selected card.</p></div></details>' +
+          '<details class="info-kb-item"><summary>Quadration and the 52-card chart</summary><div><p>Quadration is the repeatable rule used to arrange the 52 cards in the chart. Start with Natural Order—Ace through King in Hearts, Clubs, Diamonds, then Spades—and number the positions from 1 to 52. These position numbers are Solar Values. Applying the same mapping repeatedly produces each successive arrangement.</p><p>The mapping is a permutation: every position maps to one position, so no card is lost or duplicated. Its movements form six cycles:</p><ul><li><strong>Three fixed points:</strong> J♥, 8♣, and K♠ stay in place.</li><li><strong>Two alternating pairs:</strong> 2♥ and A♣ exchange places; 9♥ and 7♦ exchange places.</li><li><strong>One 45-card cycle:</strong> the other 45 cards move through the same positions before returning to their starting places.</li></ul><p>The cycle lengths account for the deck: <code>52 = 45 + 2 + 2 + 1 + 1 + 1</code>. The full arrangement repeats after <code>LCM(45, 2) = 90</code> applications. This describes the card movement mathematically; symbolic meanings are a separate layer of interpretation.</p></div></details>' +
+          '<details class="info-kb-item"><summary>Cards and the calendar</summary><div><p>In this calendar symbolism, the four suits are associated with the year’s four quarters, and the 13 ranks in each suit with the weeks of a quarter. Together they give the deck a 52-part structure for thinking about the year.</p><p>This is a symbolic correspondence, not a literal calendar calculation: 52 weeks make 364 days, while a solar year has extra days. Cardology traditions differ in how they account for that difference.</p></div></details></div>' +
+          '<div class="info-kb-group"><h3>Cardology reference</h3>' +
+          '<details class="info-kb-item"><summary>Planets</summary><div><div id="shInfoPlanets" class="info-planets"></div></div></details>' +
+          '<details class="info-kb-item"><summary>Zodiac signs</summary><div><div id="shInfoZodiacSigns" class="info-card-reference"></div></div></details>' +
+          '<details class="info-kb-item"><summary>Suits</summary><div><div id="shInfoSuits" class="info-card-reference"></div></div></details>' +
+          '<details class="info-kb-item"><summary>Ranks</summary><div><div id="shInfoRanks" class="info-card-reference"></div></div></details></div>' +
+          '<div class="info-kb-group"><h3>Sources, credits &amp; legal</h3>' +
+          '<details class="info-kb-item"><summary>Sources and method</summary><div><p>Cardology readings draw on public-domain source material and the site’s original interpretations. Solar-time features use the birth time and place when provided; they are optional and do not replace the ordinary card calculation.</p><p>Solar Time uses <a href="https://github.com/cosinekitty/astronomy" target="_blank" rel="noopener">Astronomy Engine by Don Cross</a> (MIT) to calculate the Sun’s position.</p></div></details>' +
+          '<details class="info-kb-item"><summary>Legal and credits</summary><div>' +
           '<section><h3>Code</h3><p>The original source code is released under the <a href="LICENSE">MIT License</a>.</p></section>' +
           '<section><h3>Creative content</h3><p>The readings and original “Quinta Essentia” Joker artwork are licensed under <a href="NOTICES.md">CC BY-NC 4.0</a>. Attribution, a license link, and an indication of changes are required when reusing them.</p></section>' +
           '<section><h3>Credits</h3><ul>' +
             '<li><a href="https://opengameart.org/content/playing-cards-vector-png" target="_blank" rel="noopener">Byron Knoll playing-card artwork</a> — CC0 public-domain dedication.</li>' +
             '<li><a href="https://tile.loc.gov/storage-services/public/gdcmassbookdig/mystictestbook01rich/mystictestbook01rich.pdf" target="_blank" rel="noopener">Olney H. Richmond, <em>The Mystic Test Book</em></a> (1893) — public-domain source material for the Olney readings.</li>' +
-            '<li><a href="https://github.com/cosinekitty/astronomy" target="_blank" rel="noopener">Astronomy Engine</a> by Don Cross — MIT-licensed astronomy calculations. Timezone reference coordinates are derived from public-domain IANA tz database material.</li>' +
           '</ul><p class="sh-info-note">Complete source notes are in <a href="NOTICES.md">NOTICES.md</a>.</p></section>' +
-          '<section><h3>Disclaimer</h3><p>Cardology readings and astrology calculations are offered for reflection and entertainment. They are not medical, legal, financial, or mental-health advice.</p></section>' +
-          '<section class="sh-info-contact"><h3>Contact</h3><a href="mailto:mysticscards@proton.me">mysticscards@proton.me</a></section>' +
+          '<section><h3>Disclaimer</h3><p>Cardology readings and solar-time calculations are offered for reflection and entertainment. They are not medical, legal, financial, or mental-health advice.</p></section>' +
+          '</div></details>' +
+          '<details class="info-kb-item"><summary>Contact</summary><div><section class="sh-info-contact"><p>Questions, feedback, or corrections are welcome.</p><a href="mailto:mysticscards@proton.me">mysticscards@proton.me</a></section></div></details></div>' +
         '</div>';
 
   var skipHtml = '<a href="#main" class="skip-link">Skip to content</a>';
@@ -123,14 +145,107 @@
   }, { passive: true });
 
   function initInfoPanel() {
-    var btn = document.getElementById('shInfoBtn');
     var panel = document.getElementById('shInfoPanel');
-    if (!btn || !panel) return;
+    if (!panel) return;
     panel.innerHTML = '<div class="utility-slide-min">' + infoContent + '</div>';
-    window.bindDisclosurePanel(btn, panel);
+    var zodiac = panel.querySelector('#shInfoZodiacSigns');
+    var planets = panel.querySelector('#shInfoPlanets');
+    var suits = panel.querySelector('#shInfoSuits');
+    var ranks = panel.querySelector('#shInfoRanks');
+    var data = window.PLANET_DATA || {};
+    var order = (window.PLANET_ORDER || ['Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune']).slice();
+    if (data.Crown) order.push('Crown');
+    function esc(value) {
+      return String(value == null ? '' : value).replace(/[&<>\"]/g, function (c) {
+        return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c];
+      });
+    }
+    if (zodiac) {
+      zodiac.innerHTML = (window.ZODIAC_SIGN_MEANINGS || []).map(function (sign) {
+        return '<section class="info-reference-entry"><h4>' + esc(sign.glyph + ' ' + sign.name) + '</h4>' +
+          '<p>' + esc(sign.description) + '</p></section>';
+      }).join('');
+    }
+    if (planets) {
+      planets.innerHTML = order.map(function (planet) {
+        var entry = data[planet];
+        if (!entry) return '';
+        var paragraphs = (entry.text || []).map(function (copy) {
+          return '<p>' + esc(copy) + '</p>';
+        }).join('');
+        return '<section class="info-planet-entry"><h4>' + esc(planet) + '</h4>' +
+          '<p class="info-planet-synopsis">' + esc(entry.synopsis || '') + '</p>' + paragraphs + '</section>';
+      }).join('');
+    }
+    function renderReference(target, entries, order, nameFor) {
+      if (!target || !entries) return;
+      target.innerHTML = order.map(function (key) {
+        var entry = entries[key];
+        if (!entry) return '';
+        return '<section class="info-reference-entry"><h4>' + esc(nameFor(key, entry)) + '</h4>' +
+          '<p class="info-reference-keywords">' + esc((entry.keywords || []).join(' · ')) + '</p>' +
+          '<p>' + esc(entry.text || '') + '</p></section>';
+      }).join('');
+    }
+    renderReference(suits, window.CARD_SUIT_READINGS, ['hearts', 'clubs', 'diamonds', 'spades'], function (key, entry) {
+      return (entry.symbol || '') + ' ' + key.charAt(0).toUpperCase() + key.slice(1);
+    });
+    renderReference(ranks, window.CARD_RANK_READINGS, ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'], function (key, entry) {
+      return entry.name || key;
+    });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initInfoPanel);
   else initInfoPanel();
+
+  function initUtilityDock() {
+    var finder = document.getElementById('finder');
+    var main = document.getElementById('main');
+    var cycles = document.getElementById('fInTime');
+    var quadrations = document.getElementById('qInlinePanel');
+    var info = document.getElementById('shInfoPanel');
+    var buttons = Array.prototype.slice.call(document.querySelectorAll('[data-dock-target]'));
+    if (!finder || !main || !cycles || !quadrations || !info || !buttons.length) return;
+
+    function promote(view, name) {
+      view.dataset.appView = name;
+      view.classList.add('app-view');
+      view.hidden = name !== 'finder';
+      view.inert = name !== 'finder';
+      if (view.parentElement !== main) main.appendChild(view);
+    }
+    finder.dataset.appView = 'finder';
+    finder.classList.add('app-view');
+    quadrations.classList.remove('quadrations-inline', 'utility-slide-panel', 'is-open');
+    info.classList.remove('info-inline', 'utility-slide-panel', 'is-open');
+    promote(cycles, 'cycles');
+    promote(quadrations, 'quadrations');
+    promote(info, 'info');
+
+    function setActive(name) {
+      buttons.forEach(function (button) {
+        var active = button.dataset.dockTarget === name;
+        button.classList.toggle('is-active', active);
+        button.setAttribute('aria-pressed', active ? 'true' : 'false');
+      });
+    }
+    window.showAppView = function (name) {
+      var target = main.querySelector('[data-app-view="' + name + '"]');
+      if (!target) return;
+      Array.prototype.slice.call(main.querySelectorAll('[data-app-view]')).forEach(function (view) {
+        var active = view === target;
+        view.hidden = !active;
+        view.inert = !active;
+      });
+      if (name === 'cycles' && typeof window.refreshInTime === 'function') window.refreshInTime();
+      setActive(name);
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    };
+    buttons.forEach(function (button) {
+      button.addEventListener('click', function () { window.showAppView(button.dataset.dockTarget); });
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initUtilityDock);
+  else initUtilityDock();
 
   // Offline support + PWA install.
   if ('serviceWorker' in navigator) {
