@@ -5,11 +5,13 @@
  * PRECACHE lists every deployed file.
  */
 // Cache-key bump on every deployed change.
-const CACHE = 'mysticscards-418';
+const CACHE = 'mysticscards-429';
 const PRECACHE = [
   './',
   'index.html',
   'manifest.webmanifest',
+  'LICENSE',
+  'NOTICES.md',
   'favicon.ico',
   'css/site.css',
   'js/store.js',
@@ -20,6 +22,7 @@ const PRECACHE = [
   'js/quadrations.js',
   'js/finder.js',
   'js/olney.js',
+  'js/richmonddata.js',
   'js/tzcoords.js',
   'js/lifescript.js',
   'js/in-time.js',
@@ -41,7 +44,6 @@ const PRECACHE = [
   'assets/icon-512.png',
   'assets/icon-512-maskable.png',
   'assets/og-image.png',
-  'assets/fonts/inter-300.ttf',
   'assets/fonts/inter-400.ttf',
   'assets/fonts/inter-500.ttf',
   'assets/fonts/inter-600.ttf',
@@ -85,10 +87,14 @@ self.addEventListener('fetch', (e) => {
 
   if (url.origin === location.origin) {
     if (req.mode === 'navigate') {
-      e.respondWith(
-        caches.match('index.html').then((shell) => shell || fetch(req))
-      );
-      return;
+      const appRoot = new URL(self.registration.scope);
+      const appIndex = new URL('index.html', appRoot);
+      if (url.pathname === appRoot.pathname || url.pathname === appIndex.pathname) {
+        e.respondWith(
+          caches.match('index.html').then((shell) => shell || fetch(req))
+        );
+        return;
+      }
     }
 
     const bypass = /\.(?:html|css|js)$/.test(url.pathname);
@@ -104,7 +110,6 @@ self.addEventListener('fetch', (e) => {
         .catch(() =>
           caches.match(req, { ignoreSearch: true }).then((hit) => {
             if (hit) return hit;
-            if (req.mode === 'navigate') return caches.match('index.html');
             return Response.error();
           })
         )

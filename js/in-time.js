@@ -1,8 +1,6 @@
 // in-time.js — the "Cycles" 5-card row (13-Year / 7-Year / Yearly /
 // 52-Day / Daily) for the Finder's picked card, plus the
-// date-scroll nav that lets you view the row "as of" any date. Added
-// 2026-07-10; date-nav added 2026-07-10 (was deferred in the first
-// pass).
+// date-scroll nav that lets you view the row "as of" any date.
 //
 // Each focused cycle renders two layers: a concise paragraph for the card,
 // drawn from the shared About reading, followed by two sentences describing
@@ -15,13 +13,13 @@
 //   • Yearly     → deckAtAge(⌊A/7⌋+1)  at position B, offset A%7
 //   • 52-Day     → deckAtAge(A+1)      at position B, offset ⌊daysSinceBday/52⌋
 //   • Daily      → deckAtAge(weeksAlive%90+1) at position B, offset weekdayShift
-// A (age) is derived from the VIEWED date and Finder's currentAge anchor
-// (usually supplied by a saved birthday's birth year). Quadrations has
-// its own independent age stepper and does not change this anchor.
+// A (age) is derived from the viewed date and the complete birth date selected
+// in Finder. The age-based cycles require a known birth year. Quadrations has
+// its own independent age stepper.
 //
 // Reads deckAtAge / SPREAD_PLANETS / SPREAD_PLANET_SYM / CARDS /
 // spreadCardPips via classic-script globals. Loaded after cardsdata.js
-// and after spread-grid.js (which owns Finder's `currentAge` anchor).
+// and after spread-grid.js (which provides `deckAtAge`).
 //
 // PUBLIC on window:
 //   window.renderInTime(card) — populates the inline `#fInTime` section. Returns TRUE
@@ -130,8 +128,6 @@
   function loadFavoriteBirthday(id) {
     const entry = favoriteBirthdays().find(function (item) { return String(item.id) === String(id); });
     if (!entry || typeof window.loadDateInFinder !== 'function') return;
-    const age = Math.max(0, lastBdayYearOf(Date.now(), Number(entry.month), Number(entry.day)) - Number(entry.year));
-    if (typeof setAge === 'function') setAge(age, { silent: true });
     window.loadDateInFinder(Number(entry.month), Number(entry.day), 'self', {
       name: entry.name,
       year: Number(entry.year),
@@ -168,10 +164,8 @@
   }
   function birthBoundaryMs() {
     const birth = readFinderDate();
-    if (!birth) return null;
-    const anchorAge = (typeof currentAge === 'number' && currentAge >= 0) ? currentAge : 0;
-    const realLbYear = lastBdayYearOf(Date.now(), birth.m, birth.d);
-    return localMidnight(new Date(realLbYear - anchorAge, birth.m - 1, birth.d));
+    if (!birth || !Number.isInteger(birth.year)) return null;
+    return localMidnight(new Date(birth.year, birth.m - 1, birth.d));
   }
 
   function shiftedHorizonMs(active, dir) {
@@ -459,8 +453,8 @@
     return (Date.UTC(ty, m - 1, d) > refUTC) ? ty - 1 : ty;
   }
 
-  // Read the reader's month/day from the Finder controls. Returns
-  // { m, d } or null when either is missing/invalid.
+  // Read the selected birthday from Finder. Year is null when the visitor
+  // entered only a day and month, so age-based calculations can request it.
   function readFinderDate() {
     const monEl = document.getElementById('fMonth');
     const dayEl = document.getElementById('fDay');
@@ -468,12 +462,21 @@
     const m = parseInt(monEl.value, 10);
     const d = parseInt(dayEl.value, 10);
     if (!m || !d) return null;
-    return { m, d };
+    const details = window.finderBirthDetails;
+    const year = details && Number.isInteger(details.year) &&
+      Number(details.month) === m && Number(details.day) === d ? details.year : null;
+    return { m, d, year };
   }
 
   function missingDateHTML() {
     return `<p class="it-lede">This section needs a birthday context.</p>
     <p class="it-empty-note">Add a <b>DD/MM</b>, load a contact, or pick a calendar date to see the age-based cycle cards for this selection.</p>`;
+  }
+
+  function missingYearHTML() {
+    return `<p class="it-lede">Cycles needs the birth year to calculate age-based cards.</p>
+    <p class="it-empty-note">Load a saved contact with a birth year to see personal cycles.</p>
+    <button type="button" data-it-open-favorites>Open contacts</button>`;
   }
 
   // Build the 45-card displacement wheel from the same relationship mapping
@@ -663,18 +666,14 @@
   function panelHTML(card) {
     const date = readFinderDate();
     if (!date) return missingDateHTML();
+    if (!Number.isInteger(date.year)) return missingYearHTML();
     const birthSv = 55 - (2 * date.m + date.d);
     if (birthSv < 1 || birthSv > 52) return '';   // Joker guard (also handled by isEmpty in renderInTime)
     const birthIdx = birthSv - 1;
 
-    // Finder's currentAge anchors the reader's REAL birth year (their
-    // real-today age against real-today's last birthday). Age-at-viewDate
-    // is then that fixed birth year measured against the VIEWED date's
-    // last-birthday year, so scrolling the date changes which age's cards
-    // show. Quadrations keeps a separate quadAge for its spread browsing.
-    const anchorAge  = (typeof currentAge === 'number' ? currentAge : 0);
-    const realLbYear = lastBdayYearOf(Date.now(), date.m, date.d);
-    const birthYear  = realLbYear - anchorAge;
+    // Use Finder's known birth year directly; Quadrations' age selector is
+    // only a browsing control and is capped independently.
+    const birthYear = date.year;
     const viewLbYear = lastBdayYearOf(viewDate, date.m, date.d);
     const age = Math.max(0, viewLbYear - birthYear);
 

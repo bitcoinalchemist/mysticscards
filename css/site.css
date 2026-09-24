@@ -1,5 +1,4 @@
 /* Local font files keep the installed app independent of third-party CDNs. */
-@font-face { font-family: 'Inter'; font-style: normal; font-weight: 300; font-display: swap; src: url('../assets/fonts/inter-300.ttf') format('truetype'); }
 @font-face { font-family: 'Inter'; font-style: normal; font-weight: 400; font-display: swap; src: url('../assets/fonts/inter-400.ttf') format('truetype'); }
 @font-face { font-family: 'Inter'; font-style: normal; font-weight: 500; font-display: swap; src: url('../assets/fonts/inter-500.ttf') format('truetype'); }
 @font-face { font-family: 'Inter'; font-style: normal; font-weight: 600; font-display: swap; src: url('../assets/fonts/inter-600.ttf') format('truetype'); }
@@ -338,20 +337,26 @@ body.starry .site-header.scrolled {
   text-align: center;
 }
 .info-inline-content { max-width: 38rem; margin: 0 auto; }
+.info-inline-heading {
+  margin: 0 0 .45rem;
+  color: var(--text);
+  font: 600 var(--text-lg)/1.3 var(--serif);
+  text-align: center;
+}
 .info-inline-content section { padding-top: 0; }
 .info-inline-content section + section { margin-top: 1.15rem; }
 .info-kb-group + .info-kb-group { margin-top: 1.8rem; }
-.info-kb-group > h3 {
+.info-inline-content .info-kb-group > h3 {
   margin: 0 0 .65rem;
   padding-bottom: .35rem;
   border-bottom: 1px solid var(--border);
   color: var(--gold-ink);
-  font: 600 .64rem/1.3 var(--sans);
+  font: 600 var(--text-sm)/1.4 var(--sans);
   letter-spacing: .1em;
   text-align: left;
   text-transform: uppercase;
 }
-.info-kb-intro { margin-bottom: .55rem !important; }
+.info-kb-intro { margin: 0 0 1rem !important; color: var(--secondary) !important; }
 .info-start-steps {
   display: grid;
   gap: .15rem;
@@ -381,17 +386,28 @@ body.starry .site-header.scrolled {
 .info-start-steps h4 {
   margin: 0 0 .2rem !important;
   color: var(--text) !important;
-  font: 600 .78rem/1.35 var(--sans) !important;
+  font: 600 var(--text-sm)/1.4 var(--sans) !important;
   letter-spacing: .01em !important;
   text-transform: none;
 }
-.info-start-steps p { margin: 0 !important; }
+.info-start-steps p { margin: 0 0 .55rem !important; }
+.info-start-action {
+  min-height: 2.4rem;
+  padding: .4rem .75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--gold-ink);
+  font: 500 var(--text-sm)/1.3 var(--sans);
+  cursor: pointer;
+}
+.info-start-action:hover { border-color: var(--gold); background: var(--gold-light); }
 .info-kb-item { border-top: 1px solid var(--rule); }
 .info-kb-item:last-child { border-bottom: 1px solid var(--rule); }
 .info-kb-item summary {
   display: flex; align-items: center; justify-content: space-between; gap: .75rem;
   padding: .8rem .2rem; color: var(--gold); cursor: pointer;
-  font: 600 .75rem/1.35 var(--sans); letter-spacing: .025em;
+  font: 600 var(--text-sm)/1.4 var(--sans); letter-spacing: .025em;
   list-style: none;
 }
 .info-kb-item summary::-webkit-details-marker { display: none; }
@@ -401,15 +417,16 @@ body.starry .site-header.scrolled {
 .info-kb-item > div { padding: 0 .2rem .85rem; }
 .info-kb-item > div section + section { margin-top: .9rem; }
 .info-inline-content h3 { margin: 0 0 .45rem; color: var(--gold); font: 500 .7rem/1.3 var(--sans); letter-spacing: .14em; text-align: center; text-transform: uppercase; }
-.info-inline-content h4 { margin: 1rem 0 .3rem; color: var(--gold); font: 600 .68rem/1.3 var(--sans); letter-spacing: .12em; text-transform: uppercase; }
+.info-inline-content h4 { margin: 1rem 0 .3rem; color: var(--gold); font: 600 var(--text-xs)/1.4 var(--sans); letter-spacing: .1em; text-transform: uppercase; }
 .info-inline-content .info-planet-entry + .info-planet-entry { margin-top: .9rem; padding-top: .9rem; border-top: 1px solid var(--border); }
 .info-inline-content .info-planet-entry p { margin: 0 0 .45rem; }
 .info-inline-content .info-planet-entry .info-planet-synopsis { color: var(--muted); font-style: italic; }
 .info-inline-content .info-reference-entry + .info-reference-entry { margin-top: .9rem; padding-top: .9rem; border-top: 1px solid var(--border); }
 .info-inline-content .info-reference-entry p { margin: 0 0 .45rem; }
 .info-inline-content .info-reference-keywords { color: var(--muted); }
-.info-inline-content p, .info-inline-content li { color: var(--secondary); font: 400 .82rem/1.65 var(--sans); }
+.info-inline-content p, .info-inline-content li { color: var(--secondary); font: 400 var(--text-base)/1.7 var(--sans); }
 .info-inline-content p, .info-inline-content ul { margin: 0; }
+.info-inline-content p + p, .info-inline-content p + ul, .info-inline-content ul + p { margin-top: .7em; }
 .info-inline-content ul { padding-left: 1.2rem; }
 .info-inline-content li + li { margin-top: .35rem; }
 .info-inline-content a {
@@ -2306,282 +2323,6 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
 .astro-zodiac-tab.is-active::after { background: var(--gold); }
 .astro-zodiac-tab:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .astro-zodiac-tab:disabled { opacity: .35; cursor: not-allowed; }
-/* ── Natal Chart / 3D Map rail ───────────────────────────────────────── */
-.astro-view-rail { min-width: 0; max-width: 100%; margin-top: var(--space-4); }
-.astro-view-tabs { display: flex; justify-content: center; gap: .25rem; border-bottom: 1px solid var(--rule); }
-.astro-view-tab { min-width: 7rem; }
-.astro-view-panel { min-width: 0; max-width: 100%; }
-.astro-view-panel[hidden] { display: none; }
-.astro-view-block { min-width: 0; max-width: 100%; }
-.astro-view-panel { min-width: 0; max-width: 100%; }
-.astro-view-panel > .sky3d-block { margin-top: 0; }
-/* Retired natal-chart styles are retained here only until the next focused
-   stylesheet simplification pass. */
-.ct-block { min-width: 0; max-width: 100%; margin-top: var(--space-4); }
-.ct-head {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: .4rem;
-  margin-bottom: .55rem;
-}
-.ct-block > .ct-panel[data-zodiac-panel="sidereal"] { display: none; }
-.ct-block[data-zodiac-active="sidereal"] > .ct-panel[data-zodiac-panel="tropical"] { display: none; }
-.ct-block[data-zodiac-active="sidereal"] > .ct-panel[data-zodiac-panel="sidereal"] { display: block; }
-.ct-table {
-  width: 100%;
-  border-collapse: collapse;
-  table-layout: fixed;
-  font-family: var(--sans);
-  font-size: var(--text-xs);
-  color: var(--text);
-}
-.ct-col-gate { width: 17%; }
-.ct-col-planet { width: 22%; }
-.ct-col-card { width: 12%; }
-.ct-col-sign { width: 16%; }
-.ct-col-degree { width: 18%; }
-.ct-col-house { width: 15%; }
-.ct-table th {
-  font-weight: 600;
-  font-size: .58rem;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  color: var(--ink-muted);
-  text-align: center;
-  padding: .3rem .4rem;
-  border-bottom: 1px solid var(--rule);
-  white-space: nowrap;
-}
-.ct-header-control {
-  display: grid;
-  justify-items: center;
-  gap: .14rem;
-}
-.ct-header-title { line-height: 1; }
-.ct-header-toggle {
-  max-width: 100%;
-  padding: .2rem .3rem;
-  border: 1px solid var(--rule);
-  border-radius: var(--r-sm);
-  background: var(--card-paper);
-  color: inherit;
-  font: 600 .52rem/1.2 var(--sans);
-  letter-spacing: .04em;
-  text-transform: none;
-  cursor: pointer;
-}
-.ct-header-toggle:hover { color: var(--gold); }
-.ct-header-toggle:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
-.ct-block[data-gate-active="mind"] [data-gate-kind="body"],
-.ct-block[data-gate-active="body"] [data-gate-kind="mind"] { display: none; }
-/* No per-row rules. Nine full-width hairlines made the chart read as a
-   spreadsheet dropped onto the starfield; the same quieting pass Cycles got.
-   Row separation comes from the extra vertical padding, the existing group
-   gap before Sun, and a hover band for tracking a row across six columns. */
-.ct-table td {
-  padding: .46rem .4rem;
-  vertical-align: middle;
-}
-.ct-table tbody tr { transition: background var(--ease); }
-.ct-table tbody tr:hover { background: rgba(255, 255, 255, .035); }
-.ct-table tbody tr.ct-group-gap:hover,
-.ct-table .ct-more-row tr:hover { background: none; }
-.ct-table tr.ct-group-gap td {
-  height: .85rem;
-  padding: 0;
-  border: 0;
-}
-.ct-more-row > tr > td {
-  padding: .55rem 0 0;
-  border-bottom: 0;
-}
-.ct-more-actions {
-  display: grid;
-  justify-items: center;
-  gap: .35rem;
-}
-.ct-astro-olney {
-  width: min(100%, 42rem);
-}
-.ct-more {
-  margin: 0;
-  text-align: center;
-}
-/* A quiet in-table disclosure. It carries no border or fill so it stays
-   subordinate to the chart and the adjacent historical-notes action. */
-.ct-more summary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: var(--tap-target);
-  padding: .35rem .6rem;
-  border: 0;
-  color: var(--ink-muted);
-  background: none;
-  font: 600 .6rem/1 var(--sans);
-  letter-spacing: .14em;
-  text-transform: uppercase;
-  cursor: pointer;
-  list-style: none;
-  transition: color var(--ease);
-}
-.ct-more summary::-webkit-details-marker { display: none; }
-.ct-more summary::after { content: "+"; margin-left: .45rem; font-size: .9rem; }
-.ct-more[open] summary::after { content: "−"; }
-.ct-more summary:hover { color: var(--gold); }
-.ct-more summary:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: var(--r-sm); }
-.ct-more-body { margin-top: .55rem; text-align: left; }
-.ct-astro-olney summary {
-  font-size: .72rem;
-  letter-spacing: .04em;
-  text-transform: none;
-}
-.ct-astro-olney summary::after,
-.ct-astro-olney[open] summary::after {
-  content: "";
-  display: none;
-  margin-left: 0;
-}
-.ct-table-more { margin-top: 0; }
-.ct-gate { white-space: nowrap; }
-.astro-olney-list { display: grid; gap: .9rem; text-align: left; }
-.astro-olney-intro {
-  max-width: 38rem;
-  margin: 0 auto 1rem;
-  color: var(--secondary);
-  font: .86rem/1.55 var(--serif);
-  text-align: center;
-}
-.astro-olney-intro strong { display: block; margin-bottom: .55rem; color: var(--text); }
-.astro-olney-suit-note {
-  max-width: 38rem;
-  margin: 0 auto 1.1rem;
-  padding-top: .7rem;
-  border-top: 1px solid var(--rule);
-  color: var(--muted);
-  font: .72rem/1.5 var(--sans);
-  letter-spacing: .02em;
-  text-align: center;
-}
-.astro-olney-suit-note strong { color: var(--gold-ink); }
-.astro-olney-row { display: grid; grid-template-columns: 2.6rem minmax(0, 1fr); gap: .7rem; align-items: start; }
-.astro-olney-glyph { color: var(--gold); font: 1.8rem/1 var(--serif); text-align: center; }
-.astro-olney-row h4 {
-  display: flex;
-  align-items: baseline;
-  gap: .45rem;
-  flex-wrap: wrap;
-  margin: 0 0 .15rem;
-  color: var(--gold-ink);
-  font: 600 .82rem/1.2 var(--sans);
-  letter-spacing: .01em;
-  text-transform: none;
-}
-.astro-olney-suit {
-  color: var(--muted);
-  font: 500 .68rem/1.2 var(--sans);
-}
-.astro-olney-row p { margin: 0; color: var(--secondary); font: .86rem/1.55 var(--serif); }
-.astro-olney-row strong { color: var(--text); }
-/* hexFigSVG paints its bars with var(--yang), whose global value (#1a1916) is
-   INK FOR PARCHMENT — it only works on a card face. Drawn straight onto the
-   page ground (#100c1e) it was near-black on near-black, about 1.1:1, which is
-   why the figures read as grey skeleton placeholders. Every other dark-ground
-   figure in the site overrides --yang for exactly this reason; this table just
-   never did. Each column now tints its figure to its own accent, held well
-   below the numbers so the glyphs stay ornament rather than shouting. */
-.ct-gate { text-align: left; }
-.ct-gate-inner {
-  display: inline-grid;
-  grid-template-columns: 1.2rem 2.4rem;
-  align-items: center;
-  column-gap: .32rem;
-  vertical-align: middle;
-}
-.ct-fig {
-  display: inline-flex;
-  justify-content: flex-start;
-  align-items: center;
-  min-width: 1.2rem;
-}
-.ct-fig svg { display: block; max-width: 100%; height: auto; }
-.ct-gl {
-  justify-self: end;
-  font-variant-numeric: tabular-nums;
-  color: var(--secondary);
-}
-/* Design (Body) reads warm, Personality (Mind) reads as plain ink — the same
-   pairing the old astrology page used. */
-.ct-d .ct-gl { color: var(--rose, #dc8d85); }
-.ct-p .ct-fig { --yang: rgba(200, 191, 224, .42); }
-.ct-d .ct-fig { --yang: rgba(220, 141, 133, .42); }
-.ct-planet { white-space: nowrap; }
-.ct-pg { display: inline-block; width: 1.1em; color: var(--gold-ink); }
-.ct-cardchip {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 2.1rem;
-  padding: .1rem .32rem;
-  border-radius: var(--r-sm);
-  background: var(--card-paper);
-  color: #1a1420;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-.ct-cardchip.hearts, .ct-cardchip.diamonds { color: #a3242b; }
-.ct-card--birth-axis {
-  vertical-align: middle;
-}
-.ct-cardchip--birth {
-  min-width: 2.55rem;
-  min-height: 2.15rem;
-  padding: .18rem .42rem;
-  font-size: .82rem;
-  box-shadow: 0 0 0 1px rgba(217,183,106,.36), 0 0 14px rgba(217,183,106,.22);
-}
-.ct-nocard { color: var(--ink-muted); }
-.ct-sign { white-space: nowrap; color: var(--gold-ink); }
-.ct-deg {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-.ct-table th.ct-deg,
-.ct-house { text-align: center; }
-.ct-retro { margin-left: .25rem; color: var(--ink-muted); }
-.ct-note {
-  max-width: 38rem;
-  margin: .6rem auto 0;
-  font-size: .62rem;
-  line-height: 1.5;
-  color: var(--ink-muted);
-  text-align: center;
-}
-@media (max-width: 560px) {
-  /* Keep the complete chart in view. Compact the contents themselves instead
-     of forcing a wider table, which previously pushed Degree out of view and
-     let the fixed-width gate figures spill into the neighbouring column. */
-  .ct-table { width: 100%; min-width: 0; font-size: .67rem; }
-  .ct-table th, .ct-table td { padding-left: .25rem; padding-right: .25rem; }
-  .ct-gate-inner { grid-template-columns: .95rem 1.9rem; column-gap: .18rem; }
-  .ct-fig { min-width: 0; width: .95rem; }
-  .ct-pg { width: .95em; }
-  .ct-cardchip { min-width: 1.8rem; padding-left: .2rem; padding-right: .2rem; }
-  .ct-retro { margin-left: .12rem; }
-}
-@media (max-width: 380px) {
-  .ct-table { font-size: .62rem; }
-  .ct-table th { font-size: .51rem; letter-spacing: .07em; }
-  .ct-table th, .ct-table td { padding-left: .13rem; padding-right: .13rem; }
-  .ct-gate-inner { grid-template-columns: .8rem 1.65rem; column-gap: .08rem; }
-  .ct-fig { width: .8rem; }
-  .ct-pg { width: .85em; }
-  .ct-cardchip { min-width: 1.55rem; padding-left: .12rem; padding-right: .12rem; }
-  .ct-retro { margin-left: .06rem; }
-}
-
 .ls-prc-cardlet {
   display: flex;
   flex-direction: column;
@@ -3281,13 +3022,10 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
   .ls-connection-gloss { font-size: .86rem; }
 }
 
-/* ── Finder Cycles panel (2026-07-10) ─────────────────────────────
-   Five personal cards: 13-Year / 7-Year / Yearly / 52-Day / Daily,
-   computed from the picked card's solar value and the age at
-   the current Cycles viewDate. The period-reading popup (click a card
-   to open its full reading, with its own prev/next through the timeline) is still
-   deferred — needs the compare-card popup chrome + lazy-loaded
-   reading data, neither of which exist yet. */
+/* ── Finder Cycles panel ───────────────────────────────────────────
+   Five personal cards: 13-Year / 7-Year / Yearly / 52-Day / Daily.
+   Selecting a cycle opens its reading inline; controls move between
+   available readings in the viewed timeline. */
 .finder-intime {
   margin-top: var(--about-section-gap, var(--space-5));
   color: var(--secondary);
@@ -3767,67 +3505,6 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
   letter-spacing: .03em;
 }
 .sol-true-time strong { color: var(--gold-ink); font-weight: 600; }
-.sky3d-block {
-  margin: 1.5rem auto 0; max-width: 34rem; padding-top: 1rem;
-  border-top: 1px solid var(--rule); text-align: center;
-}
-.sky3d-reset {
-  min-height: var(--tap-target); padding: .35rem .7rem;
-  border: 1px solid var(--rule-strong); border-radius: var(--r-sm);
-  background: var(--band); color: var(--gold-ink);
-  font: 600 .62rem/1 var(--sans); letter-spacing: .08em;
-  text-transform: uppercase; cursor: pointer;
-}
-.sky3d-reset:hover { border-color: var(--gold); color: var(--gold); }
-.sky3d-reset:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
-.sky3d-root { margin-top: .8rem; }
-.sky3d-stage {
-  width: 100%; height: min(72vw, 28rem); min-height: 18rem;
-  overflow: hidden; border: 1px solid rgba(181,134,74,.35);
-  border-radius: var(--r-md); background: var(--bg); cursor: grab; touch-action: none;
-}
-.sky3d-stage:active { cursor: grabbing; }
-.sky3d-stage:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
-.sky3d-stage canvas { display: block; width: 100%; height: 100%; }
-/* The stage takes `touch-action: none`, so every touch inside it orbits the
-   camera and none of it scrolls. On phones the panel is otherwise edge to
-   edge, which would leave nowhere to scroll past the sky — so keep a gutter
-   either side wide enough to be a comfortable thumb target. */
-@media (max-width: 30rem) {
-  .sky3d-stage { width: calc(100% - 4.5rem); margin-inline: auto; }
-}
-/* The ground/orbit view switch shares the .sky3d-play chrome; it just needs a
-   little more room, since its labels are words rather than "Play". */
-.sky3d-viewmode { white-space: nowrap; }
-.sky3d-viewmode[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); }
-.sky3d-viewmode-row {
-  display: flex;
-  justify-content: center;
-  margin-top: .65rem;
-}
-.sky3d-viewmode {
-  display: inline-grid;
-  place-items: center;
-  width: 2.55rem;
-  min-height: 2.55rem;
-  padding: .45rem;
-}
-.sky3d-pin { width: 1.25rem; height: 1.25rem; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.sky3d-hint kbd {
-  padding: 0 .25em; border: 1px solid var(--rule-strong); border-radius: 3px;
-  background: var(--band); color: var(--gold-ink); font: inherit; font-size: .95em;
-}
-.sky3d-status { min-height: 1.2rem; margin-bottom: .35rem; color: var(--muted); font: italic .8rem/1.4 var(--serif); }
-.sky3d-controls { display: flex; flex-direction: column; align-items: center; gap: .55rem; margin-top: .55rem; color: var(--muted); font: .62rem/1.3 var(--sans); }
-.sky3d-action-row { display: flex; justify-content: center; gap: .55rem; }
-.sky3d-scrub-row { display: flex; align-items: center; gap: .65rem; width: min(100%, 26rem); }
-.sky3d-controls input[type="range"] { flex: 1 1 auto; min-width: 0; accent-color: var(--gold); }
-.sky3d-play { min-height: var(--tap-target); padding: .35rem .7rem; border: 1px solid var(--rule-strong); border-radius: var(--r-sm); background: var(--band); color: var(--gold-ink); font: 600 .62rem/1 var(--sans); letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
-.sky3d-play:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
-.sky3d-speed { min-height: var(--tap-target); padding: .35rem .55rem; border: 1px solid var(--rule-strong); border-radius: var(--r-sm); background: var(--band); color: var(--gold-ink); font: 600 .62rem/1 var(--sans); cursor: pointer; }
-.sky3d-speed:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
-.sky3d-date { text-align: center; }
-.sky3d-hint { margin-top: .45rem; color: var(--muted); font: .62rem/1.3 var(--sans); }
 .sol-cards {
   display: flex; justify-content: center; align-items: flex-start; gap: 1.2rem;
   /* The cards are content-sized and don't shrink, so wrap is the safety net
@@ -3876,20 +3553,6 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
    phones, where two full names at 1rem would overflow the row. */
 @media (max-width: 380px) {
   .sol-card-name { font-size: .82rem; }
-}
-
-/* Retired solar-gate styles are retained here only until the next focused
-   stylesheet simplification pass. */
-.sun-gate {
-  margin-top: 1.3rem; padding-top: .2rem;
-}
-.sun-gate-center {
-  display: grid;
-  justify-items: center;
-  min-width: 0;
-}
-.sun-gate-center .sol-cards {
-  margin: 0;
 }
 
 /* ── Cycles date context (2026-07-10, simplified 2026-07-13) —

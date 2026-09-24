@@ -80,11 +80,11 @@ hexagram figures/names. These modules contain calculation tables and labels
 used for positional display; they do not include third-party interpretive
 reading text.
 
-### Hosted fonts
+### Locally bundled fonts
 
-The site requests Inter and Lora from Google Fonts rather than bundling font
-files in this repository. Both families are available under the SIL Open Font
-License 1.1.
+The site serves Inter and Lora from the font files in `assets/fonts/`; it does
+not request these families from a third-party font service. Both families are
+available under the SIL Open Font License 1.1.
 
 - Inter license: <https://github.com/google/fonts/blob/main/ofl/inter/OFL.txt>
 - Lora license: <https://github.com/google/fonts/blob/main/ofl/lora/OFL.txt>

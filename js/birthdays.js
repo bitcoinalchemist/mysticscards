@@ -4,15 +4,11 @@
 // that this tray and js/finder-trays.js's Calendar both read
 // from, so a chosen date/entry knows which Finder slot to fill.
 //
-// First pass (2026-07-09) — a deliberately simple Finder tray (no
-// age-driven year prefill, no "For" toggle inside the deck browse — see
-// js/finder-trays.js's header comment for why). Placement, visual design,
-// and the Cycles panel's contextual add/list buttons are deferred until
-// that lane opens; this is the functional first cut asked for in chat.
+// Saved birth details supply Finder's personal cycle and Solar Time tools.
+// The tray also owns the You / Partner target shared with the calendar tray.
 //
-// Loaded as a classic script AFTER spread-grid.js (bare `setAge` global —
-// anchors Finder's age-based panels to the picked person's current age)
-// and AFTER finder.js (window.loadDateInFinder).
+// Loaded as a classic script AFTER spread-grid.js and AFTER finder.js
+// (window.loadDateInFinder).
 //
 // PUBLIC on window — read by finder-trays.js:
 //   window.openBirthPanel()  — opens the Saved Birthdays inline tray.
@@ -33,9 +29,9 @@
     return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
   function loadBirths() { return CardsStore.loadBirths(); }
-  function saveBirths(list) { CardsStore.saveBirths(list); }
+  function saveBirths(list) { return CardsStore.saveBirths(list) === true; }
   function loadContactTags() { return typeof CardsStore.loadContactTags === 'function' ? CardsStore.loadContactTags() : []; }
-  function saveContactTags(tags) { if (typeof CardsStore.saveContactTags === 'function') CardsStore.saveContactTags(tags); }
+  function saveContactTags(tags) { return typeof CardsStore.saveContactTags === 'function' && CardsStore.saveContactTags(tags) === true; }
 
   function lastBdayYear(m, d) {
     const t = new Date();
@@ -72,7 +68,7 @@
 
   function rememberContactTags(tags) {
     const current = contactTagOptions([]);
-    saveContactTags(cleanTags(current.concat(tags)));
+    return saveContactTags(cleanTags(current.concat(tags)));
   }
 
   function removeContactTag(tag) {
@@ -81,8 +77,10 @@
       const tags = cleanTags(entry.tags).filter(function (value) { return value.toLocaleLowerCase() !== key; });
       return Object.assign({}, entry, { tags: tags.length ? tags : undefined });
     });
-    saveBirths(entries);
-    saveContactTags(loadContactTags().filter(function (value) { return String(value).toLocaleLowerCase() !== key; }));
+    if (!saveBirths(entries)) { bdayToast('Couldn’t save contact changes. Check browser storage and try again.', true); return; }
+    if (!saveContactTags(loadContactTags().filter(function (value) { return String(value).toLocaleLowerCase() !== key; }))) {
+      bdayToast('Contact tags could not be saved. Check browser storage and try again.', true);
+    }
   }
 
   function birthTags(entry) {
@@ -117,14 +115,6 @@
 
   function loadBirth(entry, target, options) {
     options = options || {};
-    // "You" picks carry the person's current age into Finder's age-based
-    // panels. Quadrations keeps its own independent age stepper.
-    if (target !== 'partner' && typeof setAge === 'function') {
-      // The following loadDateInFinder call performs the combined Finder
-      // render, so avoid refreshing Cycles once here and then rendering it
-      // again immediately afterward.
-      setAge(ageFromBirthYear(entry.year, entry.month, entry.day), { silent: true });
-    }
     if (typeof window.loadDateInFinder !== 'function') return;
     const reveal = function () {
       _birthLoadTimer = null;
@@ -347,7 +337,10 @@
       b.addEventListener('click', ev => {
         ev.stopPropagation();
         const id = +b.dataset.del;
-        saveBirths(loadBirths().filter(x => x.id !== id));
+        if (!saveBirths(loadBirths().filter(x => x.id !== id))) {
+          bdayToast('Couldn’t save contact changes. Check browser storage and try again.', true);
+          return;
+        }
         if (_editingBirthId === id) closeBirthAddPanel();
         renderBirthPanel();
       });
@@ -356,9 +349,12 @@
       b.addEventListener('click', ev => {
         ev.stopPropagation();
         const id = +b.dataset.favorite;
-        saveBirths(loadBirths().map(function (entry) {
+        if (!saveBirths(loadBirths().map(function (entry) {
           return entry.id === id ? Object.assign({}, entry, { favorite: !entry.favorite }) : entry;
-        }));
+        }))) {
+          bdayToast('Couldn’t save contact changes. Check browser storage and try again.', true);
+          return;
+        }
         renderBirthPanel();
       });
     });
@@ -558,6 +554,25 @@
     setBirthFormMode(null);
   }
 
+  function isValidBirthDate(day, month, year) {
+    const yMax = new Date().getFullYear();
+    if (!Number.isInteger(day) || day < 1 || day > 31 ||
+        !Number.isInteger(month) || month < 1 || month > 12 ||
+        !Number.isInteger(year) || year < 1 || year > yMax) return false;
+    const date = new Date(0);
+    date.setFullYear(year, month - 1, day);
+    if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) return false;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    return date.getTime() <= today.getTime();
+  }
+
+  function nextBirthId(list) {
+    const used = new Set(list.map(function (entry) { return entry.id; }));
+    let id = Date.now();
+    while (used.has(id)) id++;
+    return id;
+  }
+
   function saveManualBirth() {
     const dEl = document.getElementById('baDay');
     const mEl = document.getElementById('baMonth');
@@ -575,13 +590,9 @@
     if (!m || m < 1 || m > 12)       { err.textContent = 'Month must be 1–12.'; mEl.focus(); return; }
     const yMax = new Date().getFullYear();
     if (!y || y < 1 || y > yMax)  { err.textContent = 'Year must be 1–' + yMax + '.'; yEl.focus(); return; }
-    const test = new Date(0);
-    test.setFullYear(y, m - 1, d);
-    if (test.getFullYear() !== y || test.getMonth() !== m - 1 || test.getDate() !== d) {
-      err.textContent = 'Not a valid date.'; dEl.focus(); return;
+    if (!isValidBirthDate(d, m, y)) {
+      err.textContent = 'Not a valid date, or birthday is in the future.'; dEl.focus(); return;
     }
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    if (test.getTime() > today.getTime()) { err.textContent = 'Birthday can’t be in the future.'; dEl.focus(); return; }
     const wasEditing = _editingBirthId !== null;
     let entry = null;
     let list = loadBirths();
@@ -603,8 +614,11 @@
       if (tags.length) entry.tags = tags;
       list.push(entry);
     }
+    if (!saveBirths(list)) {
+      bdayToast('Couldn’t save contact. Check browser storage and try again.', true);
+      return;
+    }
     rememberContactTags(tags);
-    saveBirths(list);
     clearBirthForm();
     closeBirthAddPanel();
     renderBirthPanel();
@@ -642,11 +656,8 @@
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   function validBirth(o) {
-    const yMax = new Date().getFullYear();
     return o && typeof o.name === 'string' && o.name.trim() &&
-      Number.isInteger(o.day)   && o.day   >= 1    && o.day   <= 31 &&
-      Number.isInteger(o.month) && o.month >= 1    && o.month <= 12 &&
-      Number.isInteger(o.year)  && o.year  >= 1    && o.year  <= yMax;
+      isValidBirthDate(o.day, o.month, o.year);
   }
   function bdayToast(msg, isErr) {
     const note = document.querySelector('#bdayTrayWrap .bday-note');
@@ -671,7 +682,6 @@
         : (data && Array.isArray(data.births) ? data.births : null);
       if (!incoming) { bdayToast('No contacts found in that file.', true); return; }
       const clean = incoming.filter(validBirth).map(o => ({
-        id: Number.isFinite(o.id) ? o.id : Date.now() + Math.floor(Math.random() * 1e6),
         name: o.name.trim(),
         day: o.day,
         month: o.month,
@@ -681,12 +691,22 @@
       }));
       if (!clean.length) { bdayToast('No valid contacts to import.', true); return; }
       const existing = loadBirths();
-      rememberContactTags(clean.reduce(function (tags, entry) { return tags.concat(entry.tags || []); }, []));
       const key = o => o.name.toLowerCase() + '|' + o.day + '|' + o.month + '|' + o.year;
       const seen = new Set(existing.map(key));
       let added = 0;
-      clean.forEach(o => { if (!seen.has(key(o))) { seen.add(key(o)); existing.push(o); added++; } });
-      saveBirths(existing);
+      clean.forEach(o => {
+        if (!seen.has(key(o))) {
+          seen.add(key(o));
+          o.id = nextBirthId(existing);
+          existing.push(o);
+          added++;
+        }
+      });
+      if (!saveBirths(existing)) {
+        bdayToast('Couldn’t import contacts. Check browser storage and try again.', true);
+        return;
+      }
+      rememberContactTags(clean.reduce(function (tags, entry) { return tags.concat(entry.tags || []); }, []));
       renderBirthPanel();
       bdayToast(added ? ('Imported ' + added + (added === 1 ? ' contact.' : ' contacts.'))
                      : 'Everything in that file was already saved.', false);

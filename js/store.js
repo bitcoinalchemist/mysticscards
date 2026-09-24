@@ -2,7 +2,7 @@
   'use strict';
 
   function _get(k)         { try { return localStorage.getItem(k);       } catch (e) { return null; } }
-  function _set(k, v)      { try { localStorage.setItem(k, v);           } catch (e) {} }
+  function _set(k, v)      { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } }
   function _getCompat(k) {
     var value = _get(k);
     if (value !== null) return value;
@@ -43,12 +43,57 @@
     // on first read so saved birthdays survive the rename. Corrupt JSON
     // resolves to an empty list rather than throwing.
     loadBirths: function () {
-      try { return JSON.parse(_getCompat(K_BIRTHS)) || []; } catch (e) { return []; }
+      var raw = _getCompat(K_BIRTHS);
+      if (raw === null) return [];
+      try {
+        var parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return [];
+        var yearMax = new Date().getFullYear();
+        var usedIds = new Set();
+        var replacementId = Number.MAX_SAFE_INTEGER;
+        return parsed.filter(function (entry) {
+          if (!entry || typeof entry !== 'object' || Array.isArray(entry) ||
+              !Number.isSafeInteger(Number(entry.id)) || Number(entry.id) <= 0 || typeof entry.name !== 'string' || !entry.name.trim() ||
+              !Number.isInteger(entry.day) || !Number.isInteger(entry.month) || !Number.isInteger(entry.year) ||
+              entry.day < 1 || entry.day > 31 || entry.month < 1 || entry.month > 12 ||
+              entry.year < 1 || entry.year > yearMax) return false;
+          var date = new Date(0);
+          date.setUTCHours(0, 0, 0, 0);
+          date.setUTCFullYear(entry.year, entry.month - 1, entry.day);
+          if (date.getUTCFullYear() !== entry.year || date.getUTCMonth() !== entry.month - 1 ||
+              date.getUTCDate() !== entry.day) return false;
+          var today = new Date();
+          if (entry.year > today.getFullYear() ||
+              (entry.year === today.getFullYear() && entry.month > today.getMonth() + 1) ||
+              (entry.year === today.getFullYear() && entry.month === today.getMonth() + 1 && entry.day > today.getDate())) return false;
+          return true;
+        }).map(function (entry) {
+          var id = Number(entry.id);
+          if (usedIds.has(id)) {
+            while (usedIds.has(replacementId)) replacementId--;
+            id = replacementId--;
+          }
+          usedIds.add(id);
+          var clean = Object.assign({}, entry, { id: id, name: entry.name.trim(), favorite: !!entry.favorite });
+          if (Array.isArray(entry.tags)) clean.tags = entry.tags.filter(function (tag) { return typeof tag === 'string' && tag.trim(); });
+          else delete clean.tags;
+          return clean;
+        });
+      } catch (e) { return []; }
     },
-    saveBirths: function (list) { _set(K_BIRTHS, JSON.stringify(list)); },
+    saveBirths: function (list) {
+      if (!Array.isArray(list)) return false;
+      try { return _set(K_BIRTHS, JSON.stringify(list)); } catch (e) { return false; }
+    },
     loadContactTags: function () {
-      try { return JSON.parse(_get(K_CONTACT_TAGS)) || []; } catch (e) { return []; }
+      try {
+        var parsed = JSON.parse(_get(K_CONTACT_TAGS));
+        return Array.isArray(parsed) ? parsed.filter(function (tag) { return typeof tag === 'string' && tag.trim(); }) : [];
+      } catch (e) { return []; }
     },
-    saveContactTags: function (tags) { _set(K_CONTACT_TAGS, JSON.stringify(tags)); }
+    saveContactTags: function (tags) {
+      if (!Array.isArray(tags)) return false;
+      try { return _set(K_CONTACT_TAGS, JSON.stringify(tags)); } catch (e) { return false; }
+    }
   };
 })();

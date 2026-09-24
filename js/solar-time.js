@@ -12,8 +12,8 @@
 // (js/tzcoords.js) keyed by the IANA zone the birthplace picker resolves
 // to; the DST-aware UTC offset comes from the browser's own tz database.
 //
-// Reads SPREAD_CARDS + spreadCardPips + Finder's currentAge anchor as
-// classic-script globals (loaded earlier), and window.TZ_COORDS from
+// Reads SPREAD_CARDS + spreadCardPips, Finder's known birth-date details,
+// and window.TZ_COORDS from
 // tzcoords.js. Quadrations keeps a separate quadAge.
 //
 // PUBLIC on window.SolarTime:
@@ -29,6 +29,34 @@
   'use strict';
 
   var ZMAP = {};            // lowercased zone/city text -> canonical IANA zone
+  var CITY_ALIASES = {
+    'perth': 'Australia/Perth', 'sydney': 'Australia/Sydney', 'melbourne': 'Australia/Melbourne',
+    'brisbane': 'Australia/Brisbane', 'adelaide': 'Australia/Adelaide', 'darwin': 'Australia/Darwin',
+    'hobart': 'Australia/Hobart', 'canberra': 'Australia/Sydney',
+    'auckland': 'Pacific/Auckland', 'wellington': 'Pacific/Auckland',
+    'tokyo': 'Asia/Tokyo', 'seoul': 'Asia/Seoul', 'beijing': 'Asia/Shanghai',
+    'shanghai': 'Asia/Shanghai', 'hong kong': 'Asia/Hong_Kong', 'singapore': 'Asia/Singapore',
+    'bangkok': 'Asia/Bangkok', 'jakarta': 'Asia/Jakarta', 'manila': 'Asia/Manila',
+    'mumbai': 'Asia/Kolkata', 'delhi': 'Asia/Kolkata', 'new delhi': 'Asia/Kolkata',
+    'dubai': 'Asia/Dubai', 'jerusalem': 'Asia/Jerusalem',
+    'london': 'Europe/London', 'dublin': 'Europe/Dublin', 'paris': 'Europe/Paris',
+    'berlin': 'Europe/Berlin', 'rome': 'Europe/Rome', 'madrid': 'Europe/Madrid',
+    'amsterdam': 'Europe/Amsterdam', 'brussels': 'Europe/Brussels', 'vienna': 'Europe/Vienna',
+    'zurich': 'Europe/Zurich', 'lisbon': 'Europe/Lisbon', 'athens': 'Europe/Athens',
+    'moscow': 'Europe/Moscow', 'istanbul': 'Europe/Istanbul',
+    'new york': 'America/New_York', 'nyc': 'America/New_York', 'boston': 'America/New_York',
+    'miami': 'America/New_York', 'atlanta': 'America/New_York', 'washington dc': 'America/New_York',
+    'chicago': 'America/Chicago', 'dallas': 'America/Chicago', 'houston': 'America/Chicago',
+    'denver': 'America/Denver', 'phoenix': 'America/Phoenix', 'los angeles': 'America/Los_Angeles',
+    'san francisco': 'America/Los_Angeles', 'seattle': 'America/Los_Angeles',
+    'las vegas': 'America/Los_Angeles', 'anchorage': 'America/Anchorage', 'honolulu': 'Pacific/Honolulu',
+    'toronto': 'America/Toronto', 'montreal': 'America/Toronto', 'vancouver': 'America/Vancouver',
+    'mexico city': 'America/Mexico_City', 'bogota': 'America/Bogota', 'lima': 'America/Lima',
+    'sao paulo': 'America/Sao_Paulo', 'rio de janeiro': 'America/Sao_Paulo',
+    'buenos aires': 'America/Argentina/Buenos_Aires', 'santiago': 'America/Santiago',
+    'johannesburg': 'Africa/Johannesburg', 'cape town': 'Africa/Johannesburg',
+    'cairo': 'Africa/Cairo', 'nairobi': 'Africa/Nairobi', 'lagos': 'Africa/Lagos'
+  };
   var _enginePromise = null;
   var _renderToken = 0;     // invalidates calculations superseded by Finder changes
 
@@ -46,6 +74,9 @@
       };
       s.onerror = function () { reject(new Error('engine failed to load')); };
       document.head.appendChild(s);
+    }).catch(function (error) {
+      _enginePromise = null;
+      throw error;
     });
     return _enginePromise;
   }
@@ -202,17 +233,17 @@
     return hour12 + ':' + String(minute).padStart(2, '0') + ' ' + suffix;
   }
 
-  // Birth date from the Finder (month/day) + the age anchor (birth year).
+  // Solar Time needs the actual birth year; a day/month-only lookup is not
+  // enough to infer it from Quadrations' capped browsing age.
   function activeBirth() {
     var mEl = document.getElementById('fMonth'), dEl = document.getElementById('fDay');
     if (!mEl || !dEl) return null;
     var m = parseInt(mEl.value, 10), d = parseInt(dEl.value, 10);
     if (!m || !d) return null;
-    var anchorAge = (typeof currentAge === 'number' ? currentAge : 0);
-    var now = new Date();
-    var refUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
-    var realLbYear = (Date.UTC(now.getFullYear(), m - 1, d) > refUTC) ? now.getFullYear() - 1 : now.getFullYear();
-    return { year: realLbYear - anchorAge, month: m, day: d };
+    var details = window.finderBirthDetails;
+    if (!details || !Number.isInteger(details.year) ||
+        Number(details.month) !== m || Number(details.day) !== d) return null;
+    return { year: details.year, month: m, day: d };
   }
 
   function el(id) { return document.getElementById(id); }
@@ -223,7 +254,7 @@
     var renderToken = ++_renderToken;
     var birth = activeBirth();
     if (!birth) {
-      out.innerHTML = '<p class="sol-hint">Set a birth date first — a DD/MM plus an age, or a contact.</p>';
+      out.innerHTML = '<p class="sol-hint">Solar Time needs the birth year. Load a saved contact with a complete birth date.</p>';
       return;
     }
     var placeEl = el('solPlace'), timeEl = el('solTime');
@@ -264,16 +295,21 @@
 
   function populateZones() {
     var dl = el('solZoneList');
-    try {
-      Intl.supportedValuesOf('timeZone').forEach(function (z) {
-        ZMAP[z.toLowerCase()] = z;
-        if (dl) { var o = document.createElement('option'); o.value = z; dl.appendChild(o); }
-      });
-    } catch (e) {
-      // Older browser without supportedValuesOf — hide the birthplace field.
-      var f = el('solPlace');
-      if (f && f.closest('.it-solar-field')) f.closest('.it-solar-field').style.display = 'none';
+    var zones = [];
+    if (typeof Intl.supportedValuesOf === 'function') {
+      try { zones = Intl.supportedValuesOf('timeZone'); } catch (e) {}
     }
+    if (!zones.length && window.TZ_COORDS) zones = Object.keys(window.TZ_COORDS);
+    zones.forEach(function (zone) {
+      ZMAP[zone.toLowerCase()] = zone;
+      if (dl) { var option = document.createElement('option'); option.value = zone; dl.appendChild(option); }
+    });
+    Object.keys(CITY_ALIASES).forEach(function (city) {
+      var zone = CITY_ALIASES[city];
+      if (!window.TZ_COORDS || !window.TZ_COORDS[zone]) return;
+      ZMAP[city] = zone;
+      if (dl) { var option = document.createElement('option'); option.value = city.replace(/\b\w/g, function (letter) { return letter.toUpperCase(); }); dl.appendChild(option); }
+    });
   }
 
   function wire() {

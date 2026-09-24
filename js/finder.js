@@ -127,6 +127,12 @@
       if (dom.you.day) dom.you.day.value = snap.you.day || '';
       _finderBirthYear = Number.isInteger(snap.you.year) ? snap.you.year : null;
       window.finderBirthYear = _finderBirthYear;
+      _finderBirthDetails = _finderBirthYear === null ? null : {
+        year: _finderBirthYear,
+        month: +snap.you.month,
+        day: +snap.you.day
+      };
+      window.finderBirthDetails = _finderBirthDetails;
       if (dom.partner.month) dom.partner.month.value = snap.partner.month || '';
       if (dom.partner.day) dom.partner.day.value = snap.partner.day || '';
       if (dom.you.month) syncMonthInput(dom.you.month);
@@ -1320,7 +1326,9 @@
       window.finderBirthLabel = _finderBirthLabel;
       _finderBirthYear = Number.isInteger(options.year) ? options.year : null;
       window.finderBirthYear = _finderBirthYear;
-      _finderBirthDetails = options.birthDetails || null;
+      _finderBirthDetails = options.birthDetails || (Number.isInteger(options.year)
+        ? { year: options.year, month: Number(month), day: Number(day) }
+        : null);
       window.finderBirthDetails = _finderBirthDetails;
       clearYouTransientState();
     }
