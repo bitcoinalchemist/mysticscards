@@ -42,7 +42,7 @@
     library.zodiac = {
       name: 'Zodiac signs',
       entries: (window.ZODIAC_SIGN_MEANINGS || []).map(function (sign) {
-        return { id: slug(sign.name), name: sign.glyph + ' ' + sign.name, keywords: '', paragraphs: [sign.description] };
+        return { id: slug(sign.name), name: sign.glyph + ' ' + sign.name, keywords: '', paragraphs: sign.reference || [sign.description] };
       })
     };
 

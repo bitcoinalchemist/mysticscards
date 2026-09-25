@@ -17,8 +17,8 @@
 //   window.renderLifeScript(card) — stages the Life Script details and
 //     moves the concise summary into About. Returns TRUE when there is
 //     real content.
-//   window.ZODIAC_SIGN_MEANINGS — ordered sign names, symbols, and concise
-//     interpretive descriptions shared with the Info reference.
+//   window.ZODIAC_SIGN_MEANINGS — ordered sign names, symbols, concise Finder
+//     descriptions, and expanded reference readings.
 //   window.trimLifeDetailsForRelationship() — removes person-specific
 //     planetary-ruler, Life Script, and displacement details when About is
 //     showing a combined relationship card.
@@ -44,18 +44,102 @@
     { name: 'Sagittarius', glyph: '♐', ruler: 'Jupiter', start: [11, 22], end: [12, 21] }
   ];
   const ZODIAC_SIGN_MEANINGS = [
-    { name: 'Aries', glyph: '♈︎', description: 'Aries brings initiative and courage, meeting life through direct action and the willingness to begin.' },
-    { name: 'Taurus', glyph: '♉︎', description: 'Taurus values steadiness, patience, and care for what has lasting worth, building security through consistent attention.' },
-    { name: 'Gemini', glyph: '♊︎', description: 'Gemini explores ideas through curiosity, conversation, and flexible thinking, finding connections between people and perspectives.' },
-    { name: 'Cancer', glyph: '♋︎', description: 'Cancer centers care, memory, and belonging, creating emotional safety while learning to honor personal boundaries.' },
-    { name: 'Leo', glyph: '♌︎', description: 'Leo gives creative self-expression and generosity a visible form, bringing warmth and heart to what it chooses to share.' },
-    { name: 'Virgo', glyph: '♍︎', description: 'Virgo notices patterns and practical needs, refining skills and showing care through thoughtful, useful work.' },
-    { name: 'Libra', glyph: '♎︎', description: 'Libra seeks balance, fairness, and mutual understanding, using dialogue and perspective to shape relationships and shared choices.' },
-    { name: 'Scorpio', glyph: '♏︎', description: 'Scorpio meets intensity, trust, and change directly, looking beneath appearances and making room for renewal.' },
-    { name: 'Sagittarius', glyph: '♐︎', description: 'Sagittarius reaches toward discovery and meaning, growing through learning, exploration, candor, and beliefs tested by experience.' },
-    { name: 'Capricorn', glyph: '♑︎', description: 'Capricorn builds through responsibility, patience, and structure, turning long aims into work that can endure.' },
-    { name: 'Aquarius', glyph: '♒︎', description: 'Aquarius imagines freer ways of living together, valuing originality, shared ideals, and change that benefits the wider community.' },
-    { name: 'Pisces', glyph: '♓︎', description: 'Pisces is receptive to imagination, empathy, and subtle feeling, learning how clear boundaries can make compassion sustainable.' }
+    {
+      name: 'Aries', glyph: '♈︎',
+      description: 'Aries brings initiative and courage, meeting life through direct action and the willingness to begin.',
+      reference: [
+        'As a cardinal fire sign, Aries speaks to the impulse to begin. Its energy favors direct action, experimentation, and the courage to move before every detail is settled. In a reading, Aries can point to where initiative restores momentum and where a desire is ready to be expressed plainly.',
+        'Aries works best when its speed has a chosen purpose. Acting first can open a path, while listening and adjusting help that path remain useful. The sign invites courage without turning every delay into an obstacle or every difference into a contest.'
+      ]
+    },
+    {
+      name: 'Taurus', glyph: '♉︎',
+      description: 'Taurus values steadiness, patience, and care for what has lasting worth, building security through consistent attention.',
+      reference: [
+        'As a fixed earth sign, Taurus is concerned with what can be tended and sustained. It notices material needs, bodily comfort, beauty, and the value of consistent effort. In a reading, Taurus may describe the patient work of building trust, protecting resources, or allowing a good thing time to take root.',
+        'Steadiness becomes a strength when it remains responsive to change. Taurus can hold on to a familiar arrangement long after it has stopped nourishing anyone. Its lesson is to distinguish lasting value from simple habit, and to share the security it creates.'
+      ]
+    },
+    {
+      name: 'Gemini', glyph: '♊︎',
+      description: 'Gemini explores ideas through curiosity, conversation, and flexible thinking, finding connections between people and perspectives.',
+      reference: [
+        'As a mutable air sign, Gemini learns by asking, comparing, and exchanging ideas. It brings movement to language and finds links between subjects that seemed separate. In a reading, Gemini can highlight a conversation, a new question, or the need to see a situation from more than one angle.',
+        'Its flexibility is most valuable when curiosity has room to deepen. Too many possibilities can scatter attention or keep a difficult feeling at a distance. Gemini grows by listening as carefully as it speaks, then carrying a useful insight into action.'
+      ]
+    },
+    {
+      name: 'Cancer', glyph: '♋︎',
+      description: 'Cancer centers care, memory, and belonging, creating emotional safety while learning to honor personal boundaries.',
+      reference: [
+        'As a cardinal water sign, Cancer begins from feeling and the wish to care for what matters. Home, memory, family, and chosen forms of belonging can carry special weight. In a reading, Cancer may point to a need for safety, a bond that asks for attention, or the courage involved in expressing a vulnerable need.',
+        'Care is strongest when it includes the person offering it. Cancer can become so alert to others’ moods that its own needs are hard to hear. Clear boundaries make tenderness more dependable and allow relationships to be sustained by mutual choice.'
+      ]
+    },
+    {
+      name: 'Leo', glyph: '♌︎',
+      description: 'Leo gives creative self-expression and generosity a visible form, bringing warmth and heart to what it chooses to share.',
+      reference: [
+        'As a fixed fire sign, Leo gives warmth, creativity, and conviction a visible form. It wants to make something heartfelt and share it with others. In a reading, Leo may speak to the confidence needed to take a place in the room, lead with generosity, or let a talent be seen.',
+        'Recognition can encourage Leo, but it cannot carry the whole weight of self-worth. When praise becomes the only measure, expression can turn into performance. Leo is at its strongest when it creates for the joy and purpose of the work while leaving space for others to shine.'
+      ]
+    },
+    {
+      name: 'Virgo', glyph: '♍︎',
+      description: 'Virgo notices patterns and practical needs, refining skills and showing care through thoughtful, useful work.',
+      reference: [
+        'As a mutable earth sign, Virgo pays attention to how things work in practice. It notices patterns, details, and the small adjustments that make a process more useful. In a reading, Virgo can suggest learning a craft, caring through service, or bringing order to something that has become difficult to manage.',
+        'Discernment helps Virgo improve what matters; relentless criticism can make even good work feel unfinished. The sign asks which details truly serve the whole. Rest, proportion, and acceptance give skill room to mature without requiring perfection.'
+      ]
+    },
+    {
+      name: 'Libra', glyph: '♎︎',
+      description: 'Libra seeks balance, fairness, and mutual understanding, using dialogue and perspective to shape relationships and shared choices.',
+      reference: [
+        'As a cardinal air sign, Libra begins through relationship and dialogue. It weighs different perspectives, looks for fairness, and considers how a choice will affect everyone involved. In a reading, Libra may draw attention to an agreement, a partnership, or the work of making shared decisions with care.',
+        'The wish for harmony can make disagreement feel costly. Libra finds firmer balance when it names its own position as clearly as it hears another person’s. Fairness sometimes requires a difficult conversation, a boundary, or a choice that cannot please everyone.'
+      ]
+    },
+    {
+      name: 'Scorpio', glyph: '♏︎',
+      description: 'Scorpio meets intensity, trust, and change directly, looking beneath appearances and making room for renewal.',
+      reference: [
+        'As a fixed water sign, Scorpio is drawn to depth, trust, and what remains unspoken. It may stay with a difficult feeling long enough to understand its roots. In a reading, Scorpio can point to a change that asks for honesty, a bond that needs real trust, or a truth that is ready to surface.',
+        'Intensity becomes constructive when it has somewhere safe to go. Fear of betrayal can encourage secrecy or control, even when openness would help. Scorpio’s capacity for renewal grows through discernment, shared vulnerability, and the willingness to release what has run its course.'
+      ]
+    },
+    {
+      name: 'Sagittarius', glyph: '♐︎',
+      description: 'Sagittarius reaches toward discovery and meaning, growing through learning, exploration, candor, and beliefs tested by experience.',
+      reference: [
+        'As a mutable fire sign, Sagittarius searches for a wider horizon. Travel, study, storytelling, and encounters with unfamiliar ideas can all expand its sense of possibility. In a reading, Sagittarius may signal a question of meaning, an opportunity to learn, or the need to move beyond a limiting assumption.',
+        'Its candor and optimism bring energy, especially when they leave room for other experiences. A compelling belief can become too certain or too broad to fit the facts. Sagittarius grows by testing its convictions in life and remaining willing to revise them.'
+      ]
+    },
+    {
+      name: 'Capricorn', glyph: '♑︎',
+      description: 'Capricorn builds through responsibility, patience, and structure, turning long aims into work that can endure.',
+      reference: [
+        'As a cardinal earth sign, Capricorn gives ambition a practical structure. It considers time, resources, and the obligations involved in making something last. In a reading, Capricorn can describe a long project, a responsibility that calls for maturity, or a goal that becomes possible through steady effort.',
+        'Discipline is easier to sustain when it includes rest and support. Capricorn may carry too much alone or measure worth only by what has been achieved. Its deeper strength lies in building reliable forms that serve life beyond the task itself.'
+      ]
+    },
+    {
+      name: 'Aquarius', glyph: '♒︎',
+      description: 'Aquarius imagines freer ways of living together, valuing originality, shared ideals, and change that benefits the wider community.',
+      reference: [
+        'As a fixed air sign, Aquarius holds a vision of how people might live together differently. It values independent thought, friendship, and ideas that reach beyond a familiar circle. In a reading, Aquarius may highlight a community, an unconventional choice, or a pattern ready for thoughtful change.',
+        'Distance can make a new perspective easier to see, but it can also hide the needs of people close at hand. Aquarius gives its ideals substance by listening to lived experience and turning invention into something others can use.'
+      ]
+    },
+    {
+      name: 'Pisces', glyph: '♓︎',
+      description: 'Pisces is receptive to imagination, empathy, and subtle feeling, learning how clear boundaries can make compassion sustainable.',
+      reference: [
+        'As a mutable water sign, Pisces is sensitive to mood, image, and possibilities that are difficult to put into words. It can bring compassion, imagination, and a sense of connection to a reading. Pisces may point toward a creative impulse, a need for quiet, or a feeling that deserves gentle attention.',
+        'Sensitivity needs a workable container. Without clear limits, Pisces can absorb burdens that belong elsewhere or mistake hope for a settled reality. Rest, honest questions, and practical acts of care help its empathy remain generous and grounded.'
+      ]
+    }
   ];
   window.ZODIAC_SIGN_MEANINGS = ZODIAC_SIGN_MEANINGS;
   const TEXT_VARIATION = '\uFE0E';

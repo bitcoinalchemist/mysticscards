@@ -5,7 +5,7 @@
  * PRECACHE lists every deployed file.
  */
 // Cache-key bump on every deployed change.
-const CACHE = 'mysticscards-459';
+const CACHE = 'mysticscards-465';
 const PRECACHE = [
   './',
   'index.html',

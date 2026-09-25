@@ -313,6 +313,38 @@
         input.click();
       }
     });
+    root.addEventListener('input', function (ev) {
+      const form = ev.target.closest('[data-it-birthday-form]');
+      if (!form) return;
+      form.elements.day.setCustomValidity('');
+      if (ev.target.name === 'year' && ev.target.value.length === 4 &&
+          form.elements.day.value && form.elements.month.value) {
+        form.requestSubmit();
+      }
+    });
+    root.addEventListener('submit', function (ev) {
+      const form = ev.target.closest('[data-it-birthday-form]');
+      if (!form) return;
+      ev.preventDefault();
+      form.elements.day.setCustomValidity('');
+      if (!form.reportValidity()) return;
+      const year = Number(form.elements.year.value);
+      const month = Number(form.elements.month.value);
+      const day = Number(form.elements.day.value);
+      const daysInMonth = [0, 31, (year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0)) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+      if (year < 1 || year > 9999 || month < 1 || month > 12 || day < 1 || day > daysInMonth[month]) {
+        form.elements.day.setCustomValidity('Enter a valid birthday.');
+        form.elements.day.reportValidity();
+        return;
+      }
+      form.elements.day.setCustomValidity('');
+      if (typeof window.loadDateInFinder === 'function') {
+        window.loadDateInFinder(month, day, 'self', {
+          year: year,
+          birthDetails: { year: year, month: month, day: day }
+        });
+      }
+    });
     root.addEventListener('keydown', function (ev) {
       if (ev.key !== 'Escape') return;
       const openMenu = root.querySelector('.it-favorites:not([hidden]), .it-date-favorites:not([hidden])');
@@ -473,12 +505,6 @@
     <p class="it-empty-note">Add a <b>DD/MM</b>, load a contact, or pick a calendar date to see the age-based cycle cards for this selection.</p>`;
   }
 
-  function missingYearHTML() {
-    return `<p class="it-lede">Cycles needs the birth year to calculate age-based cards.</p>
-    <p class="it-empty-note">Load a saved contact with a birth year to see personal cycles.</p>
-    <button type="button" data-it-open-favorites>Open contacts</button>`;
-  }
-
   // Build the 45-card displacement wheel from the same relationship mapping
   // used in Life Script. Following the displaced-by link from J♦ gives the
   // printed order J♦ → J♣ → 10♥ and returns to J♦ after all 45 cards.
@@ -517,19 +543,39 @@
       <title id="itWheelTitle">45-card displacement wheel</title>
       <desc id="itWheelDescription">A circle of 45 cards ordered by displacement relationships. The seven fixed and semi-fixed cards are excluded.</desc>
       <circle class="it-wheel-orbit" cx="${center}" cy="${center}" r="${radius}" />
-      <circle class="it-wheel-core" cx="${center}" cy="${center}" r="93" />
-      <text class="it-wheel-center-prompt" x="${center}" text-anchor="middle">
-        <tspan x="${center}" y="${center - 15}">Choose a birthday</tspan>
-        <tspan x="${center}" y="${center}">in Finder to reveal</tspan>
-        <tspan x="${center}" y="${center + 15}">your personal cycles.</tspan>
-      </text>
       ${cardMarkup}
     </svg>`;
+  }
+
+  function renderWheelCenter(date) {
+    const host = document.getElementById('itWheelCenter');
+    if (!host) return;
+    const day = date ? String(date.d).padStart(2, '0') : '';
+    const month = date ? String(date.m).padStart(2, '0') : '';
+    const year = date && Number.isInteger(date.year) ? String(date.year).padStart(4, '0') : '';
+    host.innerHTML = `<form class="it-wheel-date-form" data-it-birthday-form>
+      <div class="finder-datepair it-wheel-datepair" role="group" aria-label="Birthday">
+        <label class="finder-select-wrap"><input class="finder-select finder-day-input" name="day" type="text" inputmode="numeric" pattern="[0-9]{1,2}" maxlength="2" placeholder="DD" value="${day}" aria-label="Birth day" required></label>
+        <span class="finder-datepair-slash" aria-hidden="true">/</span>
+        <label class="finder-select-wrap"><input class="finder-select finder-day-input" name="month" type="text" inputmode="numeric" pattern="[0-9]{1,2}" maxlength="2" placeholder="MM" value="${month}" aria-label="Birth month" required></label>
+        <span class="finder-datepair-slash" aria-hidden="true">/</span>
+        <label class="finder-select-wrap it-wheel-year-wrap"><input class="finder-select finder-day-input" name="year" type="text" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="YYYY" value="${year}" aria-label="Birth year" required></label>
+      </div>
+    </form>`;
+  }
+
+  function birthdayPillHTML(date) {
+    if (!date || !Number.isInteger(date.year)) return '';
+    const day = String(date.d).padStart(2, '0');
+    const month = String(date.m).padStart(2, '0');
+    const year = String(date.year).padStart(4, '0');
+    return `<div class="it-birthday-top" role="group" aria-label="Birth date"><span>${day}/${month}/${year}</span></div>`;
   }
 
   function initDisplacementWheel() {
     const host = document.getElementById('itDisplacementWheel');
     if (host) host.innerHTML = displacementWheelSVG();
+    renderWheelCenter(readFinderDate());
     renderCycleFavorites();
   }
 
@@ -680,7 +726,7 @@
     if (viewLbYear - birthYear < 0) {
       // Scrolled to before this birth date — nothing to compute, but keep
       // the nav bar live so the reader can scroll back into range.
-      return `<p class="it-lede">That date is before this birthday.</p>
+      return `${birthdayPillHTML(date)}<p class="it-lede">That date is before this birthday.</p>
       ${dateNavHTML()}`;
     }
 
@@ -760,7 +806,8 @@
       </div>`;
     }).join('');
 
-    return `${dateNavHTML()}
+    return `${birthdayPillHTML(date)}
+    ${dateNavHTML()}
     <div class="it-row-wrap">
       <div class="it-row">${rowHTML}</div>
       ${thirteenYearSequenceHTML(birthIdx, tSpread, tPos, tCycleStart)}
@@ -778,16 +825,24 @@
     if (!root) return false;
     renderCycleFavorites();
     const inner = root.querySelector('.it-inner') || root;
-    root.classList.remove('is-empty');
     _lastCard = card || null;
-    if (!card || card.suit === 'joker' || !readFinderDate()) {
+    const date = readFinderDate();
+    if (!card || card.suit === 'joker' || !date || !Number.isInteger(date.year)) {
       _activeCards = [];
       root.classList.add('is-empty');
       inner.innerHTML = '';
+      renderWheelCenter(date);
       return false;
     }
+    root.classList.remove('is-empty');
     const html = panelHTML(card);
-    if (!html) { _activeCards = []; root.classList.add('is-empty'); inner.innerHTML = ''; return false; }
+    if (!html) {
+      _activeCards = [];
+      root.classList.add('is-empty');
+      inner.innerHTML = '';
+      renderWheelCenter(date);
+      return false;
+    }
     const focused = document.activeElement;
     let focusSelector = null;
     if (focused && inner.contains(focused)) {
