@@ -229,8 +229,6 @@
           <button class="it-date-today${isViewingToday() ? '' : ' visible'}" type="button" title="Reset to today">↻ Today</button>
         </div>
       </div>
-      <button class="it-date-favorites-toggle" type="button" data-it-favorites-toggle data-it-date-favorites-toggle aria-label="Show favourite birthdays" aria-expanded="false" aria-controls="itDateFavorites">☆</button>
-      <div class="it-date-favorites" id="itDateFavorites" aria-label="Favourite birthdays" hidden>${favoriteListHTML()}</div>
       <input class="it-date-input" type="date" tabindex="-1" aria-hidden="true" value="${isoFromMs(viewDate)}" />
     </div>`;
   }
@@ -255,7 +253,28 @@
         }
       });
     }
+    function selectBirthdayInput(input) {
+      if (document.activeElement !== input) return;
+      window.requestAnimationFrame(function () {
+        if (document.activeElement === input) input.select();
+      });
+    }
+    root.addEventListener('focusin', function (ev) {
+      const input = ev.target.closest('[data-it-birthday-form] input');
+      if (input) selectBirthdayInput(input);
+    });
+    root.addEventListener('pointerup', function (ev) {
+      const input = ev.target.closest('[data-it-birthday-form] input');
+      if (!input) return;
+      ev.preventDefault();
+      selectBirthdayInput(input);
+    });
     root.addEventListener('click', function (ev) {
+      const birthdayInput = ev.target.closest('[data-it-birthday-form] input');
+      if (birthdayInput) {
+        selectBirthdayInput(birthdayInput);
+        return;
+      }
       const favoritesToggle = ev.target.closest('[data-it-favorites-toggle]');
       if (favoritesToggle) {
         const favorites = document.getElementById(favoritesToggle.getAttribute('aria-controls'));
@@ -317,9 +336,28 @@
       const form = ev.target.closest('[data-it-birthday-form]');
       if (!form) return;
       form.elements.day.setCustomValidity('');
-      if (ev.target.name === 'year' && ev.target.value.length === 4 &&
+      const atEnd = ev.target.selectionStart === ev.target.value.length;
+      if (atEnd && ev.target.name === 'day' && ev.target.value.length === 2) {
+        form.elements.month.focus({ preventScroll: true });
+      } else if (atEnd && ev.target.name === 'month' && ev.target.value.length === 2) {
+        form.elements.year.focus({ preventScroll: true });
+      } else if (ev.target.name === 'year' && ev.target.value.length === 4 &&
           form.elements.day.value && form.elements.month.value) {
         form.requestSubmit();
+      }
+    });
+    root.addEventListener('keydown', function (ev) {
+      const input = ev.target.closest('[data-it-birthday-form] input');
+      if (!input) return;
+      if (ev.key === '/') {
+        ev.preventDefault();
+        if (input.value && input.name !== 'year') {
+          const next = input.name === 'day' ? input.form.elements.month : input.form.elements.year;
+          next.focus({ preventScroll: true });
+        }
+      } else if (ev.key === 'Enter') {
+        ev.preventDefault();
+        input.form.requestSubmit();
       }
     });
     root.addEventListener('submit', function (ev) {
@@ -547,13 +585,11 @@
     </svg>`;
   }
 
-  function renderWheelCenter(date) {
-    const host = document.getElementById('itWheelCenter');
-    if (!host) return;
+  function birthdayFormHTML(date, formClass) {
     const day = date ? String(date.d).padStart(2, '0') : '';
     const month = date ? String(date.m).padStart(2, '0') : '';
     const year = date && Number.isInteger(date.year) ? String(date.year).padStart(4, '0') : '';
-    host.innerHTML = `<form class="it-wheel-date-form" data-it-birthday-form>
+    return `<form class="${formClass}" data-it-birthday-form>
       <div class="finder-datepair it-wheel-datepair" role="group" aria-label="Birthday">
         <label class="finder-select-wrap"><input class="finder-select finder-day-input" name="day" type="text" inputmode="numeric" pattern="[0-9]{1,2}" maxlength="2" placeholder="DD" value="${day}" aria-label="Birth day" required></label>
         <span class="finder-datepair-slash" aria-hidden="true">/</span>
@@ -564,12 +600,18 @@
     </form>`;
   }
 
+  function renderWheelCenter(date) {
+    const host = document.getElementById('itWheelCenter');
+    if (host) host.innerHTML = birthdayFormHTML(date, 'it-wheel-date-form');
+  }
+
   function birthdayPillHTML(date) {
     if (!date || !Number.isInteger(date.year)) return '';
-    const day = String(date.d).padStart(2, '0');
-    const month = String(date.m).padStart(2, '0');
-    const year = String(date.year).padStart(4, '0');
-    return `<div class="it-birthday-top" role="group" aria-label="Birth date"><span>${day}/${month}/${year}</span></div>`;
+    return `<div class="it-birthday-row">
+      ${birthdayFormHTML(date, 'it-birthday-top')}
+      <button class="it-date-favorites-toggle" type="button" data-it-favorites-toggle data-it-date-favorites-toggle aria-label="Show favourite birthdays" aria-expanded="false" aria-controls="itDateFavorites">☆</button>
+      <div class="it-date-favorites" id="itDateFavorites" aria-label="Favourite birthdays" hidden>${favoriteListHTML()}</div>
+    </div>`;
   }
 
   function initDisplacementWheel() {
@@ -852,6 +894,9 @@
       ['it-date-label', 'it-date-input', 'it-date-today'].forEach(function (name) {
         if (focused.classList.contains(name)) focusSelector = '.' + name;
       });
+      if (focused.closest('[data-it-birthday-form]') && focused.name) {
+        focusSelector = '[data-it-birthday-form] [name="' + focused.name + '"]';
+      }
     }
     inner.innerHTML = html;
     if (focusSelector) {
