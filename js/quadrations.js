@@ -60,6 +60,17 @@
     setButtonState(document.getElementById('qAlt'), on);
   }
 
+  function qSetReadLtr(on, persist) {
+    const grid = document.getElementById('annualGrid');
+    if (grid) grid.classList.toggle('sl-reading-ltr', !!on);
+    setButtonState(document.getElementById('qReadLtr'), !!on);
+    if (persist) {
+      CardsStore.setQuadReadLtr(!!on);
+      if (typeof window.refreshLifeScriptDirection === 'function') window.refreshLifeScriptDirection();
+      if (typeof window.refreshInTime === 'function') window.refreshInTime();
+    }
+  }
+
   function syncSpreadLabel(age) {
     const el = document.getElementById('qModeCurrent');
     if (!el) return;
@@ -106,6 +117,10 @@
     qSyncAltBtn(on);
     CardsStore.setQuadAlt(on);
   }
+  function qToggleReadLtr() {
+    const grid = document.getElementById('annualGrid');
+    qSetReadLtr(!(grid && grid.classList.contains('sl-reading-ltr')), true);
+  }
   function restoreQuadToggles() {
     if (CardsStore.getQuadAlt()) {
       document.body.classList.add('pips-only');
@@ -113,11 +128,14 @@
     }
     const mode = CardsStore.getQuadSolar() ? 'solar' : (CardsStore.getQuadDisp() ? 'displacements' : 'none');
     qSetDisplayMode(mode, false);
+    qSetReadLtr(CardsStore.getQuadReadLtr(), false);
   }
 
   function wireDelegatedControls() {
     const alt = document.getElementById('qAlt');
     if (alt) alt.addEventListener('click', qToggleAltCourts);
+    const readLtr = document.getElementById('qReadLtr');
+    if (readLtr) readLtr.addEventListener('click', qToggleReadLtr);
     const solar = document.getElementById('qSolar');
     if (solar) solar.addEventListener('click', qToggleSolar);
     const disp = document.getElementById('qDisp');

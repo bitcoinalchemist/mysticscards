@@ -739,6 +739,8 @@ body.starry .site-header.scrolled {
   max-width: var(--reading-max-w);
   margin: 0 auto;
 }
+.spread-grid.sl-reading-ltr { direction: rtl; }
+.spread-grid.sl-reading-ltr .sl-seat { direction: ltr; }
 .spread-col-label {
   text-align: center; font-size: 1.5rem;
   color: var(--text-muted); padding-top: .4rem; line-height: 1;
@@ -1100,9 +1102,12 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
   grid-column: 2;
   gap: .15rem;
   padding: 0;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: var(--surface);
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03)),
+    rgba(17,12,33,.38);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 8px 24px rgba(0,0,0,.16);
 }
 .q-chart-age .age-btn,
 .q-chart-age .age-input { min-height: var(--tap-target); height: var(--tap-target); }
@@ -1136,7 +1141,9 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
   padding: 0;
   border: 1px solid var(--border);
   border-radius: 50%;
-  background: var(--surface);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03)),
+    rgba(17,12,33,.38);
   color: var(--secondary);
   cursor: pointer;
   transition: border-color var(--ease), color var(--ease), background var(--ease);
@@ -1538,9 +1545,10 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
   margin: 0 auto;
   padding: 0 0 7rem;
 }
-.app-view[data-app-view="cycles"] { padding-top: .75rem; }
+.app-view[data-app-view="cycles"] { padding-top: .75rem; padding-bottom: 0; }
 .app-view[data-app-view="cycles"].finder-intime { margin-top: 0; }
 .app-view[data-app-view="info"] { padding-top: .75rem; }
+.app-view[data-app-view="quadrations"] { padding-bottom: 0; }
 .app-view[data-app-view="quadrations"] .spread-wrap { padding-top: .5rem; }
 .finder-reading-panel[hidden] { display: none; }
 .finder-card-map { color: var(--text); }
@@ -1926,16 +1934,6 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
   margin: 0 auto;
   padding-top: .55rem;
 }
-.finder-modern-action-label {
-  display: inline-flex;
-  align-items: center;
-  min-height: var(--tap-target);
-  padding: .35rem .6rem;
-  color: var(--gold-ink);
-  font: 600 .64rem/1 var(--sans);
-  letter-spacing: .1em;
-  text-transform: uppercase;
-}
 .finder-modern-action-btn {
   display: inline-flex;
   align-items: center;
@@ -1954,6 +1952,14 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
 .finder-modern-action-btn:hover { color: var(--gold); }
 .finder-modern-action-btn.is-active { color: var(--gold); }
 .finder-modern-action-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: var(--r-sm); }
+.finder-modern-details {
+  width: 100%;
+  margin-top: .15rem;
+  padding: .65rem .9rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+.finder-modern-details[hidden] { display: none; }
 .finder-about.is-joker .finder-modern-actions,
 .finder-about.is-relationship .finder-modern-actions { display: none; }
 .finder-modern-yenlo {
@@ -3159,6 +3165,7 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
    Selecting a cycle opens its reading inline; controls move between
    available readings in the viewed timeline. */
 .finder-intime {
+  --finder-tool-size: var(--tap-target);
   margin-top: var(--about-section-gap, var(--space-5));
   color: var(--secondary);
 }
@@ -3177,21 +3184,19 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
 }
 .it-date-favorites[hidden] { display: none; }
 .it-date-favorites:not([hidden]) {
-  position: absolute;
-  z-index: 5;
-  top: calc(100% - .15rem);
-  left: 50%;
   display: grid;
   gap: .25rem;
-  width: min(20rem, calc(100% - 1rem));
+  width: min(30rem, 100%);
+  margin: -.15rem auto .55rem;
   max-height: min(14rem, 48vh);
   overflow: auto;
   padding: .45rem;
   border: 1px solid var(--border);
   border-radius: var(--r-md);
-  background: var(--surface);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03)),
+    var(--bg);
   box-shadow: var(--sh-md);
-  transform: translateX(-50%);
 }
 .it-displacement-figure { position: relative; width: min(100%, 34rem); margin: .25rem auto 0; }
 .it-displacement-wheel { width: 100%; }
@@ -3208,8 +3213,8 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
   left: 50%;
   display: grid;
   place-items: center;
-  width: 2rem;
-  height: 2rem;
+  width: var(--finder-tool-size);
+  height: var(--finder-tool-size);
   padding: 0;
   border: 1px solid var(--border);
   border-radius: 50%;
@@ -3229,8 +3234,8 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
   z-index: 3;
   display: grid;
   place-items: center;
-  width: 2rem;
-  height: 2rem;
+  width: var(--finder-tool-size);
+  height: var(--finder-tool-size);
   padding: 0;
   border: 1px solid var(--border);
   border-radius: 50%;
@@ -3238,6 +3243,29 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
   color: var(--gold-ink);
   cursor: pointer;
   font: 1.1rem/1 var(--serif);
+  transform: translateY(-50%);
+}
+.it-date-action-btn {
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--secondary);
+  cursor: pointer;
+  transition: border-color var(--ease), color var(--ease), background var(--ease);
+}
+.it-date-action-btn:hover,
+.it-date-action-btn.is-active { border-color: var(--gold); color: var(--gold); background: rgba(199,154,84,.1); }
+.it-date-action-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.it-date-action-btn svg { width: 1rem; height: 1rem; }
+.it-date-share-toggle {
+  position: absolute;
+  inset: 50% .2rem auto auto;
+  z-index: 3;
+  width: var(--finder-tool-size);
+  height: var(--finder-tool-size);
+  padding: 0;
   transform: translateY(-50%);
 }
 .it-date-favorites-toggle:hover,

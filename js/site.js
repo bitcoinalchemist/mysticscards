@@ -157,6 +157,9 @@
     buttons.forEach(function (button) {
       button.addEventListener('click', function () { window.showAppView(button.dataset.dockTarget); });
     });
+    if (new URLSearchParams(window.location.search).get('view') === 'cycles') {
+      window.showAppView('cycles');
+    }
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initUtilityDock);
   else initUtilityDock();

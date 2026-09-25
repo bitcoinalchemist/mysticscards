@@ -30,6 +30,7 @@
 //     resolves the active birthday-to-birthday Yearly card for a saved birth.
 //   window.yearlyCycleAgesForCard(card, targetCard[, maxAge]) — age-based
 //     Yearly-card recurrences, used by relationship connections.
+//   Cycles share links preserve the complete birth date and viewed date.
 
 (function () {
   'use strict';
@@ -85,6 +86,15 @@
   // renderInTime so the date controls (which don't get a card reference
   // themselves) can trigger a re-render.
   let viewDate = localMidnight(new Date());
+  (function restoreSharedViewDate() {
+    const value = new URLSearchParams(window.location.search).get('cy');
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value || '');
+    if (!match) return;
+    const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+    if (date.getFullYear() === Number(match[1]) && date.getMonth() === Number(match[2]) - 1 && date.getDate() === Number(match[3])) {
+      viewDate = localMidnight(date);
+    }
+  })();
   let _lastCard = null;
   let _activeLabel = IT_DEFAULT_FOCUS;
   let _activeCards = [];
@@ -134,6 +144,43 @@
       birthDetails: { year: Number(entry.year), month: Number(entry.month), day: Number(entry.day) }
     });
   }
+  function cyclesShareUrl() {
+    const birth = readFinderDate();
+    const url = new URL(window.location.href);
+    url.hash = '';
+    ['m', 'd', 'y', 'rel', 'pm', 'pd', 'card', 'view', 'cy'].forEach(function (key) { url.searchParams.delete(key); });
+    if (birth && Number.isInteger(birth.year)) {
+      url.searchParams.set('m', String(birth.m));
+      url.searchParams.set('d', String(birth.d));
+      url.searchParams.set('y', String(birth.year));
+      url.searchParams.set('view', 'cycles');
+      url.searchParams.set('cy', isoFromMs(viewDate));
+    }
+    return url.toString();
+  }
+  function shareCycles() {
+    const url = cyclesShareUrl();
+    const birth = readFinderDate();
+    const title = 'Mystics Cards Cycles';
+    const text = birth ? `Cycles for ${String(birth.d).padStart(2, '0')}/${String(birth.m).padStart(2, '0')}/${birth.year} on mysticscards.space` : 'Mystics Cards Cycles on mysticscards.space';
+    const button = document.querySelector('[data-it-share]');
+    function copied() {
+      if (!button) return;
+      button.setAttribute('title', 'Link copied');
+      button.classList.add('is-active');
+      window.setTimeout(function () {
+        button.setAttribute('title', 'Share Cycles link');
+        button.classList.remove('is-active');
+      }, 1400);
+    }
+    if (navigator.share) {
+      navigator.share({ title: title, text: text, url: url }).catch(function () {});
+    } else if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(copied).catch(function () { window.prompt('Copy this Cycles link:', url); });
+    } else {
+      window.prompt('Copy this Cycles link:', url);
+    }
+  }
   function isoFromMs(ms) {
     const d = new Date(ms);
     const y = d.getFullYear();
@@ -149,6 +196,15 @@
   function setViewDate(ms) {
     viewDate = localMidnight(new Date(ms));
     renderInTime(_lastCard);
+  }
+  function cyclesReadLeftToRight() {
+    return !!(window.CardsStore && typeof window.CardsStore.getQuadReadLtr === 'function' && window.CardsStore.getQuadReadLtr());
+  }
+  function cycleSequenceOrder() {
+    return cyclesReadLeftToRight() ? [0, 1, 2, 3, 4, 5, 6] : [6, 5, 4, 3, 2, 1, 0];
+  }
+  function cycleGestureDirection(direction) {
+    return cyclesReadLeftToRight() ? -direction : direction;
   }
   function setActiveFocus(label, options) {
     options = options || {};
@@ -270,6 +326,10 @@
       selectBirthdayInput(input);
     });
     root.addEventListener('click', function (ev) {
+      if (ev.target.closest('[data-it-share]')) {
+        shareCycles();
+        return;
+      }
       const birthdayInput = ev.target.closest('[data-it-birthday-form] input');
       if (birthdayInput) {
         selectBirthdayInput(birthdayInput);
@@ -413,7 +473,7 @@
       const dy = ev.changedTouches[0].clientY - readingTouch.y;
       readingTouch = null;
       if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.4) {
-        shiftActiveHorizon(dx < 0 ? 1 : -1);
+        shiftActiveHorizon(cycleGestureDirection(dx < 0 ? -1 : 1));
       }
     }, { passive: true });
     root.addEventListener('wheel', function (ev) {
@@ -436,7 +496,7 @@
       if (!readingWheelUsed && Math.abs(readingWheelTotal) >= 32) {
         readingWheelUsed = true;
         readingWheelDirection = Math.sign(readingWheelTotal);
-        shiftActiveHorizon(readingWheelTotal > 0 ? 1 : -1);
+        shiftActiveHorizon(cycleGestureDirection(readingWheelTotal > 0 ? -1 : 1));
       }
       if (readingWheelTimer !== null) window.clearTimeout(readingWheelTimer);
       readingWheelTimer = window.setTimeout(function () {
@@ -609,9 +669,10 @@
     if (!date || !Number.isInteger(date.year)) return '';
     return `<div class="it-birthday-row">
       ${birthdayFormHTML(date, 'it-birthday-top')}
-      <button class="it-date-favorites-toggle" type="button" data-it-favorites-toggle data-it-date-favorites-toggle aria-label="Show favourite birthdays" aria-expanded="false" aria-controls="itDateFavorites">☆</button>
-      <div class="it-date-favorites" id="itDateFavorites" aria-label="Favourite birthdays" hidden>${favoriteListHTML()}</div>
-    </div>`;
+      <button class="it-date-action-btn it-date-favorites-toggle" type="button" data-it-favorites-toggle data-it-date-favorites-toggle aria-label="Show favourite birthdays" aria-expanded="false" aria-controls="itDateFavorites">☆</button>
+      <button class="it-date-action-btn it-date-share-toggle" type="button" data-it-share title="Share Cycles link" aria-label="Share Cycles link"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="5" cy="8" r="1.55" stroke="currentColor" stroke-width="1.4"/><circle cx="11.5" cy="4" r="1.55" stroke="currentColor" stroke-width="1.4"/><circle cx="11.5" cy="12" r="1.55" stroke="currentColor" stroke-width="1.4"/><path d="M6.35 7.2l3.75-2.3M6.35 8.8l3.75 2.3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></button>
+    </div>
+    <div class="it-date-favorites" id="itDateFavorites" aria-label="Favourite birthdays" hidden>${favoriteListHTML()}</div>`;
   }
 
   function initDisplacementWheel() {
@@ -679,10 +740,10 @@
   function fiftyTwoDaySequenceHTML(birthIdx, spreadIdx, activePos, cycleStartMs) {
     if (!_expandedCycleRows['52-day']) return '';
     const cards = [];
-    for (let i = 6; i >= 0; i--) {
+    cycleSequenceOrder().forEach(function (i) {
       const startMs = addCalendarDays(cycleStartMs, i * 52);
       cards.push(cycleSequenceCardHTML(pcReadCard(spreadIdx, birthIdx, i), SPREAD_PLANETS[i], i === activePos, startMs, 'current 52-Day card'));
-    }
+    });
     return `<div class="it-sequence" id="itSequence52" aria-label="All seven 52-Day cycle cards">
       ${cards.join('')}
     </div>`;
@@ -691,9 +752,9 @@
   function yearlySequenceHTML(birthIdx, spreadIdx, activePos, firstAge) {
     if (!_expandedCycleRows.yearly) return '';
     const cards = [];
-    for (let i = 6; i >= 0; i--) {
+    cycleSequenceOrder().forEach(function (i) {
       cards.push(cycleSequenceCardHTML(pcReadCard(spreadIdx, birthIdx, i), SPREAD_PLANETS[i], i === activePos, 'age ' + (firstAge + i), 'current Yearly card'));
-    }
+    });
     return `<div class="it-sequence" id="itSequenceYearly" aria-label="All seven Yearly cycle cards">
       ${cards.join('')}
     </div>`;
@@ -702,10 +763,10 @@
   function sevenYearSequenceHTML(birthIdx, spreadIdx, activePos, firstAge) {
     if (!_expandedCycleRows['7-year']) return '';
     const cards = [];
-    for (let i = 6; i >= 0; i--) {
+    cycleSequenceOrder().forEach(function (i) {
       const start = firstAge + (i * 7);
       cards.push(cycleSequenceCardHTML(pcReadCard(spreadIdx, birthIdx, i), SPREAD_PLANETS[i], i === activePos, 'age ' + start + '-' + (start + 6), 'current 7-Year card'));
-    }
+    });
     return `<div class="it-sequence" id="itSequence7Year" aria-label="All seven 7-Year cycle cards">
       ${cards.join('')}
     </div>`;
@@ -714,10 +775,10 @@
   function thirteenYearSequenceHTML(birthIdx, spreadIdx, activePos, firstAge) {
     if (!_expandedCycleRows['13-year']) return '';
     const cards = [];
-    for (let i = 6; i >= 0; i--) {
+    cycleSequenceOrder().forEach(function (i) {
       const start = firstAge + (i * 13);
       cards.push(cycleSequenceCardHTML(pcReadCard(spreadIdx, birthIdx, i), SPREAD_PLANETS[i], i === activePos, 'age ' + start + '-' + (start + 12), 'current 13-Year card'));
-    }
+    });
     return `<div class="it-sequence" id="itSequence13Year" aria-label="All seven 13-Year cycle cards">
       ${cards.join('')}
     </div>`;
@@ -726,10 +787,10 @@
   function dailySequenceHTML(birthIdx, spreadIdx, activePos, cycleStartMs) {
     if (!_expandedCycleRows.daily) return '';
     const cards = [];
-    for (let i = 6; i >= 0; i--) {
+    cycleSequenceOrder().forEach(function (i) {
       const dayMs = addCalendarDays(cycleStartMs, i);
       cards.push(cycleSequenceCardHTML(pcReadCard(spreadIdx, birthIdx, i), SPREAD_PLANETS[i], i === activePos, compactDate(dayMs), 'current Daily card'));
-    }
+    });
     return `<div class="it-sequence" id="itSequenceDaily" aria-label="All seven Daily cycle cards">
       ${cards.join('')}
     </div>`;

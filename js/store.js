@@ -17,6 +17,7 @@
   var K_DISP   = 'mysticscards_showDisp';
   var K_SOLAR  = 'mysticscards_showSolarValues';
   var K_QSIZE  = 'mysticscards_quadSize';
+  var K_QREADLTR = 'mysticscards_quadReadLtr';
   var K_BIRTHS = 'mysticscards_births';
   var K_CONTACT_TAGS = 'mysticscards_contactTags';
   var K_PRC_SYSTEM = 'mysticscards_prcSystem';
@@ -33,6 +34,8 @@
       return Number.isFinite(size) ? size : 100;
     },
     setQuadSize: function (size) { _set(K_QSIZE, String(size)); },
+    getQuadReadLtr: function () { return _flag(K_QREADLTR); },
+    setQuadReadLtr: function (on) { _setFlag(K_QREADLTR, on); },
     getPrcSystem: function () {
       return _getCompat(K_PRC_SYSTEM) === 'sidereal' ? 'sidereal' : 'tropical';
     },

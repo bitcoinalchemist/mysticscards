@@ -27,6 +27,7 @@
   'use strict';
 
   const SUIT_FROM_SYM = { '♥':'hearts', '♦':'diamonds', '♣':'clubs', '♠':'spades' };
+  let _renderedLifeScriptCard = null;
   // Primary sign rulers use modern outer-planet rulerships. The decan
   // tables below intentionally retain their classical/traditional system.
   const ZODIAC = [
@@ -233,7 +234,7 @@
   }
 
   function readsLeftToRight() {
-    return false;
+    return !!(window.CardsStore && typeof window.CardsStore.getQuadReadLtr === 'function' && window.CardsStore.getQuadReadLtr());
   }
 
   function dateNumber(month, day) {
@@ -1216,6 +1217,7 @@
   }
 
   function renderLifeScript(card) {
+    _renderedLifeScriptCard = card || null;
     clearAboutLifeScript();
     if (!card) return false;
     // Joker has its own prose note, which now lives in About with the rest
@@ -1237,6 +1239,12 @@
     bindPrcTabs(aboutCardology);
     bindLifeScriptCardClicks(aboutCardology);
     return true;
+  }
+
+  function refreshLifeScriptDirection() {
+    const about = document.getElementById('fAbout');
+    if (!about || about.classList.contains('is-relationship') || !_renderedLifeScriptCard) return;
+    renderLifeScript(_renderedLifeScriptCard);
   }
 
   function trimLifeDetailsForRelationship() {
@@ -2127,6 +2135,7 @@
   }
 
   window.renderLifeScript = renderLifeScript;
+  window.refreshLifeScriptDirection = refreshLifeScriptDirection;
   window.trimLifeDetailsForRelationship = trimLifeDetailsForRelationship;
   window.renderRelationshipConnections = renderRelationshipConnections;
   window.calculateRelationshipConnections = calculateRelationshipConnections;

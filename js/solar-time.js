@@ -318,6 +318,7 @@
     populateZones();
     var button = el('fSolarToggle');
     function setOpen(open) {
+      if (open && typeof window.closeFinderDetailPanels === 'function') window.closeFinderDetailPanels('solar');
       panel.hidden = !open;
       panel.classList.toggle('open', open);
       if (button) {

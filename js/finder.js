@@ -565,11 +565,21 @@
     const params = new URLSearchParams(window.location.search);
     const m = parseInt(params.get('m') || '', 10);
     const d = parseInt(params.get('d') || '', 10);
+    const y = parseInt(params.get('y') || '', 10);
     const pm = parseInt(params.get('pm') || '', 10);
     const pd = parseInt(params.get('pd') || '', 10);
     const card = parseInt(params.get('card') || '', 10);
     if (m && d && m >= 1 && m <= 12 && d >= 1 && d <= DAYS_IN_MONTH[m]) {
       syncSlotDate(dom.you, m, d);
+      if (Number.isInteger(y) && y >= 1 && y <= 9999) {
+        const daysInMonth = m === 2 && (y % 4 === 0 && (y % 100 !== 0 || y % 400 === 0)) ? 29 : DAYS_IN_MONTH[m];
+        if (d <= daysInMonth) {
+          _finderBirthYear = y;
+          window.finderBirthYear = y;
+          _finderBirthDetails = { year: y, month: m, day: d };
+          window.finderBirthDetails = _finderBirthDetails;
+        }
+      }
     }
     if (params.get('rel') === '1' && pm && pd && pm >= 1 && pm <= 12 && pd >= 1 && pd <= DAYS_IN_MONTH[pm]) {
       setRelationshipMode(true);
@@ -769,6 +779,18 @@
            `
         : '';
       box.facts.hidden = !suit;
+      const detailsPanel = document.getElementById('fDetailsPanel');
+      const detailsButton = document.getElementById('fDetailsToggle');
+      if (!suit) {
+        if (detailsPanel) detailsPanel.hidden = true;
+        if (detailsButton) {
+          detailsButton.disabled = true;
+          detailsButton.classList.remove('is-active');
+          detailsButton.setAttribute('aria-expanded', 'false');
+        }
+      } else if (detailsButton) {
+        detailsButton.disabled = false;
+      }
     }
     if (box.suit) {
       const suit = !rel && card.suit !== 'joker' ? SUIT_READINGS[card.suit] : null;
@@ -1348,17 +1370,47 @@
   window.finderBirthDetails = _finderBirthDetails;
   window.finderPartnerBirthDetails = _finderPartnerBirthDetails;
   window.finderBirthYear = _finderBirthYear;
+  // Finder disclosure API: closeFinderDetailPanels(except) closes the three
+  // mutually exclusive Details, Solar Time, and Yenlo panels except `except`.
   // Small read-only helpers the new finder-adjacent modules (birthdays,
   // calendar, solar-value calculator) need but that otherwise live only in
   // this file's closure.
   window.solarValue    = solarValue;
   window.MONTH_NAMES   = MONTH_NAMES;
   window.DAYS_IN_MONTH = DAYS_IN_MONTH;
+  window.closeFinderDetailPanels = function (except) {
+    if (except !== 'details') {
+      const panel = document.getElementById('fDetailsPanel');
+      const button = document.getElementById('fDetailsToggle');
+      if (panel) panel.hidden = true;
+      if (button) {
+        button.classList.remove('is-active');
+        button.setAttribute('aria-expanded', 'false');
+      }
+    }
+    if (except !== 'solar') {
+      const button = document.getElementById('fSolarToggle');
+      if (button && button.getAttribute('aria-expanded') === 'true') button.click();
+    }
+    if (except !== 'yenlo' && typeof window.resetYenlo === 'function') window.resetYenlo();
+  };
 
   document.addEventListener('DOMContentLoaded', function () {
     dom = cacheDom();
     if (!dom || !dom.you.month || !dom.you.day) return;
     wireReadingTabs();
+
+    const detailsButton = document.getElementById('fDetailsToggle');
+    const detailsPanel = document.getElementById('fDetailsPanel');
+    if (detailsButton && detailsPanel) {
+      detailsButton.addEventListener('click', function () {
+        const open = detailsPanel.hidden;
+        if (open) window.closeFinderDetailPanels('details');
+        detailsPanel.hidden = !open;
+        detailsButton.classList.toggle('is-active', open);
+        detailsButton.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+    }
 
     populateMonth(dom.you.month);
     syncMonthInput(dom.you.month);

@@ -204,6 +204,7 @@
       resetYenlo();
       return;
     }
+    if (typeof window.closeFinderDetailPanels === 'function') window.closeFinderDetailPanels('yenlo');
     root.hidden = false;
     root.dataset.cardKey = `${card.rank}_${card.suit}`;
     button.classList.add('is-active');
