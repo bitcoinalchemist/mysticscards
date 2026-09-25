@@ -22,7 +22,7 @@
   <meta name="twitter:title" content="Mystics Cards - mysticscards.space" />
   <meta name="twitter:description" content="Explore cardology with Mystics Cards: find your birthday cards, Life Script, and cycles." />
   <meta name="twitter:image" content="https://mysticscards.space/assets/og-image.png" />
-  <link rel="stylesheet" href="css/site.css?v=20260923ah" />
+  <link rel="stylesheet" href="css/site.css?v=20260925k" />
 </head>
 <body class="starry bg-enabled">
 <canvas class="stars-bg" aria-hidden="true"></canvas>
@@ -30,17 +30,17 @@
 <script src="js/stardata.js?v=20260908a"></script>
 <script src="js/ambient-motion.js?v=20260909b"></script>
 <script src="js/stars.js?v=20260909b"></script>
-<script src="js/site.js?v=20260923q"></script>
+<script src="js/site.js?v=20260924about"></script>
 <script src="js/store.js?v=20260922a"></script>
 <script src="js/cardsdata.js?v=20260923c"></script>
 <script src="js/relationshipdata.js?v=20260908a"></script>
 <script src="js/castfield.js?v=20260909d"></script>
 <script src="js/spread-grid.js?v=20260923d"></script>
 <script src="js/quadrations.js?v=20260923e"></script>
-<script src="js/finder.js?v=20260923e"></script>
+<script src="js/finder.js?v=20260925a"></script>
 <script src="js/olney.js?v=20260908b"></script>
 <script src="js/tzcoords.js?v=20260917a"></script>
-<script src="js/lifescript.js?v=20260923z"></script>
+<script src="js/lifescript.js?v=20260925e"></script>
 <script src="js/in-time.js?v=20260923f"></script>
 <script src="js/solar-time.js?v=20260922b"></script>
 <script src="js/birthdays.js?v=20260922c"></script>
@@ -64,6 +64,7 @@
   });
 </script>
 <script src="js/planetdata.js?v=20260923a"></script>
+<script src="js/about.js?v=20260925c"></script>
 <main id="main" tabindex="-1">
   <h1 class="vh">Mystics Cards — Cardology</h1>
   <section class="finder page-section section-open" id="finder" aria-labelledby="finderHeading">
@@ -241,7 +242,68 @@
             </div>
           </div>
 
-          <section class="info-inline utility-slide-panel" id="shInfoPanel" aria-label="About" hidden></section>
+          <section class="info-inline utility-slide-panel" id="shInfoPanel" aria-label="About" hidden>
+            <div class="info-inline-content">
+              <section id="infoReference" class="info-panel" aria-label="Reference">
+                <div id="infoReferenceIndex">
+                <h3 id="infoReferenceHeading" class="vh" tabindex="-1">Reference</h3>
+                <ol class="info-start-steps"><li><div><h4>Find a birth card</h4><p>Enter a day and month in Finder to see the birth card, Life Script, and related patterns. Add a second birthday to compare two readings.</p><button class="info-start-action" type="button" data-info-view="finder"><span class="utility-dock-icon utility-dock-icon--finder" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><rect class="finder-icon-side" x="2.5" y="6" width="8" height="13" rx="1" transform="rotate(-8 6.5 12.5)" /><rect class="finder-icon-side" x="13.5" y="6" width="8" height="13" rx="1" transform="rotate(8 17.5 12.5)" /><rect class="finder-icon-main" x="8" y="4" width="8" height="15" rx="1" /><path class="finder-icon-mark" d="M12 8v7M9.5 11.5h5" /></svg></span><span>Finder</span></button></div></li><li><div><h4>Follow its cycles</h4><p>Choose a cycle and move the date to see which card is active. Cycles needs a birth year; load a saved contact with a complete birthday.</p><button class="info-start-action" type="button" data-info-view="cycles"><span class="utility-dock-icon utility-dock-icon--cycles" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M18.2 8.5A7 7 0 0 0 6 5.2" /><path d="M5.8 2.9v2.7h2.7M5.8 15.5A7 7 0 0 0 18 18.8" /><path d="M18.2 21.1v-2.7h-2.7" /></svg></span><span>Cycles</span></button></div></li><li><div><h4>Browse the chart</h4><p>Use Spreads to look up the 52-card Quadration chart. Select options to show Solar Values, displacements, or pips.</p><button class="info-start-action" type="button" data-info-view="quadrations"><span class="utility-dock-icon utility-dock-icon--quad" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><rect x="10" y="3" width="4" height="4" rx=".5" /><rect x="5" y="8" width="4" height="4" rx=".5" /><rect x="10" y="8" width="4" height="4" rx=".5" /><rect x="15" y="8" width="4" height="4" rx=".5" /><rect x="5" y="13" width="4" height="4" rx=".5" /><rect x="10" y="13" width="4" height="4" rx=".5" /><rect x="15" y="13" width="4" height="4" rx=".5" /><rect x="5" y="18" width="4" height="4" rx=".5" /><rect x="10" y="18" width="4" height="4" rx=".5" /><rect x="15" y="18" width="4" height="4" rx=".5" /></svg></span><span>Spreads</span></button></div></li></ol>
+                <h3>Knowledge base</h3><p>Browse meanings for planets, suits, ranks, and zodiac signs.</p>
+                  <div class="info-library info-library--knowledge">
+                    <details class="info-library-guide info-reference-category" data-info-inline-category="planets"><summary data-info-category="planets"><strong>Planets</strong><span>The themes of each position</span></summary><div class="info-kb-group" data-info-category-content="planets"></div></details>
+                    <details class="info-library-guide info-reference-category" data-info-inline-category="suits"><summary data-info-category="suits"><strong>Suits</strong><span>Four domains of experience</span></summary><div class="info-kb-group" data-info-category-content="suits"></div></details>
+                    <details class="info-library-guide info-reference-category" data-info-inline-category="ranks"><summary data-info-category="ranks"><strong>Ranks</strong><span>Ace through King</span></summary><div class="info-kb-group" data-info-category-content="ranks"></div></details>
+                    <details class="info-library-guide info-reference-category" data-info-inline-category="zodiac"><summary data-info-category="zodiac"><strong>Zodiac signs</strong><span>The character of each sign</span></summary><div class="info-kb-group" data-info-category-content="zodiac"></div></details>
+                  </div>
+                <h3>Guides &amp; information</h3><p>Explore how readings and chart tools work, along with practical details and credits.</p>
+                  <div class="info-library">
+                    <details class="info-library-guide"><summary><strong>Build your understanding</strong><span>Birth cards, readings, cycles, and connections</span></summary><div class="info-kb-group">
+                      <h3>What is cardology?</h3><p class="info-lead">Cardology uses a standard deck as a symbolic language for exploring personal themes and cycles.</p>
+                      <p>A birthday identifies a birth card. Its suit and rank offer a starting point; its place in the wider arrangement connects it with other cards. Mystics Cards brings traditional correspondences together with original explanatory writing.</p>
+                      <p class="info-reflection">Readings offer ideas for reflection, not scientific findings or certain predictions.</p>
+                      <details class="info-kb-item"><summary>Your birth card</summary><div><p>Enter a day and month in Finder. Begin with the card’s suit and rank, then explore its full reading and the other cards connected with it.</p></div></details>
+                      <details class="info-kb-item"><summary>Planetary Ruling Cards</summary><div><p>A Planetary Ruling Card (PRC) connects a birthday’s zodiac sign with the playing card associated with that sign’s planetary ruler. The birth card and PRC are related but distinct parts of the reading. In Finder, choose Tropical or Sidereal to view the corresponding sign and ruling card. Scorpio shows both Mars and Pluto as rulers.</p><p>Birthdays near a sign boundary may also show a cusp alternative. Solar Time needs the birth year, time, and place. It estimates longitude from the selected time zone, so treat results near solar midnight as approximate.</p></div></details>
+                      <details class="info-kb-item"><summary>The Life Script</summary><div><p>The Life Script is the seven-card reading linked to a birth card. Each card occupies one of seven planetary positions, from Mercury through Neptune. Each position adds a theme to the reading, and the cards are also considered together as one pattern.</p><p>Finder presents the Life Script with the birth card’s reading. In the Spreads chart, those same seven cards are highlighted within the wider 52-card arrangement.</p></div></details>
+                      <details class="info-kb-item"><summary>Displacements</summary><div><p>A displacement is a relationship between two cards: one occupies the place associated with the other in the Life Script pattern. The displaced card remains part of the pattern; the cards are read together to consider how their themes meet.</p><p>Finder shows the cards a selected card displaces and the card that displaces it. Fixed cards hold their own place and have no separate displacement partner.</p></div></details>
+                      <details class="info-kb-item"><summary>Comparing two people</summary><div><p>Add a second birthday in Finder to explore connections between two readings. Shared cards and chart positions offer different themes to consider together; they do not determine the outcome of a relationship.</p></div></details>
+                      <details class="info-kb-item"><summary>Cycles through time</summary><div><p>Cycles follows the changing card pattern across five horizons: 13-Year, 7-Year, Yearly, 52-Day, and Daily. Each horizon has its own sequence. Select a period and move the viewed date to see which card is active at that point in the timeline. Cycles needs the actual birth year; day and month alone do not determine a person’s age.</p></div></details>
+                    </div></details>
+                    <details class="info-library-guide"><summary><strong>Chart mechanics &amp; correspondences</strong><span>Quadration, calendar, and piano-note correspondences</span></summary><div class="info-kb-group">
+                      <details class="info-kb-item"><summary>Quadration and the 52-card chart</summary><div><p>Quadration is the repeatable rule used to arrange the 52 cards in the chart. Start with Natural Order—Ace through King in Hearts, Clubs, Diamonds, then Spades—and number the positions from 1 to 52. These position numbers are Solar Values. They label places in the chart; they are not times. Applying the same mapping repeatedly produces each successive arrangement.</p><p>Solar Time is a separate Finder tool. It uses the birth date and clock time with a time-zone reference longitude to estimate the local solar day at birth. Near solar midnight, that date can differ from the calendar date and produce a different birth card.</p><p>The mapping is a permutation: every position maps to one position, so no card is lost or duplicated. Its movements form six cycles:</p><ul><li><strong>Three fixed points:</strong> J♥, 8♣, and K♠ stay in place.</li><li><strong>Two alternating pairs:</strong> 2♥ and A♣ exchange places; 9♥ and 7♦ exchange places.</li><li><strong>One 45-card cycle:</strong> the other 45 cards move through the same positions before returning to their starting places.</li></ul><p>The cycle lengths account for the deck: <code>52 = 45 + 2 + 2 + 1 + 1 + 1</code>. The full arrangement repeats after <code>LCM(45, 2) = 90</code> applications. This describes the card movement mathematically; symbolic meanings are a separate layer of interpretation.</p></div></details>
+                      <details class="info-kb-item"><summary>Cards and the calendar</summary><div><p>In this calendar symbolism, the four suits are associated with the year’s four quarters, and the 13 ranks in each suit with the weeks of a quarter. Together they give the deck a 52-part structure for thinking about the year.</p><p>This is a symbolic correspondence, not a literal calendar calculation: 52 weeks make 364 days, while a solar year has extra days. Cardology traditions differ in how they account for that difference.</p></div></details>
+                      <details class="info-kb-item"><summary>Piano note correspondence</summary><div><p>Each card is assigned one white-key note in the standard 88-key piano range. Follow the Spiritual Spread order from A♥ through 10♠ to map 49 cards down from B7 to C1. The three crown cards are J♠ at C8, Q♠ at B0, and K♠ at A0. Together, the assignments use all 52 white keys once; Finder Details shows the note for the selected card.</p></div></details>
+                    </div></details>
+                    <details class="info-library-guide"><summary><strong>Practical questions</strong><span>Birth dates, contacts, Solar Time, and historical readings</span></summary><div class="info-kb-group">
+                      <details class="info-kb-item"><summary>What birthday information do I need?</summary><div><p>Day and month identify a birth card. Personal Cycles also needs the birth year; load a saved contact with a complete birthday. Solar Time needs the full date, clock time, and a birthplace or time zone.</p></div></details>
+                      <details class="info-kb-item"><summary>Birth dates and card assignment</summary><div><p>Finder assigns a Solar Value from the month and day using <code>55 − (2 × month + day)</code>; a birth year is not needed for that lookup. December 31 has Solar Value 0 and maps to the Joker, which sits outside the 52-card sequence.</p><p>February 29 maps to Solar Value 22. For age-based Cycles, when a year has no February 29, the date calculation treats March 1 as the birthday boundary. Save a complete valid calendar date when a tool needs the birth year.</p></div></details>
+                      <details class="info-kb-item"><summary>How are contacts saved?</summary><div><p>Contacts are saved in this browser only. Export them to back up or move to another device. Clearing this site’s browser data can remove saved contacts. Import merges contacts with the existing list.</p></div></details>
+                      <details class="info-kb-item"><summary>How precise is Solar Time?</summary><div><p>Solar Time uses the selected time zone’s reference longitude, rather than the exact birthplace longitude. Treat results near solar midnight as approximate. Solar Values are different: they number card positions in the chart and are not times.</p></div></details>
+                      <details class="info-kb-item"><summary>Yenlo and The Mystic Test Book</summary><div><p>Yenlo opens historical card readings drawn from Olney H. Richmond’s 1893 book, <em>The Mystic Test Book</em>, including its Grand Spread when one is available for the selected card. The wording and symbolism belong to Richmond’s source material and may differ from the site’s original readings; some cards have no transcribed entry.</p></div></details>
+                    </div></details>
+                    <details class="info-library-guide"><summary><strong>Legal and credits</strong><span>Licenses, attribution, sources, and disclaimer</span></summary><div class="info-kb-group">
+                      <section><h4>Code</h4><p>The original source code is released under the <a href="LICENSE">MIT License</a>.</p></section>
+                      <section><h4>Creative content</h4><p>The readings and original “Quinta Essentia” Joker artwork are licensed under <a href="NOTICES.md">CC BY-NC 4.0</a>. Attribution, a license link, and an indication of changes are required when reusing them.</p></section>
+                      <section><h4>Credits</h4><ul><li><a href="https://opengameart.org/content/playing-cards-vector-png" target="_blank" rel="noopener">Byron Knoll playing-card artwork</a> — CC0 public-domain dedication.</li><li><a href="https://tile.loc.gov/storage-services/public/gdcmassbookdig/mystictestbook01rich/mystictestbook01rich.pdf" target="_blank" rel="noopener">Olney H. Richmond, <em>The Mystic Test Book</em></a> (1893) — public-domain source material for the Olney readings.</li><li><a href="https://github.com/cosinekitty/astronomy" target="_blank" rel="noopener">Astronomy Engine by Don Cross</a> (MIT) — used by Solar Time to calculate the Sun’s position.</li></ul><p class="sh-info-note">Complete source notes are in <a href="NOTICES.md">NOTICES.md</a>.</p></section>
+                      <section><h4>Disclaimer</h4><p>Cardology readings and solar-time calculations are offered for reflection and entertainment. They are not medical, legal, financial, or mental-health advice.</p></section>
+                    </div></details>
+                  </div>
+                  <section class="info-contact" aria-labelledby="infoContactHeading">
+                    <h3 id="infoContactHeading">Contact me</h3>
+                    <p>Questions, feedback, or corrections? Send me an email.</p>
+                    <a class="info-contact-action" href="mailto:mysticscards@proton.me">mysticscards@proton.me</a>
+                  </section>
+                </div>
+                <div id="infoReferenceDetail" hidden inert>
+                  <a class="info-back" href="#about/reference">← All reference subjects</a>
+                  <p class="info-eyebrow" id="infoCategoryName"></p>
+                  <nav class="info-entry-nav" id="infoEntryNav" aria-label="Reference entries"></nav>
+                  <article class="info-reference-article" aria-labelledby="infoEntryHeading">
+                    <h3 id="infoEntryHeading" tabindex="-1"></h3><p class="info-reference-keywords" id="infoEntryKeywords" hidden></p><div id="infoEntryText"></div>
+                  </article>
+                </div>
+              </section>
+            </div>
+          </section>
 
           <div class="finder-results">
             <div class="finder-result" id="fResult" aria-live="polite"></div>
@@ -260,12 +322,14 @@
                     <p class="finder-about-card-note" id="fAboutCardNote" hidden></p>
                   </div>
                   <div class="finder-card-facts" id="fAboutCardFacts" aria-label="Details"></div>
+                  <div class="finder-about-dates ls-stats ls-stats--about" id="fAboutDates" hidden></div>
                   <div class="finder-about-personality" id="fAboutPersonality"></div>
                   <div class="finder-about-lifescript relationship-connections" id="fRelationshipConnections"></div>
                   <div class="finder-about-longform" id="fAboutLongform"></div>
                   <div class="finder-about-lifescript finder-about-cardology" id="fAboutCardology"></div>
                   <div class="about-planet-info" id="fAboutPlanetInfo" hidden aria-live="polite"></div>
                   <div class="finder-modern-actions">
+                    <span class="finder-modern-action-label">Details</span>
                     <button class="finder-modern-action-btn" id="fSolarToggle" type="button" aria-expanded="false" aria-controls="fSolar">Solar Time</button>
                     <button class="finder-modern-action-btn" id="fModernOlney" type="button" aria-expanded="false" aria-controls="fYenloPanel">Yenlo</button>
                   </div>

@@ -19,6 +19,7 @@
   var K_QSIZE  = 'mysticscards_quadSize';
   var K_BIRTHS = 'mysticscards_births';
   var K_CONTACT_TAGS = 'mysticscards_contactTags';
+  var K_PRC_SYSTEM = 'mysticscards_prcSystem';
 
   window.CardsStore = {
     getQuadAlt:  function ()   { return _flag(K_ALT); },
@@ -32,6 +33,12 @@
       return Number.isFinite(size) ? size : 100;
     },
     setQuadSize: function (size) { _set(K_QSIZE, String(size)); },
+    getPrcSystem: function () {
+      return _getCompat(K_PRC_SYSTEM) === 'sidereal' ? 'sidereal' : 'tropical';
+    },
+    setPrcSystem: function (system) {
+      _set(K_PRC_SYSTEM, system === 'sidereal' ? 'sidereal' : 'tropical');
+    },
 
     // Reading voice (Modern / Olney) is no longer persisted — it moved to
     // per-section rails in About + Card Elements (2026-07-23), each defaulting

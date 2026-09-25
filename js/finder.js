@@ -758,8 +758,7 @@
         : (birthYear === null ? 'Add birth year' : 'Unavailable');
       const pianoNote = pianoNoteForCard(card);
       box.facts.innerHTML = suit
-        ? `<h3 class="ls-stat-label">Details</h3>
-           <div class="finder-card-facts-grid">
+        ? `<div class="finder-card-facts-grid">
              <div><span>Solar value</span><strong>${card.sv}</strong></div>
              <div><span>Season</span><strong>${seasons[card.suit]}</strong></div>
              <div><span>Element</span><strong>${suit.element}</strong></div>

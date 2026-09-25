@@ -37,7 +37,7 @@
     { name: 'Taurus', glyph: '♉', ruler: 'Venus', start: [4, 20], end: [5, 20] },
     { name: 'Gemini', glyph: '♊', ruler: 'Mercury', start: [5, 21], end: [6, 20] },
     { name: 'Cancer', glyph: '♋', ruler: 'Moon', start: [6, 21], end: [7, 22] },
-    { name: 'Leo', glyph: '♌', ruler: 'Sun', start: [7, 23], end: [8, 22] },
+    { name: 'Leo', glyph: '♌', ruler: 'Sun', coRuler: 'Uranus', start: [7, 23], end: [8, 22] },
     { name: 'Virgo', glyph: '♍', ruler: 'Mercury', start: [8, 23], end: [9, 22] },
     { name: 'Libra', glyph: '♎', ruler: 'Venus', start: [9, 23], end: [10, 22] },
     { name: 'Scorpio', glyph: '♏', ruler: 'Mars', coRuler: 'Pluto', start: [10, 23], end: [11, 21] },
@@ -617,7 +617,7 @@
         <div class="ls-prc-cusp-group">${cuspHTML}</div>
         ${mainHTML.replace(' is-prc-centered', '')}
         <div class="ls-prc-alternative-group">${alternativeHTML}</div>
-        ${cuspHTML ? `<div class="ls-prc-cusp-check"><button type="button" data-prc-solar-link aria-label="Cusp Card - Check Solar Time">Cusp Card - Check Solar Time</button></div>` : ''}
+        ${cuspHTML ? `<div class="ls-prc-cusp-check"><button type="button" data-prc-solar-link aria-label="Cusp Card - Check Solar Time">Check Solar Time</button></div>` : ''}
       </div>
     </section>`;
   }
@@ -979,11 +979,13 @@
     const aboutTarget = document.getElementById('fAboutCardology');
     const planetInfo = document.getElementById('fAboutPlanetInfo');
     const cardFacts = document.getElementById('fAboutCardFacts');
+    const cardDates = document.getElementById('fAboutDates');
     // The panel is moved into the Quadration Chart Position stat block after
     // each render. Detach both reusable panels before clearing that block so
     // later card selections can still reuse them.
     if (planetInfo) planetInfo.remove();
     if (cardFacts) cardFacts.remove();
+    if (cardDates) { cardDates.replaceChildren(); cardDates.hidden = true; }
     if (aboutTarget) aboutTarget.innerHTML = '';
     if (planetInfo && aboutTarget) aboutTarget.appendChild(planetInfo);
     if (cardFacts && aboutTarget) aboutTarget.appendChild(cardFacts);
@@ -996,6 +998,7 @@
     if (!aboutTarget || !inner) return;
     const planetInfo = document.getElementById('fAboutPlanetInfo');
     const cardFacts = document.getElementById('fAboutCardFacts');
+    const cardDates = document.getElementById('fAboutDates');
     aboutTarget.innerHTML = '';
     const header = inner.querySelector('.ls-header');
     const row = inner.querySelector('.ls-row');
@@ -1015,7 +1018,12 @@
       });
       const topStats = document.createElement('div');
       topStats.className = 'ls-stats ls-stats--about';
-      if (statBlocks.Dates) topStats.appendChild(statBlocks.Dates);
+      if (statBlocks.Dates) {
+        if (cardDates) {
+          cardDates.replaceChildren(statBlocks.Dates);
+          cardDates.hidden = false;
+        } else topStats.appendChild(statBlocks.Dates);
+      }
       if (statBlocks['Planetary Ruling Cards']) topStats.appendChild(statBlocks['Planetary Ruling Cards']);
       if (topStats.children.length) aboutTarget.appendChild(topStats);
 
@@ -1098,19 +1106,29 @@
   }
 
   function bindPrcTabs(root) {
-    if (!root || root.dataset.prcBound === 'true') return;
-    if (!root.querySelector('[data-prc-toggle]') || !root.querySelector('[data-prc-panel]')) return;
-    root.dataset.prcBound = 'true';
+    if (!root) return;
     function select(kind, focus) {
       const toggle = root.querySelector('[data-prc-toggle]');
       const panels = Array.prototype.slice.call(root.querySelectorAll('[data-prc-panel]'));
+      if (!toggle || !panels.length) return;
       toggle.checked = kind === 'sidereal';
       panels.forEach(function (panel) { panel.hidden = panel.dataset.prcPanel !== kind; });
     }
-    root.querySelector('[data-prc-toggle]').addEventListener('change', function (event) {
-      select(event.target.checked ? 'sidereal' : 'tropical');
-    });
-    select('tropical');
+    if (root.dataset.prcBound !== 'true') {
+      root.dataset.prcBound = 'true';
+      root.addEventListener('change', function (event) {
+        if (!event.target.matches('[data-prc-toggle]')) return;
+        const kind = event.target.checked ? 'sidereal' : 'tropical';
+        if (window.CardsStore && typeof window.CardsStore.setPrcSystem === 'function') {
+          window.CardsStore.setPrcSystem(kind);
+        }
+        select(kind);
+      });
+    }
+    const savedKind = window.CardsStore && typeof window.CardsStore.getPrcSystem === 'function'
+      ? window.CardsStore.getPrcSystem()
+      : 'tropical';
+    select(savedKind);
   }
 
   function renderLifeScript(card) {
