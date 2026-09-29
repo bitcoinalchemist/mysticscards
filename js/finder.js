@@ -639,7 +639,7 @@
     }
   }
 
-  // Return the Chinese lunisolar zodiac animal for a Gregorian birth date.
+  // Return the Chinese calendar year profile for a Gregorian birth date.
   // Intl's Chinese calendar applies the Lunar New Year boundary, so January
   // and early-February birthdays are not assigned from the Gregorian year.
   function chineseZodiacAnimal(year, month, day) {
@@ -654,20 +654,72 @@
       if (!yearName) return null;
       const yearParts = yearName.value.toLowerCase().split('-');
       const stems = {
-        jia: ['Yang', 'Wood'], yi: ['Yin', 'Wood'], bing: ['Yang', 'Fire'], ding: ['Yin', 'Fire'],
-        wu: ['Yang', 'Earth'], ji: ['Yin', 'Earth'], geng: ['Yang', 'Metal'], xin: ['Yin', 'Metal'],
-        ren: ['Yang', 'Water'], gui: ['Yin', 'Water']
+        jia: { name: 'Jia', character: '甲', polarity: 'Yang', element: 'Wood' },
+        yi: { name: 'Yi', character: '乙', polarity: 'Yin', element: 'Wood' },
+        bing: { name: 'Bing', character: '丙', polarity: 'Yang', element: 'Fire' },
+        ding: { name: 'Ding', character: '丁', polarity: 'Yin', element: 'Fire' },
+        wu: { name: 'Wu', character: '戊', polarity: 'Yang', element: 'Earth' },
+        ji: { name: 'Ji', character: '己', polarity: 'Yin', element: 'Earth' },
+        geng: { name: 'Geng', character: '庚', polarity: 'Yang', element: 'Metal' },
+        xin: { name: 'Xin', character: '辛', polarity: 'Yin', element: 'Metal' },
+        ren: { name: 'Ren', character: '壬', polarity: 'Yang', element: 'Water' },
+        gui: { name: 'Gui', character: '癸', polarity: 'Yin', element: 'Water' }
       };
       const animals = {
         zi: 'Rat', chou: 'Ox', yin: 'Tiger', mao: 'Rabbit', chen: 'Dragon', si: 'Snake',
         wu: 'Horse', wei: 'Goat', shen: 'Monkey', you: 'Rooster', xu: 'Dog', hai: 'Pig'
       };
+      const branches = {
+        zi: '子', chou: '丑', yin: '寅', mao: '卯', chen: '辰', si: '巳',
+        wu: '午', wei: '未', shen: '申', you: '酉', xu: '戌', hai: '亥'
+      };
       const stem = stems[yearParts[0]];
       const animal = animals[yearParts[1]];
-      return stem && animal ? { polarity: stem[0], element: stem[1], animal: animal } : null;
+      const branchCharacter = branches[yearParts[1]];
+      return stem && animal && branchCharacter ? {
+        stem: stem.name,
+        stemCharacter: stem.character,
+        branch: yearParts[1].charAt(0).toUpperCase() + yearParts[1].slice(1),
+        branchCharacter: branchCharacter,
+        sexagenary: stem.character + branchCharacter,
+        pinyin: stem.name + '-' + (yearParts[1].charAt(0).toUpperCase() + yearParts[1].slice(1)),
+        polarity: stem.polarity,
+        element: stem.element,
+        animal: animal
+      } : null;
     } catch (_) {
       return null;
     }
+  }
+
+  let baziPillarRequest = 0;
+  function refreshBaziPillars(year, month, day) {
+    const target = document.getElementById('fBaziPillars');
+    if (!target) return;
+    const request = ++baziPillarRequest;
+    if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) {
+      target.innerHTML = '<p class="finder-card-facts-chinese-empty">Add a complete birth date to see the Month and Day pillars.</p>';
+      return;
+    }
+    target.innerHTML = '<p class="finder-card-facts-chinese-empty" role="status">Calculating date-based estimate…</p>';
+    if (!window.SolarTime || typeof window.SolarTime.baziPillars !== 'function') {
+      target.innerHTML = '<p class="finder-card-facts-chinese-empty">Month and Day pillars are unavailable.</p>';
+      return;
+    }
+    window.SolarTime.baziPillars({ year: year, month: month, day: day }).then(function (pillars) {
+      if (request !== baziPillarRequest || !document.getElementById('fBaziPillars')) return;
+      function cell(label, value, isDay) {
+        return '<div><span>' + label + '</span><strong lang="zh-Hans">' + value.sexagenary + '</strong>' +
+          '<small>' + value.pinyin + ' · ' + value.animal + '</small>' +
+          '<small>' + (isDay ? 'Day Master: ' : '') + value.stem + ' · ' + value.polarity + ' ' + value.element + '</small></div>';
+      }
+      target.innerHTML = '<div class="finder-card-facts-chinese-grid finder-card-facts-bazi-grid">' +
+        cell('Month Pillar', pillars.month, false) + cell('Day Pillar', pillars.day, true) + '</div>';
+    }).catch(function () {
+      if (request === baziPillarRequest && document.getElementById('fBaziPillars')) {
+        target.innerHTML = '<p class="finder-card-facts-chinese-empty">Month and Day pillars could not be calculated.</p>';
+      }
+    });
   }
 
   // About panel — the card reading. Content populated whenever a
@@ -763,9 +815,7 @@
       const birthMonth = dom.you.month ? parseInt(dom.you.month.value, 10) : NaN;
       const birthDay = dom.you.day ? parseInt(dom.you.day.value, 10) : NaN;
       const chineseProfile = birthYear === null ? null : chineseZodiacAnimal(birthYear, birthMonth, birthDay);
-      const chineseValue = chineseProfile
-        ? `${chineseProfile.polarity} ${chineseProfile.element} ${chineseProfile.animal}`
-        : (birthYear === null ? 'Add birth year' : 'Unavailable');
+      const chineseFallback = birthYear === null ? 'Add birth year to see this profile.' : 'Chinese year profile unavailable.';
       const pianoNote = pianoNoteForCard(card);
       box.facts.innerHTML = suit
         ? `<div class="finder-card-facts-grid">
@@ -773,12 +823,30 @@
              <div><span>Season</span><strong>${seasons[card.suit]}</strong></div>
              <div><span>Element</span><strong>${suit.element}</strong></div>
              <div><span>Rank value</span><strong>${rankValue}</strong></div>
-            <div><span>Piano note</span><strong>${pianoNote}</strong></div>
-             <div title="Chinese year element, polarity, and animal"><span>Chinese astrology</span><strong>${chineseValue}</strong></div>
+             <div><span>Piano note</span><strong>${pianoNote}</strong></div>
            </div>
+           <section class="finder-card-facts-chinese" aria-labelledby="fChineseYearTitle">
+             <h4 id="fChineseYearTitle">Chinese Year Profile</h4>
+             ${chineseProfile
+               ? `<div class="finder-card-facts-chinese-grid">
+                   <div><span>Sexagenary year</span><strong lang="zh-Hans">${chineseProfile.sexagenary}</strong><small>${chineseProfile.pinyin}</small></div>
+                   <div><span>Heavenly stem</span><strong lang="zh-Hans">${chineseProfile.stemCharacter}</strong><small>${chineseProfile.stem} · ${chineseProfile.polarity} ${chineseProfile.element}</small></div>
+                   <div><span>Earthly branch</span><strong lang="zh-Hans">${chineseProfile.branchCharacter}</strong><small>${chineseProfile.branch} · ${chineseProfile.animal}</small></div>
+                 </div>`
+               : `<p class="finder-card-facts-chinese-empty">${chineseFallback}</p>`}
+             <p class="finder-card-facts-chinese-note">This profile follows the Chinese calendar year. BaZi uses solar-term boundaries, so the year pillar can differ near Li Chun.</p>
+             <div class="finder-card-facts-bazi">
+               <h4>BaZi Month &amp; Day</h4>
+               <div id="fBaziPillars" aria-live="polite"></div>
+               <p class="finder-card-facts-chinese-note">Date-only estimate: the Month Pillar uses the Sun’s position at 12:00 UTC. Birth time and location can change results near solar-term boundaries; the Day Pillar can also vary near midnight.</p>
+             </div>
+           </section>
            `
         : '';
       box.facts.hidden = !suit;
+      if (suit && document.getElementById('fDetailsPanel') && !document.getElementById('fDetailsPanel').hidden) {
+        refreshBaziPillars(birthYear, birthMonth, birthDay);
+      }
       const detailsPanel = document.getElementById('fDetailsPanel');
       const detailsButton = document.getElementById('fDetailsToggle');
       if (!suit) {
@@ -1409,6 +1477,12 @@
         detailsPanel.hidden = !open;
         detailsButton.classList.toggle('is-active', open);
         detailsButton.setAttribute('aria-expanded', open ? 'true' : 'false');
+        if (open) {
+          const year = Number.isInteger(_finderBirthYear) ? _finderBirthYear : NaN;
+          const month = dom.you.month ? parseInt(dom.you.month.value, 10) : NaN;
+          const day = dom.you.day ? parseInt(dom.you.day.value, 10) : NaN;
+          refreshBaziPillars(year, month, day);
+        }
       });
     }
 

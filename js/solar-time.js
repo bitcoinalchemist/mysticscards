@@ -23,6 +23,8 @@
 //     prevMs, nextMs }>
 //   zoneFor(text) -> canonical IANA zone (or null)
 //   lonFor(tz)    -> longitude east (or null)
+//   baziPillars({year,month,day}) -> Promise<{month,day}> using a date-only
+//     noon UTC estimate for solar-month boundaries
 //   refresh()     -> re-render the Solar Time stats sub-panel
 
 (function () {
@@ -79,6 +81,61 @@
       throw error;
     });
     return _enginePromise;
+  }
+
+  // Calculate BaZi month and day pillars from a civil birth date. With no
+  // birth time or location, noon UTC is an explicit estimate; users near a
+  // Jie boundary need a full birth moment for a definitive Month Pillar.
+  function baziPillars(parts) {
+    if (!parts || !Number.isInteger(parts.year) || !Number.isInteger(parts.month) || !Number.isInteger(parts.day)) {
+      return Promise.reject(new Error('invalid birth date'));
+    }
+    var year = parts.year, month = parts.month, day = parts.day;
+    var date = new Date(Date.UTC(year, month - 1, day, 12));
+    if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) {
+      return Promise.reject(new Error('invalid birth date'));
+    }
+    return ensureEngine().then(function (Astronomy) {
+      var sunLongitude = Astronomy.SunPosition(date).elon;
+      var stems = [
+        ['Jia', '甲', 'Wood', 'Yang'], ['Yi', '乙', 'Wood', 'Yin'],
+        ['Bing', '丙', 'Fire', 'Yang'], ['Ding', '丁', 'Fire', 'Yin'],
+        ['Wu', '戊', 'Earth', 'Yang'], ['Ji', '己', 'Earth', 'Yin'],
+        ['Geng', '庚', 'Metal', 'Yang'], ['Xin', '辛', 'Metal', 'Yin'],
+        ['Ren', '壬', 'Water', 'Yang'], ['Gui', '癸', 'Water', 'Yin']
+      ];
+      var branches = [
+        ['Zi', '子', 'Rat'], ['Chou', '丑', 'Ox'], ['Yin', '寅', 'Tiger'],
+        ['Mao', '卯', 'Rabbit'], ['Chen', '辰', 'Dragon'], ['Si', '巳', 'Snake'],
+        ['Wu', '午', 'Horse'], ['Wei', '未', 'Goat'], ['Shen', '申', 'Monkey'],
+        ['You', '酉', 'Rooster'], ['Xu', '戌', 'Dog'], ['Hai', '亥', 'Pig']
+      ];
+      // A BaZi year turns at Li Chun (315°), not at Lunar New Year.
+      var baziYear = sunLongitude >= 315 ? year : year - 1;
+      var yearStem = ((baziYear - 4) % 10 + 10) % 10;
+      // Jie month branch: Yin begins at 315°, then one branch per 30°.
+      var monthBranch = (Math.floor((sunLongitude + 45) / 30) + 2) % 12;
+      var yinMonthStem = (yearStem % 5 * 2 + 2) % 10;
+      var monthStem = (yinMonthStem + (monthBranch + 10) % 12) % 10;
+      // Gregorian date to integer Julian Day Number; 2000-01-01 is Wu-Wu.
+      var a = Math.floor((14 - month) / 12);
+      var y = year + 4800 - a;
+      var m = month + 12 * a - 3;
+      var jdn = day + Math.floor((153 * m + 2) / 5) + 365 * y +
+        Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
+      var dayIndex = (jdn + 49) % 60;
+      var dayStem = dayIndex % 10;
+      var dayBranch = dayIndex % 12;
+      function pillar(stemIndex, branchIndex) {
+        var stem = stems[stemIndex], branch = branches[branchIndex];
+        return {
+          stem: stem[0], stemCharacter: stem[1], element: stem[2], polarity: stem[3],
+          branch: branch[0], branchCharacter: branch[1], animal: branch[2],
+          sexagenary: stem[1] + branch[1], pinyin: stem[0] + '-' + branch[0]
+        };
+      }
+      return { month: pillar(monthStem, monthBranch), day: pillar(dayStem, dayBranch) };
+    });
   }
 
   // Minutes east of UTC in zone tz at the given instant (DST-aware, via the
@@ -335,6 +392,6 @@
     if (p) p.addEventListener('input', render);
   }
 
-  window.SolarTime = { solarDate: solarDate, birthInstant: birthInstant, zoneFor: zoneFor, lonFor: lonFor, refresh: render };
+  window.SolarTime = { solarDate: solarDate, birthInstant: birthInstant, zoneFor: zoneFor, lonFor: lonFor, baziPillars: baziPillars, refresh: render };
   document.addEventListener('DOMContentLoaded', wire);
 })();

@@ -714,9 +714,14 @@
   const CHINESE_ELEMENTS = ['Wood', 'Fire', 'Earth', 'Metal', 'Water'];
 
   function chineseYearProfile(year, month, day) {
-    if (!Number.isInteger(year) || year < 1900 || year > 9999) return null;
+    if (!Number.isInteger(year) || year < 1 || year > 9999 ||
+        !Number.isInteger(month) || month < 1 || month > 12 ||
+        !Number.isInteger(day) || day < 1 || day > 31) return null;
     try {
-      const date = new Date(Date.UTC(year, month - 1, day, 12));
+      const date = new Date(0);
+      date.setUTCHours(12, 0, 0, 0);
+      date.setUTCFullYear(year, month - 1, day);
+      if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return null;
       const parts = new Intl.DateTimeFormat('en-u-ca-chinese', {
         year: 'numeric', month: 'numeric', day: 'numeric', timeZone: 'UTC'
       }).formatToParts(date);

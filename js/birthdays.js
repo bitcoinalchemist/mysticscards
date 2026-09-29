@@ -77,16 +77,18 @@
       const tags = cleanTags(entry.tags).filter(function (value) { return value.toLocaleLowerCase() !== key; });
       return Object.assign({}, entry, { tags: tags.length ? tags : undefined });
     });
-    if (!saveBirths(entries)) { bdayToast('Couldn’t save contact changes. Check browser storage and try again.', true); return; }
+    if (!saveBirths(entries)) { bdayToast('Couldn’t save contact changes. Check browser storage and try again.', true); return false; }
     if (!saveContactTags(loadContactTags().filter(function (value) { return String(value).toLocaleLowerCase() !== key; }))) {
       bdayToast('Contact tags could not be saved. Check browser storage and try again.', true);
+      return false;
     }
+    return true;
   }
 
   function birthTags(entry) {
     const tags = cleanTags(entry.tags);
-    return tags.length ? '<div class="birth-tags">' + tags.map(tag =>
-      '<span class="birth-tag">' + escHtml(tag) + '</span>').join('') + '</div>' : '';
+    return tags.length ? '<span class="birth-tags">' + tags.map(tag =>
+      '<span class="birth-tag">' + escHtml(tag) + '</span>').join('') + '</span>' : '';
   }
 
   function relOn() {
@@ -99,7 +101,9 @@
   let _bdayTarget = 'self';
   let _editingBirthId = null;
   let _birthQuery = '';
+  let _birthSort = 'name';
   let _birthTags = [];
+  let _tagFiltersOpen = false;
   let _birthPage = 1;
   let _birthPageCount = 1;
   let _birthLoadTimer = null;
@@ -147,9 +151,9 @@
       const c = SPREAD_CARDS[sv - 1];
       const red = c.suit === 'hearts' || c.suit === 'diamonds';
       const suitMark = typeof window.pipMark === 'function' ? window.pipMark(c.sym) : c.sym;
-      return '<div class="bi-chip' + (red ? ' red' : '') + '"><span class="bi-rank">' + c.rank + '</span><span class="bi-suit">' + suitMark + '</span></div>';
+      return '<span class="bi-chip' + (red ? ' red' : '') + '"><span class="bi-rank">' + c.rank + '</span><span class="bi-suit">' + suitMark + '</span></span>';
     }
-    return '<div class="bi-chip bi-chip-joker">&#10022;</div>';
+    return '<span class="bi-chip bi-chip-joker">&#10022;</span>';
   }
   function birthCardSearchText(e) {
     const sv = typeof window.solarValue === 'function' ? window.solarValue(e.month, e.day) : null;
@@ -186,6 +190,11 @@
     const count = document.getElementById('bdayCount');
     const searchWrap = document.getElementById('bdaySearchWrap');
     const search = document.getElementById('bdaySearch');
+    const activeFilters = document.getElementById('bdayActiveFilters');
+    const activeFilterSummary = document.getElementById('bdayActiveFilterSummary');
+    const sortWrap = document.getElementById('bdaySortWrap');
+    const sortSelect = document.getElementById('bdaySort');
+    const tagToggle = document.getElementById('bdayTagsToggle');
     const tagFilters = document.getElementById('bdayTagFilters');
     const pager = document.getElementById('bdayPager');
     if (!panel) return;
@@ -196,23 +205,43 @@
     }
     if (count) count.textContent = list.length + (list.length === 1 ? ' contact' : ' contacts');
     if (searchWrap) searchWrap.hidden = !list.length;
+    if (sortWrap) sortWrap.hidden = !list.length;
+    if (sortSelect && sortSelect.value !== _birthSort) sortSelect.value = _birthSort;
     if (search && search.value !== _birthQuery) search.value = _birthQuery;
     const tagNames = contactTagOptions(list).map(function (label) {
       return { key: label.toLocaleLowerCase(), label: label };
     });
+    const assignedTags = list.reduce(function (tags, entry) { return tags.concat(cleanTags(entry.tags)); }, []);
+    const savedCustomTags = loadContactTags().filter(function (tag) {
+      return !DEFAULT_CONTACT_TAGS.some(function (defaultTag) { return defaultTag.toLocaleLowerCase() === String(tag).toLocaleLowerCase(); });
+    });
+    const managedTags = cleanTags(savedCustomTags.concat(assignedTags)).sort(function (a, b) {
+      return a.localeCompare(b, undefined, { sensitivity: 'base' });
+    });
     const tagKeys = new Set(tagNames.map(function (tag) { return tag.key; }));
     _birthTags = _birthTags.filter(function (tag) { return tag === '__untagged__' || tagKeys.has(tag); });
+    if (tagToggle) {
+      tagToggle.setAttribute('aria-expanded', _tagFiltersOpen ? 'true' : 'false');
+      const label = tagToggle.querySelector('[data-tags-label]');
+      if (label) label.textContent = _birthTags.length ? 'Tags (' + _birthTags.length + ')' : 'Tags';
+    }
     if (tagFilters) {
-      tagFilters.hidden = !list.length;
+      tagFilters.hidden = !list.length || !_tagFiltersOpen;
       tagFilters.innerHTML = list.length ?
         '<button type="button" class="bday-tag-filter' + (!_birthTags.length ? ' is-active' : '') + '" data-tag="">All</button>' +
         '<button type="button" class="bday-tag-filter' + (_birthTags.includes('__untagged__') ? ' is-active' : '') + '" data-tag="__untagged__">Untagged</button>' +
         tagNames.map(tag => '<button type="button" class="bday-tag-filter' + (_birthTags.includes(tag.key) ? ' is-active' : '') +
           '" data-tag="' + escHtml(tag.key) + '">' + escHtml(tag.label) + '</button>').join('') +
-        '<button type="button" class="bday-tag-create" data-create-contact-tag>+/-</button>' +
-        '<form class="bday-tag-add-form" data-contact-tag-form' + (_tagCreatorOpen ? '' : ' hidden') + '>' +
-          '<label for="bdayNewTag">New tag</label><input id="bdayNewTag" type="text" maxlength="32" autocomplete="off">' +
-          '<button type="submit">Add</button></form>' : '';
+        '<button type="button" class="bday-tag-create" data-create-contact-tag>' + (_tagCreatorOpen ? 'Done managing' : 'Manage tags') + '</button>' +
+        '<div class="bday-tag-manager"' + (_tagCreatorOpen ? '' : ' hidden') + '>' +
+          (managedTags.length
+            ? '<div class="bday-managed-tag-list" aria-label="Existing tags">' + managedTags.map(tag =>
+                '<div class="bday-managed-tag"><span>' + escHtml(tag) + '</span><button type="button" data-remove-managed-tag="' + escHtml(tag) + '">Remove</button></div>').join('') + '</div>'
+            : '<p class="bday-managed-tag-empty">No saved tags yet.</p>') +
+          '<form class="bday-tag-add-form" data-contact-tag-form>' +
+            '<label for="bdayNewTag">New tag</label><input id="bdayNewTag" type="text" maxlength="32" autocomplete="off">' +
+            '<button type="submit" data-tag-action="add" disabled>Add tag</button></form>' +
+        '</div>' : '';
       tagFilters.querySelectorAll('[data-tag]').forEach(button => button.addEventListener('click', () => {
         const tag = button.dataset.tag;
         if (!tag) _birthTags = [];
@@ -235,34 +264,55 @@
           if (input) input.focus();
         }
       });
+      tagFilters.querySelectorAll('[data-remove-managed-tag]').forEach(button => button.addEventListener('click', function () {
+        const tag = button.dataset.removeManagedTag;
+        if (!tag || !removeContactTag(tag)) return;
+        const key = tag.toLocaleLowerCase();
+        _birthTags = _birthTags.filter(function (selected) { return selected !== key; });
+        _formTags = _formTags.filter(function (selected) { return selected.toLocaleLowerCase() !== key; });
+        renderBirthPanel();
+        renderFormTagPicker();
+      }));
       const form = tagFilters.querySelector('[data-contact-tag-form]');
       if (form) form.addEventListener('submit', function (event) {
         event.preventDefault();
         const input = form.querySelector('input');
         const tag = cleanTags(input && input.value)[0];
         if (!tag) { if (input) input.focus(); return; }
-        const existing = contactTagOptions(loadBirths()).find(function (value) {
+        const existing = contactTagOptions(loadBirths()).some(function (value) {
           return value.toLocaleLowerCase() === tag.toLocaleLowerCase();
         });
-        if (existing) removeContactTag(existing);
-        else rememberContactTags([tag]);
+        if (existing) { if (input) input.focus(); return; }
+        rememberContactTags([tag]);
         _tagCreatorOpen = false;
         renderBirthPanel();
         renderFormTagPicker();
       });
       if (form) {
         const input = form.querySelector('input');
-        const submit = form.querySelector('button[type="submit"]');
-        const syncTagAction = function () {
+        const addButton = form.querySelector('[data-tag-action="add"]');
+        const syncAddTagAction = function () {
           const value = cleanTags(input && input.value)[0] || '';
           const existing = value && contactTagOptions(loadBirths()).some(function (tag) {
             return tag.toLocaleLowerCase() === value.toLocaleLowerCase();
           });
-          if (submit) submit.textContent = existing ? 'Remove' : 'Add';
+          if (addButton) addButton.disabled = !value || !!existing;
         };
-        if (input) input.addEventListener('input', syncTagAction);
-        syncTagAction();
+        if (input) input.addEventListener('input', syncAddTagAction);
+        syncAddTagAction();
       }
+    }
+    if (activeFilters && activeFilterSummary) {
+      const activeLabels = [];
+      if (_birthQuery.trim()) activeLabels.push('<span class="bday-active-filter">Search: ' + escHtml(_birthQuery.trim()) + '</span>');
+      _birthTags.forEach(function (key) {
+        const tag = key === '__untagged__'
+          ? 'Untagged'
+          : ((tagNames.find(function (item) { return item.key === key; }) || {}).label || key);
+        activeLabels.push('<span class="bday-active-filter">' + escHtml(tag) + '</span>');
+      });
+      activeFilterSummary.innerHTML = activeLabels.join('');
+      activeFilters.hidden = !activeLabels.length;
     }
     if (!list.length) {
       _birthPageCount = 1;
@@ -270,10 +320,47 @@
       if (pager) { pager.hidden = true; pager.innerHTML = ''; }
       return;
     }
-    const ordered = list.slice().sort((a, b) =>
-      Number(!!b.favorite) - Number(!!a.favorite) ||
-      String(a.name || '').localeCompare(String(b.name || ''), undefined, { sensitivity: 'base', numeric: true }) ||
-      (a.year - b.year) || (a.month - b.month) || (a.day - b.day) || (a.id - b.id));
+    const compareName = (a, b) => String(a.name || '').localeCompare(String(b.name || ''), undefined, { sensitivity: 'base', numeric: true });
+    const cardOrder = entry => {
+      const value = typeof window.solarValue === 'function' ? window.solarValue(entry.month, entry.day) : null;
+      return value === 0 ? 52 : (Number.isInteger(value) && value > 0 ? value - 1 : 53);
+    };
+    const pathParts = entry => lifePathNumber(entry.year, entry.month, entry.day).split('/').map(Number);
+    const chineseAnimal = entry => {
+      const profile = typeof window.chineseYearProfile === 'function'
+        ? window.chineseYearProfile(entry.year, entry.month, entry.day)
+        : null;
+      return profile && profile.animal ? profile.animal : '';
+    };
+    const animalCycle = ['Rat', 'Ox', 'Tiger', 'Cat', 'Dragon', 'Snake', 'Horse', 'Goat', 'Monkey', 'Rooster', 'Dog', 'Pig'];
+    const lifePathById = new Map();
+    const animalOrderById = new Map();
+    if (_birthSort === 'lifePath') list.forEach(entry => lifePathById.set(entry.id, pathParts(entry)));
+    if (_birthSort === 'animal') list.forEach(entry => {
+      const index = animalCycle.indexOf(chineseAnimal(entry));
+      animalOrderById.set(entry.id, index < 0 ? animalCycle.length : index);
+    });
+    const ordered = list.slice().sort((a, b) => {
+      const favoriteOrder = Number(!!b.favorite) - Number(!!a.favorite);
+      if (favoriteOrder) return favoriteOrder;
+      if (_birthSort === 'birthday') {
+        return (a.month - b.month) || (a.day - b.day) || compareName(a, b) || (a.year - b.year) || (a.id - b.id);
+      }
+      if (_birthSort === 'age') {
+        return (a.year - b.year) || (a.month - b.month) || (a.day - b.day) || compareName(a, b) || (a.id - b.id);
+      }
+      if (_birthSort === 'card') {
+        return (cardOrder(a) - cardOrder(b)) || compareName(a, b) || (a.year - b.year) || (a.id - b.id);
+      }
+      if (_birthSort === 'lifePath') {
+        const aPath = lifePathById.get(a.id), bPath = lifePathById.get(b.id);
+        return (aPath[1] - bPath[1]) || (aPath[0] - bPath[0]) || compareName(a, b) || (a.id - b.id);
+      }
+      if (_birthSort === 'animal') {
+        return (animalOrderById.get(a.id) - animalOrderById.get(b.id)) || compareName(a, b) || (a.year - b.year) || (a.id - b.id);
+      }
+      return compareName(a, b) || (a.year - b.year) || (a.month - b.month) || (a.day - b.day) || (a.id - b.id);
+    });
     const query = _birthQuery.trim().toLocaleLowerCase();
     const compactQuery = query.replace(/\s+/g, '');
     const matches = ordered.filter(e => {
@@ -298,30 +385,40 @@
     const visible = matches.slice(start, start + BIRTH_PAGE_SIZE);
     if (!matches.length) {
       panel.innerHTML = '<div class="birth-empty">No contacts match that search.</div>';
-    } else panel.innerHTML = visible.map(e => {
+    } else {
+      let lastFavoriteGroup = null;
+      panel.innerHTML = visible.map(e => {
       const chinese = typeof window.chineseYearProfile === 'function'
         ? window.chineseYearProfile(e.year, e.month, e.day)
         : null;
-      return '<div class="birth-item" data-id="' + e.id + '">' +
-        birthChip(e) +
-        '<div class="birth-item-body">' +
-          '<div class="birth-name">' + escHtml(e.name) + '</div>' +
-          '<div class="birth-date birth-date-primary">' + MONTHS_SHORT[e.month - 1] + ' ' + e.day + ', ' + e.year +
-            ' &middot; age ' + ageFromBirthYear(e.year, e.month, e.day) + '</div>' +
-          '<div class="birth-date birth-date-secondary">life path ' + lifePathNumber(e.year, e.month, e.day) +
-            (chinese ? ' &middot; ' + escHtml(chinese.animal) : '') + '</div>' +
-          birthTags(e) +
-        '</div>' +
+      const isFavorite = !!e.favorite;
+      const groupHeading = isFavorite !== lastFavoriteGroup
+        ? '<div class="birth-group-label">' + (isFavorite ? 'Favourites' : 'Contacts') + '</div>'
+        : '';
+      lastFavoriteGroup = isFavorite;
+      return groupHeading + '<div class="birth-item" data-id="' + e.id + '">' +
+        '<button type="button" class="birth-open" aria-label="Open reading for ' + escHtml(e.name) + '">' +
+          birthChip(e) +
+          '<span class="birth-item-body">' +
+            '<span class="birth-name">' + escHtml(e.name) + '</span>' +
+            '<span class="birth-date birth-date-primary">' + MONTHS_SHORT[e.month - 1] + ' ' + e.day + ', ' + e.year +
+              ' &middot; age ' + ageFromBirthYear(e.year, e.month, e.day) + '</span>' +
+            '<span class="birth-date birth-date-secondary">Life path ' + lifePathNumber(e.year, e.month, e.day) +
+              (chinese ? ' &middot; ' + escHtml(chinese.animal) : '') + '</span>' +
+            birthTags(e) +
+          '</span>' +
+        '</button>' +
         '<button type="button" class="birth-favorite' + (e.favorite ? ' is-favorite' : '') + '" data-favorite="' + e.id + '" aria-pressed="' + (e.favorite ? 'true' : 'false') + '" aria-label="' + (e.favorite ? 'Remove ' : 'Add ') + escHtml(e.name) + (e.favorite ? ' from favourites' : ' to favourites') + '">&#9733;</button>' +
         '<details class="birth-actions"><summary aria-label="Actions for ' + escHtml(e.name) + '">&#183;&#183;&#183;</summary>' +
           '<div class="birth-actions-menu"><button type="button" data-edit="' + e.id + '">Edit contact</button>' +
           '<button type="button" data-del="' + e.id + '">Delete contact</button></div></details>' +
       '</div>';
-    }).join('');
-    panel.querySelectorAll('.birth-item').forEach(item => {
-      item.addEventListener('click', ev => {
-        if (ev.target.closest('[data-edit], [data-del], [data-favorite], .birth-actions')) return;
-        const id = +item.dataset.id;
+      }).join('');
+    }
+    panel.querySelectorAll('.birth-open').forEach(button => {
+      button.addEventListener('click', () => {
+        const item = button.closest('.birth-item');
+        const id = item ? +item.dataset.id : NaN;
         const entry = loadBirths().find(x => x.id === id);
         if (entry) loadBirth(entry, _bdayTarget);
       });
@@ -474,7 +571,9 @@
   function setBirthFormMode(entry) {
     _editingBirthId = entry ? entry.id : null;
     const saveBtn = document.getElementById('birthAddSave');
-    if (saveBtn) saveBtn.textContent = entry ? 'Update' : 'Save';
+    const heading = document.getElementById('birthFormHeading');
+    if (saveBtn) saveBtn.textContent = entry ? 'Save changes' : 'Add contact';
+    if (heading) heading.textContent = entry ? 'Edit contact' : 'Add contact';
   }
 
   function renderFormTagPicker() {
@@ -522,10 +621,13 @@
       dEl.value = String(fD).padStart(2, '0');
       mEl.value = String(fM).padStart(2, '0');
     }
-    document.getElementById('birthAddPanel').classList.add('open');
+    const panel = document.getElementById('birthAddPanel');
+    panel.classList.add('open');
+    panel.inert = false;
+    document.getElementById('bdayAddBtn').setAttribute('aria-expanded', 'true');
     renderFormTagPicker();
     setTimeout(() => {
-      const firstEmpty = ['baDay', 'baMonth', 'baYear', 'baName'].find(id => !document.getElementById(id).value);
+      const firstEmpty = ['baName', 'baDay', 'baMonth', 'baYear'].find(id => !document.getElementById(id).value);
       document.getElementById(firstEmpty || 'baName').focus();
     }, 0);
   }
@@ -541,17 +643,24 @@
     yEl.value = String(entry.year);
     nEl.value = entry.name;
     _formTags = cleanTags(entry.tags);
-    document.getElementById('birthAddPanel').classList.add('open');
+    const panel = document.getElementById('birthAddPanel');
+    panel.classList.add('open');
+    panel.inert = false;
+    document.getElementById('bdayAddBtn').setAttribute('aria-expanded', 'true');
     renderFormTagPicker();
     setTimeout(() => nEl.focus(), 0);
   }
 
   function closeBirthAddPanel() {
     const p = document.getElementById('birthAddPanel');
-    if (p) p.classList.remove('open');
+    const restoreFocus = !!(p && p.contains(document.activeElement));
+    if (p) { p.classList.remove('open'); p.inert = true; }
+    const addButton = document.getElementById('bdayAddBtn');
+    if (addButton) addButton.setAttribute('aria-expanded', 'false');
     const err = document.getElementById('birthAddError');
     if (err) err.textContent = '';
     setBirthFormMode(null);
+    if (restoreFocus && addButton) addButton.focus();
   }
 
   function isValidBirthDate(day, month, year) {
@@ -626,17 +735,17 @@
   }
 
   function wireAddFormAutoAdvance() {
-    const seq = ['baDay', 'baMonth', 'baYear', 'baName'];
-    seq.slice(0, 3).forEach((id, i) => {
+    const numericSeq = ['baDay', 'baMonth', 'baYear'];
+    numericSeq.forEach((id, i) => {
       const el = document.getElementById(id);
       if (!el) return;
       el.addEventListener('input', () => {
         el.value = el.value.replace(/\D/g, '');
         const maxLen = el.getAttribute('maxlength') | 0;
-        if (el.value.length >= maxLen) document.getElementById(seq[i + 1]).focus();
+        if (el.value.length >= maxLen) document.getElementById(numericSeq[i + 1] || 'birthAddSave').focus();
       });
     });
-    seq.forEach(id => {
+    ['baName'].concat(numericSeq).forEach(id => {
       const el = document.getElementById(id);
       if (!el) return;
       el.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); saveManualBirth(); } });
@@ -723,23 +832,58 @@
     });
     const saveBtn = document.getElementById('birthAddSave');
     if (saveBtn) saveBtn.addEventListener('click', saveManualBirth);
+    const cancelBtn = document.getElementById('birthAddCancel');
+    if (cancelBtn) cancelBtn.addEventListener('click', function () {
+      clearBirthForm();
+      closeBirthAddPanel();
+      const addToggle = document.getElementById('bdayAddBtn');
+      if (addToggle) addToggle.focus();
+    });
     const exportBtn = document.getElementById('bdayExportBtn');
     if (exportBtn) exportBtn.addEventListener('click', exportBirths);
     const importBtn = document.getElementById('bdayImportBtn');
     const importFile = document.getElementById('bdayImportFile');
     if (importBtn) importBtn.addEventListener('click', () => importFile.click());
     if (importFile) importFile.addEventListener('change', importBirthsFromFile);
+    [exportBtn, importBtn].forEach(button => {
+      if (!button) return;
+      button.addEventListener('click', () => {
+        const menu = button.closest('.bday-more-menu');
+        if (menu) window.setTimeout(() => { menu.open = false; }, 0);
+      });
+    });
     const infoBtn = document.getElementById('bdayInfoBtn');
     const note = document.getElementById('bdayNote');
     if (infoBtn && note) infoBtn.addEventListener('click', () => {
       const open = note.hidden;
       note.hidden = !open;
       infoBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      const menu = infoBtn.closest('.bday-more-menu');
+      if (menu) menu.open = false;
     });
     const search = document.getElementById('bdaySearch');
     if (search) search.addEventListener('input', () => {
       _birthQuery = search.value;
       _birthPage = 1;
+      renderBirthPanel();
+    });
+    const clearFilters = document.getElementById('bdayClearFilters');
+    if (clearFilters) clearFilters.addEventListener('click', () => {
+      _birthQuery = '';
+      _birthTags = [];
+      _birthPage = 1;
+      renderBirthPanel();
+      if (search) search.focus();
+    });
+    const sortSelect = document.getElementById('bdaySort');
+    if (sortSelect) sortSelect.addEventListener('change', () => {
+      _birthSort = ['name', 'birthday', 'card', 'lifePath', 'animal', 'age'].includes(sortSelect.value) ? sortSelect.value : 'name';
+      _birthPage = 1;
+      renderBirthPanel();
+    });
+    const tagToggle = document.getElementById('bdayTagsToggle');
+    if (tagToggle) tagToggle.addEventListener('click', () => {
+      _tagFiltersOpen = !_tagFiltersOpen;
       renderBirthPanel();
     });
     ['bdayTargetSelf', 'bdayTargetPartner', 'deckTargetSelf', 'deckTargetPartner'].forEach(id => {

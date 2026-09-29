@@ -137,39 +137,72 @@
             <div class="finder-tray-min">
               <div class="finder-tray bday-tray">
                 <div class="bday-inline-head">
-                  <span class="bday-inline-title">Contacts</span>
+                  <div class="bday-heading">
+                    <span class="bday-inline-title">Contacts</span>
+                    <span class="bday-count" id="bdayCount">0 contacts</span>
+                  </div>
+                  <div class="bday-head-actions">
+                    <button class="btn btn--gold" id="bdayAddBtn" type="button" aria-expanded="false" aria-controls="birthAddPanel">Add contact</button>
+                    <details class="bday-more-menu">
+                      <summary aria-label="More contact actions">More<svg viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="m2.5 4.5 3.5 3 3.5-3" /></svg></summary>
+                      <div class="bday-more-menu-panel">
+                        <button class="bday-menu-action" id="bdayImportBtn" type="button">Import contacts</button>
+                        <button class="bday-menu-action" id="bdayExportBtn" type="button">Export contacts</button>
+                        <button class="bday-menu-action" id="bdayInfoBtn" type="button" aria-expanded="false" aria-controls="bdayNote">Help &amp; storage</button>
+                      </div>
+                    </details>
+                    <input type="file" id="bdayImportFile" accept="application/json" hidden>
+                  </div>
                 </div>
                 <div class="pick-target" id="bdayTarget" hidden>
                   <button type="button" class="pick-target-btn is-active" id="bdayTargetSelf" data-target="self">Player 1</button>
                   <button type="button" class="pick-target-btn" id="bdayTargetPartner" data-target="partner">Player 2</button>
                 </div>
-                <div class="bday-toolbar">
-                  <div class="bday-io">
-                    <button class="btn btn--gold" id="bdayAddBtn" type="button">+ Add contact</button>
-                    <button class="btn" id="bdayImportBtn" type="button" title="Import a contacts file">Import</button>
-                    <button class="btn" id="bdayExportBtn" type="button" title="Download your contacts">Export</button>
-                    <button class="bday-info-btn" id="bdayInfoBtn" type="button" aria-expanded="false" aria-controls="bdayNote" aria-label="About contacts">i</button>
-                    <input type="file" id="bdayImportFile" accept="application/json" hidden>
-                  </div>
-                </div>
                 <p class="bday-note" id="bdayNote" hidden>Contacts are saved in this browser only. Export to back up or move to another device.</p>
                 <div class="bday-search" id="bdaySearchWrap" hidden>
                   <input type="search" id="bdaySearch" placeholder="Search Contacts" aria-label="Search Contacts" autocomplete="off">
                 </div>
+                <div class="bday-sort" id="bdaySortWrap" hidden>
+                  <label for="bdaySort">Sort by</label>
+                  <select id="bdaySort">
+                    <option value="name">Name (A–Z)</option>
+                    <option value="birthday">Birthday (Jan–Dec)</option>
+                    <option value="card">Birth card</option>
+                    <option value="lifePath">Life path</option>
+                    <option value="animal">Chinese animal</option>
+                    <option value="age">Age (oldest first)</option>
+                  </select>
+                  <button class="bday-tags-toggle" id="bdayTagsToggle" type="button" aria-expanded="false" aria-controls="bdayTagFilters">
+                    <span data-tags-label>Tags</span>
+                    <svg viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="m2.5 4.5 3.5 3 3.5-3" /></svg>
+                  </button>
+                </div>
+                <div class="bday-active-filters" id="bdayActiveFilters" hidden>
+                  <div class="bday-active-filter-list" id="bdayActiveFilterSummary" aria-label="Active contact filters"></div>
+                  <button type="button" class="bday-clear-filters" id="bdayClearFilters">Clear filters</button>
+                </div>
                 <div class="bday-tag-filters" id="bdayTagFilters" hidden role="group" aria-label="Filter contacts by tag"></div>
-                <div class="birth-add-panel" id="birthAddPanel">
+                <div class="birth-add-panel" id="birthAddPanel" role="region" aria-labelledby="birthFormHeading" inert>
+                  <h3 class="birth-form-heading" id="birthFormHeading">Add contact</h3>
                   <div class="birth-add-row">
-                    <input type="text" id="baDay" class="ba-field ba-num" maxlength="2" inputmode="numeric" placeholder="DD" aria-label="Day">
-                    <input type="text" id="baMonth" class="ba-field ba-num" maxlength="2" inputmode="numeric" placeholder="MM" aria-label="Month">
-                    <input type="text" id="baYear" class="ba-field ba-year" maxlength="4" inputmode="numeric" placeholder="YYYY" aria-label="Year">
-                    <input type="text" id="baName" class="ba-field ba-name" placeholder="Name" aria-label="Name">
-                    <button type="button" class="btn btn--gold" id="birthAddSave">Save</button>
+                    <label class="ba-detail-field ba-name-field">Name
+                      <input type="text" id="baName" class="ba-field ba-name" autocomplete="off">
+                    </label>
+                    <div class="birth-date-fields" role="group" aria-label="Birthday">
+                      <label class="ba-detail-field">Day<input type="text" id="baDay" class="ba-field ba-num" maxlength="2" inputmode="numeric" placeholder="DD" aria-label="Birthday day"></label>
+                      <label class="ba-detail-field">Month<input type="text" id="baMonth" class="ba-field ba-num" maxlength="2" inputmode="numeric" placeholder="MM" aria-label="Birthday month"></label>
+                      <label class="ba-detail-field">Year<input type="text" id="baYear" class="ba-field ba-year" maxlength="4" inputmode="numeric" placeholder="YYYY" aria-label="Birthday year"></label>
+                    </div>
                   </div>
-                  <label class="ba-detail-field birth-tags-field">
+                  <div class="ba-detail-field birth-tags-field">
                     <span>Tags</span>
                     <span class="birth-tag-picker" id="baTagPicker" role="group" aria-label="Contact tags"></span>
-                  </label>
+                  </div>
                   <p class="birth-add-error" id="birthAddError" aria-live="polite"></p>
+                  <div class="birth-form-actions">
+                    <button type="button" class="btn" id="birthAddCancel">Cancel</button>
+                    <button type="button" class="btn btn--gold" id="birthAddSave">Add contact</button>
+                  </div>
                 </div>
                 <div class="bday-list" id="birthPanel"></div>
                 <div class="bday-pager" id="bdayPager" hidden aria-label="Contacts pages"></div>
