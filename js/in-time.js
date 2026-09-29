@@ -364,6 +364,16 @@
         setActiveFocus(focusBtn.getAttribute('data-it-focus') || IT_DEFAULT_FOCUS, { syncToStart: true });
         return;
       }
+      const sequenceCard = ev.target.closest('.it-seq-card[data-it-sequence-date]');
+      if (sequenceCard) {
+        const focus = sequenceCard.getAttribute('data-it-sequence-focus');
+        const dateMs = Number(sequenceCard.getAttribute('data-it-sequence-date'));
+        if (focus && Number.isFinite(dateMs)) {
+          _activeLabel = focus;
+          setViewDate(dateMs);
+        }
+        return;
+      }
       const cycleBtn = ev.target.closest('[data-it-cycle]');
       if (cycleBtn) {
         const dir = parseInt(cycleBtn.getAttribute('data-it-cycle') || '0', 10);
@@ -493,7 +503,10 @@
         }
       }
       if (!readingWheelUsed) readingWheelTotal += delta;
-      if (!readingWheelUsed && Math.abs(readingWheelTotal) >= 32) {
+      // Trackpads often deliver a light horizontal gesture as many small
+      // pixel deltas. A lower accumulated threshold lets those gestures step
+      // reliably while still producing at most one change per gesture.
+      if (!readingWheelUsed && Math.abs(readingWheelTotal) >= 12) {
         readingWheelUsed = true;
         readingWheelDirection = Math.sign(readingWheelTotal);
         shiftActiveHorizon(cycleGestureDirection(readingWheelTotal > 0 ? -1 : 1));
@@ -505,7 +518,7 @@
         readingWheelCanRearm = false;
         readingWheelDirection = 0;
         readingWheelTimer = null;
-      }, 90);
+      }, 140);
     }, { passive: false });
   }
 
@@ -572,6 +585,11 @@
     const date = new Date(ms);
     date.setDate(date.getDate() + days);
     return localMidnight(date);
+  }
+  function birthdayAtAge(age) {
+    const birth = readFinderDate();
+    if (!birth || !Number.isInteger(birth.year) || !Number.isInteger(age)) return null;
+    return localMidnight(new Date(birth.year + age, birth.m - 1, birth.d));
   }
 
   // The birthday of the calendar year `refMs` falls in, or the year
@@ -722,7 +740,7 @@
     return abbr[planet] || '';
   }
 
-  function cycleSequenceCardHTML(idx, planet, active, detail, currentLabel) {
+  function cycleSequenceCardHTML(idx, planet, active, detail, currentLabel, focusSlug, dateMs) {
     const c = CARDS[idx];
     if (!c) return '';
     const face = spreadCardPips(c);
@@ -730,9 +748,15 @@
     const label = planetAbbr(planet);
     const sub = typeof detail === 'number' ? compactDate(detail) : (detail || '');
     const activeLabel = currentLabel || 'current cycle card';
+    const selectionAttrs = focusSlug && Number.isFinite(dateMs)
+      ? ` data-it-sequence-focus="${focusSlug}" data-it-sequence-date="${dateMs}" title="Load ${c.name} for ${focusSlug} on ${formatViewDate(dateMs)}"`
+      : '';
+    const accessibleLabel = focusSlug && Number.isFinite(dateMs)
+      ? `Load ${c.name} for ${focusSlug} on ${formatViewDate(dateMs)}`
+      : `${c.name}${active ? ', ' + activeLabel : ''}`;
     return `<div class="it-seq-col${active ? ' is-current' : ''}">
       <div class="it-seq-head" title="${planet || ''}">${glyph}<span class="it-seq-label">${label}</span></div>
-      <button type="button" class="spread-card it-seq-card ${c.suit}" data-idx="${idx}" title="${c.name}" aria-label="${c.name}${active ? ', ' + activeLabel : ''}">${face}</button>
+      <button type="button" class="spread-card it-seq-card ${c.suit}" data-idx="${idx}"${selectionAttrs} aria-label="${accessibleLabel}">${face}</button>
       <div class="it-seq-date">${sub}</div>
     </div>`;
   }
@@ -742,7 +766,7 @@
     const cards = [];
     cycleSequenceOrder().forEach(function (i) {
       const startMs = addCalendarDays(cycleStartMs, i * 52);
-      cards.push(cycleSequenceCardHTML(pcReadCard(spreadIdx, birthIdx, i), SPREAD_PLANETS[i], i === activePos, startMs, 'current 52-Day card'));
+      cards.push(cycleSequenceCardHTML(pcReadCard(spreadIdx, birthIdx, i), SPREAD_PLANETS[i], i === activePos, startMs, 'current 52-Day card', '52-day', startMs));
     });
     return `<div class="it-sequence" id="itSequence52" aria-label="All seven 52-Day cycle cards">
       ${cards.join('')}
@@ -753,7 +777,8 @@
     if (!_expandedCycleRows.yearly) return '';
     const cards = [];
     cycleSequenceOrder().forEach(function (i) {
-      cards.push(cycleSequenceCardHTML(pcReadCard(spreadIdx, birthIdx, i), SPREAD_PLANETS[i], i === activePos, 'age ' + (firstAge + i), 'current Yearly card'));
+      const age = firstAge + i;
+      cards.push(cycleSequenceCardHTML(pcReadCard(spreadIdx, birthIdx, i), SPREAD_PLANETS[i], i === activePos, 'age ' + age, 'current Yearly card', 'yearly', birthdayAtAge(age)));
     });
     return `<div class="it-sequence" id="itSequenceYearly" aria-label="All seven Yearly cycle cards">
       ${cards.join('')}
@@ -765,7 +790,7 @@
     const cards = [];
     cycleSequenceOrder().forEach(function (i) {
       const start = firstAge + (i * 7);
-      cards.push(cycleSequenceCardHTML(pcReadCard(spreadIdx, birthIdx, i), SPREAD_PLANETS[i], i === activePos, 'age ' + start + '-' + (start + 6), 'current 7-Year card'));
+      cards.push(cycleSequenceCardHTML(pcReadCard(spreadIdx, birthIdx, i), SPREAD_PLANETS[i], i === activePos, 'age ' + start + '-' + (start + 6), 'current 7-Year card', '7-year', birthdayAtAge(start)));
     });
     return `<div class="it-sequence" id="itSequence7Year" aria-label="All seven 7-Year cycle cards">
       ${cards.join('')}
@@ -777,7 +802,7 @@
     const cards = [];
     cycleSequenceOrder().forEach(function (i) {
       const start = firstAge + (i * 13);
-      cards.push(cycleSequenceCardHTML(pcReadCard(spreadIdx, birthIdx, i), SPREAD_PLANETS[i], i === activePos, 'age ' + start + '-' + (start + 12), 'current 13-Year card'));
+      cards.push(cycleSequenceCardHTML(pcReadCard(spreadIdx, birthIdx, i), SPREAD_PLANETS[i], i === activePos, 'age ' + start + '-' + (start + 12), 'current 13-Year card', '13-year', birthdayAtAge(start)));
     });
     return `<div class="it-sequence" id="itSequence13Year" aria-label="All seven 13-Year cycle cards">
       ${cards.join('')}
@@ -789,7 +814,7 @@
     const cards = [];
     cycleSequenceOrder().forEach(function (i) {
       const dayMs = addCalendarDays(cycleStartMs, i);
-      cards.push(cycleSequenceCardHTML(pcReadCard(spreadIdx, birthIdx, i), SPREAD_PLANETS[i], i === activePos, compactDate(dayMs), 'current Daily card'));
+      cards.push(cycleSequenceCardHTML(pcReadCard(spreadIdx, birthIdx, i), SPREAD_PLANETS[i], i === activePos, compactDate(dayMs), 'current Daily card', 'daily', dayMs));
     });
     return `<div class="it-sequence" id="itSequenceDaily" aria-label="All seven Daily cycle cards">
       ${cards.join('')}
@@ -799,14 +824,20 @@
   function inTimeReadingHTML(pc, canGoBack) {
     const c = CARDS[pc.idx];
     if (!c) return '';
+    const leftDir = cyclesReadLeftToRight() ? -1 : 1;
+    const rightDir = -leftDir;
+    const leftCanShift = leftDir > 0 || canGoBack;
+    const rightCanShift = rightDir > 0 || canGoBack;
+    const leftAction = leftDir > 0 ? 'Next' : 'Previous';
+    const rightAction = rightDir > 0 ? 'Next' : 'Previous';
     const headStart = `<div class="it-reading-head">
-      <button type="button" class="it-reading-shift${canGoBack ? '' : ' is-disabled'}" data-it-cycle="-1" aria-label="Previous ${pc.label} card" title="${canGoBack ? 'Previous ' + pc.label + ' card' : 'Already at birthday'}"${canGoBack ? '' : ' disabled'}>‹</button>
+      <button type="button" class="it-reading-shift${leftCanShift ? '' : ' is-disabled'}" data-it-cycle="${leftDir}" aria-label="${leftAction} ${pc.label} card" title="${leftCanShift ? leftAction + ' ' + pc.label + ' card' : 'Already at birthday'}"${leftCanShift ? '' : ' disabled'}>‹</button>
       <div class="it-reading-head-copy">
       <div class="it-reading-kicker">${pc.label}</div>
       <h4 class="it-reading-title">${c.name}</h4>
       <div class="it-reading-meta">${pc.planet} · ${pc.sub}</div>
       </div>
-      <button type="button" class="it-reading-shift" data-it-cycle="1" aria-label="Next ${pc.label} card" title="Next ${pc.label} card">›</button>
+      <button type="button" class="it-reading-shift${rightCanShift ? '' : ' is-disabled'}" data-it-cycle="${rightDir}" aria-label="${rightAction} ${pc.label} card" title="${rightCanShift ? rightAction + ' ' + pc.label + ' card' : 'Already at birthday'}"${rightCanShift ? '' : ' disabled'}>›</button>
     </div>
     `;
     return headStart + `<div class="it-reading-copy">${cycleCardReadingHTML(c)}${planetCycleReadingHTML(pc)}</div>`;
@@ -949,7 +980,7 @@
     const focused = document.activeElement;
     let focusSelector = null;
     if (focused && inner.contains(focused)) {
-      ['data-it-focus', 'data-it-cycle'].forEach(function (attr) {
+      ['data-it-focus', 'data-it-sequence-focus', 'data-it-cycle'].forEach(function (attr) {
         if (focused.hasAttribute(attr)) focusSelector = '[' + attr + '="' + focused.getAttribute(attr) + '"]';
       });
       ['it-date-label', 'it-date-input', 'it-date-today'].forEach(function (name) {

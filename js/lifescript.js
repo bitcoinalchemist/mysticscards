@@ -1057,23 +1057,18 @@
     ${birthStatsHTML(card, script)}`;
   }
 
-  // Keep all selected-card material in About. Quadration Chart Position closes
-  // the cardology group.
+  // Keep the Life Script and chart position in About; Finder card facts remain
+  // inside the mutually exclusive Details rail panel.
   function clearAboutLifeScript() {
     clearPlanetInfo();
     const aboutTarget = document.getElementById('fAboutCardology');
     const planetInfo = document.getElementById('fAboutPlanetInfo');
-    const cardFacts = document.getElementById('fAboutCardFacts');
     const cardDates = document.getElementById('fAboutDates');
-    // The panel is moved into the Quadration Chart Position stat block after
-    // each render. Detach both reusable panels before clearing that block so
-    // later card selections can still reuse them.
+    // Detach the reusable chart panel before clearing its previous position.
     if (planetInfo) planetInfo.remove();
-    if (cardFacts) cardFacts.remove();
     if (cardDates) { cardDates.replaceChildren(); cardDates.hidden = true; }
     if (aboutTarget) aboutTarget.innerHTML = '';
     if (planetInfo && aboutTarget) aboutTarget.appendChild(planetInfo);
-    if (cardFacts && aboutTarget) aboutTarget.appendChild(cardFacts);
     return aboutTarget;
   }
 
@@ -1082,7 +1077,6 @@
     const inner = root && root.querySelector('.ls-inner');
     if (!aboutTarget || !inner) return;
     const planetInfo = document.getElementById('fAboutPlanetInfo');
-    const cardFacts = document.getElementById('fAboutCardFacts');
     const cardDates = document.getElementById('fAboutDates');
     aboutTarget.innerHTML = '';
     const header = inner.querySelector('.ls-header');
@@ -1091,7 +1085,6 @@
     const stats = inner.querySelector('.ls-stats');
     if (!row && !stats) {
       while (inner.firstChild) aboutTarget.appendChild(inner.firstChild);
-      if (cardFacts) aboutTarget.appendChild(cardFacts);
       return;
     }
     if (stats) {
@@ -1130,9 +1123,8 @@
 
       if (statBlocks['Quadration Chart Position']) {
         if (planetInfo) statBlocks['Quadration Chart Position'].appendChild(planetInfo);
-        if (cardFacts) statBlocks['Quadration Chart Position'].appendChild(cardFacts);
         aboutTarget.appendChild(statBlocks['Quadration Chart Position']);
-      } else if (cardFacts) aboutTarget.appendChild(cardFacts);
+      }
     }
   }
 
