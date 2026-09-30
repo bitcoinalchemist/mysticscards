@@ -95,6 +95,7 @@
     '<header class="site-header" id="siteHeader">' +
       '<div class="sh-inner">' +
         '<a href="index.html" class="sh-logo">mysticscards<span class="suit">.space</span></a>' +
+        '<button type="button" class="sh-info-btn" id="shInfoBtn" aria-label="Site info" aria-haspopup="dialog" aria-controls="siteInfoDialog" title="Site info"><span aria-hidden="true">i</span></button>' +
       '</div>' +
     '</header>';
 
@@ -109,6 +110,18 @@
     header.classList.toggle('scrolled', window.scrollY > 10);
   }, { passive: true });
 
+  function initSiteInfoDialog() {
+    var button = document.getElementById('shInfoBtn');
+    var dialog = document.getElementById('siteInfoDialog');
+    var closeButton = dialog && dialog.querySelector('[data-site-info-close]');
+    if (!button || !dialog || !closeButton || typeof dialog.showModal !== 'function') return;
+    button.addEventListener('click', function () { dialog.showModal(); });
+    closeButton.addEventListener('click', function () { dialog.close(); });
+    dialog.addEventListener('click', function (event) {
+      if (event.target === dialog) dialog.close();
+    });
+  }
+
 
 
   function initUtilityDock() {
@@ -116,9 +129,8 @@
     var main = document.getElementById('main');
     var cycles = document.getElementById('fInTime');
     var quadrations = document.getElementById('qInlinePanel');
-    var info = document.getElementById('shInfoPanel');
     var buttons = Array.prototype.slice.call(document.querySelectorAll('[data-dock-target]'));
-    if (!finder || !main || !cycles || !quadrations || !info || !buttons.length) return;
+    if (!finder || !main || !cycles || !quadrations || !buttons.length) return;
 
     function promote(view, name) {
       view.dataset.appView = name;
@@ -130,10 +142,8 @@
     finder.dataset.appView = 'finder';
     finder.classList.add('app-view');
     quadrations.classList.remove('quadrations-inline', 'utility-slide-panel', 'is-open');
-    info.classList.remove('info-inline', 'utility-slide-panel', 'is-open');
     promote(cycles, 'cycles');
     promote(quadrations, 'quadrations');
-    promote(info, 'info');
 
     function setActive(name) {
       buttons.forEach(function (button) {
@@ -163,6 +173,8 @@
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initUtilityDock);
   else initUtilityDock();
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initSiteInfoDialog);
+  else initSiteInfoDialog();
 
   // Offline support + PWA install.
   if ('serviceWorker' in navigator) {
