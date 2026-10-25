@@ -1,6 +1,6 @@
 // Network-first offline support for the standalone Nature Cards site.
 // Bump this key whenever deployable files change. No public window APIs.
-const CACHE = 'mysticscards-standalone-v048-20261025-8';
+const CACHE = 'mysticscards-standalone-v048-20261025-14';
 const PRECACHE = [
   './', 'index.html', 'manifest.webmanifest', 'favicon.ico',
   'LICENSE', 'NOTICES.md', 'LEGAL.md',

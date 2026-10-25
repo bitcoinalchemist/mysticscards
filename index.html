@@ -1369,18 +1369,23 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
 .finder-deck-card:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; }
 .finder.finder-has-selection .finder-deck { position: absolute; visibility: hidden; pointer-events: none; }
 .finder.finder-has-selection .finder-results { margin-top: 1.5rem; }
-.finder.finder-is-revealing .finder-result.has-card { opacity: 0; }
+.finder.finder-is-revealing .finder-result.has-card .spread-card { opacity: 0; }
 .finder-card-handoff { position: fixed; z-index: 100; pointer-events: none; perspective: 700px; }
-.finder-card-handoff-flip { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; animation: finder-card-flip .56s cubic-bezier(.2,.7,.2,1) forwards; }
+.finder-card-handoff-flip { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; will-change: transform; animation: finder-card-flip .64s both; }
 .finder-card-handoff-side { position: absolute; inset: 0; overflow: hidden; border-radius: var(--card-radius); backface-visibility: hidden; -webkit-backface-visibility: hidden; }
 .finder-card-handoff-back .card-back {
   background: var(--surface);
 }
 .finder-card-handoff-back .card-back::before,
 .finder-card-handoff-back .cb-coin { display: none; }
-.finder-card-handoff-front { transform: rotateY(180deg); }
+.finder-card-handoff-front { transform: translateZ(.5px); }
 .finder-card-handoff-front .spread-card { width: 100%; height: 100%; }
-@keyframes finder-card-flip { to { transform: rotateY(180deg); } }
+.finder-card-handoff-side { box-shadow: 0 0 0 1.5px var(--gold), 0 0 14px 2px color-mix(in srgb, var(--gold) 35%, transparent); }
+@keyframes finder-card-flip {
+  0% { transform: translateY(0) rotateY(-12deg) rotateZ(-1deg); animation-timing-function: cubic-bezier(.3,0,.6,1); }
+  35% { transform: translateY(-6%) rotateY(8deg) rotateZ(1deg); animation-timing-function: cubic-bezier(.2,.7,.3,1); }
+  100% { transform: translateY(0) rotateY(0deg) rotateZ(0deg); }
+}
 @media (prefers-reduced-motion: reduce) { .finder-deck, .finder-deck-card, .finder-result, .finder-card-handoff-flip { transition: none; animation: none !important; } }
 .finder-results.triptych {
   --triptych-side-w: clamp(3.2rem, 14vw, 3.9rem);
@@ -1413,11 +1418,11 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
   width: var(--triptych-side-w);
   margin-top: calc((var(--triptych-main-w) - var(--triptych-side-w)) * 0.7);
   opacity: .92;
-  transition: transform .16s ease, box-shadow .16s ease, opacity .18s ease, width .4s cubic-bezier(.4,0,.2,1);
+  transition: box-shadow .16s ease;
 }
 .finder-results.triptych .finder-result-composite .spread-card {
   width: var(--triptych-main-w);
-  transition: transform .16s ease, box-shadow .16s ease, width .4s cubic-bezier(.4,0,.2,1);
+  transition: box-shadow .16s ease;
 }
 .finder-results.triptych .finder-result-composite {
   inline-size: var(--triptych-main-w);
@@ -6201,6 +6206,12 @@ window.RELATIONSHIP_READINGS = {
     '1100010', '1000101', '0001011', '111'];
   const individualBits = binaryRows.join('');
   const earthlyDeck = deckAtAge(1);
+  function paintBinaryCode(el, code) {
+    if (gridEl.classList.contains('sl-reading-ltr')) code = code.split('').reverse().join('');
+    const binary = el.querySelector('.sl-card-binary');
+    binary.textContent = code;
+    binary.setAttribute('aria-label', 'Binary ' + code.split('').join(' ') + ', decimal ' + parseInt(code, 2));
+  }
   function binaryScript(cardIdx) {
     const card = SPREAD_CARDS[cardIdx];
     const script = LIFE_SCRIPTS[`${card.rank}_${card.suit}`];
@@ -6364,9 +6375,7 @@ window.RELATIONSHIP_READINGS = {
         el.dataset.binaryBit = positionBit;
         bit.textContent = positionBit;
         bit.setAttribute('aria-label', 'Position bit ' + positionBit);
-        const binary = el.querySelector('.sl-card-binary');
-        binary.textContent = code;
-        binary.setAttribute('aria-label', 'Binary ' + code.split('').join(' ') + ', decimal ' + parseInt(code, 2));
+        paintBinaryCode(el, code);
       }
     });
     paintGhosts(deck);
@@ -6405,6 +6414,9 @@ window.RELATIONSHIP_READINGS = {
     },
     showSolarValues(on) { gridEl.classList.toggle('sl-solar-values', !!on); },
     showBinary(on) { gridEl.classList.toggle('sl-binary', !!on); },
+    refreshBinaryDirection() {
+      for (const k in cards) paintBinaryCode(cards[k], binaryScript(Number(k)));
+    },
     showSolarCardValues(on) { gridEl.classList.toggle('sl-solar-card-values', !!on); },
     showCrownBottom(on) {
       on = !!on;
@@ -6693,6 +6705,7 @@ document.addEventListener('DOMContentLoaded', function () {
   function qSetReadLtr(on, persist) {
     const grid = document.getElementById('annualGrid');
     if (grid) grid.classList.toggle('sl-reading-ltr', !!on);
+    if (_spreadCtl) _spreadCtl.refreshBinaryDirection();
     setButtonState(document.getElementById('qReadLtr'), !!on);
     if (persist) {
       CardsStore.setQuadReadLtr(!!on);
@@ -7025,6 +7038,8 @@ document.addEventListener('DOMContentLoaded', function () {
   let _deckHandoff = null;
   let _deckHandoffPending = false;
   let _deckHandoffRevision = 0;
+  const _relationshipMotion = new Set();
+  let _birthdayMotion = [];
   // When a snapshot is restored (reset button), this remembers which side
   // the overridden card came from so the solo→triptych entrance sends that
   // card back to its own slot instead of always replaying the left-card
@@ -7714,6 +7729,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function setRelationshipMode(on) {
     if (!dom || !dom.root || !dom.relBtn) return;
+    const changed = dom.root.classList.contains('rel-on') !== !!on;
+    _birthdayMotion.forEach(animation => animation.cancel());
+    _birthdayMotion = [];
+    const youInputs = dom.root.querySelector('.finder-person[data-role="you"] .finder-inputs');
+    const before = changed && youInputs ? youInputs.getBoundingClientRect() : null;
     dom.root.classList.toggle('rel-on', !!on);
     dom.relBtn.classList.toggle('on', !!on);
     dom.relBtn.textContent = on ? '−' : '+';
@@ -7721,6 +7741,18 @@ document.addEventListener('DOMContentLoaded', function () {
     dom.relBtn.title = on ? 'Remove relationship' : 'Add relationship';
     dom.relBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
     if (typeof window.refreshFinderTrayTargets === 'function') window.refreshFinderTrayTargets();
+    if (before && !reduceMotion() && typeof youInputs.animate === 'function') {
+      const after = youInputs.getBoundingClientRect();
+      _birthdayMotion.push(youInputs.animate([
+        { transform: `translate(${before.left - after.left}px, ${before.top - after.top}px)` },
+        { transform: 'translate(0, 0)' }
+      ], { duration: 360, easing: 'cubic-bezier(.22,1,.36,1)' }));
+      const partnerInputs = dom.root.querySelector('.finder-person[data-role="partner"] .finder-inputs');
+      if (on && partnerInputs) _birthdayMotion.push(partnerInputs.animate([
+        { opacity: 0, transform: 'translateY(6px)' },
+        { opacity: 1, transform: 'translateY(0)' }
+      ], { duration: 300, easing: 'cubic-bezier(.22,1,.36,1)' }));
+    }
   }
 
   function clearPartnerInputs() {
@@ -7792,6 +7824,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const keepsActiveReveal = (_deckHandoff || _deckHandoffPending) && state.targetMode === 'solo' &&
       _renderMode === 'solo' && sameFinderCard(state.you, _selectedCard);
     if (!keepsActiveReveal) cancelDeckCardHandoff();
+    cancelRelationshipMotion();
     const animation = options.animate === false ? null : captureAnimationContext(state.targetMode);
     renderFinderState(state, options);
     updateContactContext();
@@ -7800,6 +7833,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function ghostAt(src, rect) {
     const g = src.cloneNode(true);
+    g.setAttribute('aria-hidden', 'true');
     g.style.cssText =
       'position:fixed;' +
       `left:${rect.left}px;top:${rect.top}px;` +
@@ -7827,6 +7861,37 @@ document.addEventListener('DOMContentLoaded', function () {
     _transitionSource = rect && rect.width ? { slot: slotName, rect, el: cardEl } : null;
   }
 
+  // One owner per relationship animation: completion, interruption, scroll,
+  // and resize all release temporary cards and styles through the same path.
+  function cancelRelationshipMotion() {
+    Array.from(_relationshipMotion).forEach(motion => motion.cancel());
+  }
+
+  function relationshipMotion(el, frames, options, cleanup) {
+    if (!el) return;
+    if (reduceMotion() || typeof el.animate !== 'function') {
+      if (cleanup) cleanup();
+      return;
+    }
+    const animation = el.animate(frames, Object.assign({
+      duration: 440, easing: 'cubic-bezier(.22,1,.36,1)', fill: 'both'
+    }, options));
+    const motion = { cancel: finish };
+    function finish() {
+      if (!_relationshipMotion.delete(motion)) return;
+      animation.cancel();
+      if (cleanup) cleanup();
+      window.removeEventListener('resize', finish);
+      window.removeEventListener('scroll', finish, true);
+    }
+    _relationshipMotion.add(motion);
+    animation.finished.then(finish, finish);
+    window.addEventListener('resize', finish, { once: true });
+    // Only fixed overlays need cancelling on scroll. In-flow cards move
+    // with the page, including the Finder's own anchor correction.
+    if (el.style.position === 'fixed') window.addEventListener('scroll', finish, { capture: true, once: true });
+  }
+
   function flipEnterRel(soloRect, origin) {
     if (reduceMotion() || !soloRect || !soloRect.width) return;
     origin = origin === 'partner' ? 'partner' : 'you';
@@ -7848,38 +7913,17 @@ document.addEventListener('DOMContentLoaded', function () {
     const dy = Math.round((soloRect.top  + soloRect.height / 2) - (leadRect.top  + leadRect.height / 2));
     const scaleUp = soloRect.width / leadRect.width;
 
-    lead.style.zIndex     = '5';
-    lead.style.transition = 'none';
-    lead.style.transform  = `translate(${dx}px, ${dy}px) scale(${scaleUp})`;
-
-    others.forEach((el) => {
-      if (!el) return;
-      el.style.transition = 'none';
-      el.style.opacity    = '0';
-      el.style.transform  = 'scale(.85)';
+    lead.style.zIndex = '5';
+    relationshipMotion(lead, [
+      { transform: `translate(${dx}px, ${dy}px) scale(${scaleUp})` },
+      { transform: 'translate(0, 0) scale(1)' }
+    ], {}, () => lead.style.removeProperty('z-index'));
+    others.forEach((el, i) => {
+      relationshipMotion(el, [
+        { opacity: 0, transform: 'translateY(8px) scale(.96)' },
+        { opacity: 1, transform: 'translateY(0) scale(1)' }
+      ], { duration: 340, delay: 60 + i * 40 });
     });
-    lead.getBoundingClientRect();
-    requestAnimationFrame(() => {
-      lead.style.transition = 'transform .55s cubic-bezier(.4,0,.2,1)';
-      lead.style.transform  = '';
-      others.forEach((el, i) => {
-        if (!el) return;
-        const delay = 0.15 + i * 0.08;
-        el.style.transition =
-          `opacity .5s ease ${delay}s, transform .5s cubic-bezier(.4,0,.2,1) ${delay}s`;
-        el.style.opacity   = '';
-        el.style.transform = '';
-      });
-    });
-    setTimeout(() => {
-      [lead].concat(others).forEach((el) => {
-        if (!el) return;
-        el.style.removeProperty('transition');
-        el.style.removeProperty('transform');
-        el.style.removeProperty('opacity');
-        el.style.removeProperty('z-index');
-      });
-    }, 800);
   }
 
   function flipExitRel(sourceEl, sourceRect) {
@@ -7888,26 +7932,15 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!solo) return;
     const soloRect = solo.getBoundingClientRect();
     if (!soloRect.width) return;
-    const dx = Math.round((soloRect.left + soloRect.width  / 2) - (sourceRect.left + sourceRect.width  / 2));
-    const dy = Math.round((soloRect.top  + soloRect.height / 2) - (sourceRect.top  + sourceRect.height / 2));
-    const scaleUp = soloRect.width / sourceRect.width;
-    const ghost = ghostAt(sourceEl, sourceRect);
-
-    solo.style.opacity = '0';
-    solo.style.transition = 'none';
-    ghost.style.transform = 'translate(0, 0) scale(1)';
-    ghost.getBoundingClientRect();
-    requestAnimationFrame(() => {
-      ghost.style.transition = 'transform .55s cubic-bezier(.4,0,.2,1), opacity .2s ease .35s';
-      ghost.style.transform  = `translate(${dx}px, ${dy}px) scale(${scaleUp})`;
-      solo.style.transition = 'opacity .18s ease .38s';
-      solo.style.opacity = '';
-    });
-    setTimeout(() => {
-      ghost.remove();
-      solo.style.removeProperty('transition');
-      solo.style.removeProperty('opacity');
-    }, 700);
+    const dx = Math.round((sourceRect.left + sourceRect.width / 2) - (soloRect.left + soloRect.width / 2));
+    const dy = Math.round((sourceRect.top + sourceRect.height / 2) - (soloRect.top + soloRect.height / 2));
+    const scale = sourceRect.width / soloRect.width;
+    // Move the real face from its former slot. A ghost crossfading over
+    // the destination briefly doubled the artwork and changed its glow.
+    relationshipMotion(solo, [
+      { transform: `translate(${dx}px, ${dy}px) scale(${scale})` },
+      { transform: 'translate(0, 0) scale(1)' }
+    ]);
   }
 
   function captureAnimationContext(targetMode) {
@@ -7952,17 +7985,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function animateGhostExit(ghosts) {
     if (!ghosts || !ghosts.length) return;
-    requestAnimationFrame(() => {
-      ghosts.forEach((ghost, i) => {
-        const delay = i * 0.06;
-        ghost.style.transition = `transform .58s cubic-bezier(.4,0,.2,1) ${delay}s, opacity .48s ease ${delay}s`;
-        ghost.style.transform  = i === 0
-          ? 'scale(.5) translateY(-10px)'
-          : 'translateX(56px) scale(.78) rotate(8deg)';
-        ghost.style.opacity    = '0';
-      });
+    ghosts.forEach(ghost => {
+      relationshipMotion(ghost, [
+        { opacity: 1, transform: 'translateY(0) scale(1)' },
+        { opacity: 0, transform: 'translateY(6px) scale(.96)' }
+      ], { duration: 220 }, () => ghost.remove());
     });
-    setTimeout(() => { ghosts.forEach(g => g.remove()); }, 800);
   }
 
   function playFinderAnimation(ctx) {
@@ -8077,13 +8105,9 @@ document.addEventListener('DOMContentLoaded', function () {
     reveal.style.height = target.height + 'px';
     const flip = document.createElement('div');
     flip.className = 'finder-card-handoff-flip';
-    const back = document.createElement('div');
-    back.className = 'finder-card-handoff-side finder-card-handoff-back';
-    back.innerHTML = '<div class="card-back"><span class="cb-coin"></span></div>';
     const front = document.createElement('div');
     front.className = 'finder-card-handoff-side finder-card-handoff-front';
     front.appendChild(resultCard.cloneNode(true));
-    flip.appendChild(back);
     flip.appendChild(front);
     reveal.appendChild(flip);
     document.body.appendChild(reveal);
@@ -8099,7 +8123,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (_deckHandoff === handoff) cancelDeckCardHandoff();
     };
     flip.addEventListener('animationend', finish, { once: true });
-    handoff = { node: reveal, cancel: cancel, fallback: window.setTimeout(finish, 750) };
+    handoff = { node: reveal, cancel: cancel, fallback: window.setTimeout(finish, 900) };
     _deckHandoff = handoff;
     window.addEventListener('resize', cancel, { once: true });
     window.addEventListener('scroll', cancel, { capture: true, once: true });
@@ -16472,7 +16496,7 @@ window.TZ_COORDS = {
     const life = deckAtAge(1);
     const pos = life.indexOf(idx);
     if (pos < 0) return '';
-    if (pos >= 49) return planetButtonHTML('Crown', 'Crown Card in the Crown Line');
+    if (pos >= 49) return planetButtonHTML('Crown', 'Crown Card');
     const rowPlanet = SPREAD_PLANETS[Math.floor(pos / 7)];
     const colPlanet = SPREAD_PLANETS[pos % 7];
     return planetButtonHTML(rowPlanet, `${colPlanet} Card in the ${rowPlanet} Line`);
