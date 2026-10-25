@@ -14,8 +14,6 @@ content outside the CC BY-NC 4.0 license.
 - The cardology **reading texts** (the "Sage voice"), including the per-card,
   per-planet, and period readings.
 - The original **"Quinta Essentia" Joker artwork** (`assets/cards/JOKER.webp`).
-- An inactive **magnetism-inspired Joker concept** (`assets/cards/JOKER-magnetism.jpg`),
-  retained as a design draft and not used on the site.
 
 It does **not** cover the source code (MIT, see `LICENSE`) or the third-party
 material below.
@@ -88,3 +86,37 @@ available under the SIL Open Font License 1.1.
 
 - Inter license: <https://github.com/google/fonts/blob/main/ofl/inter/OFL.txt>
 - Lora license: <https://github.com/google/fonts/blob/main/ofl/lora/OFL.txt>
+
+## Standalone v0.48 packaging
+
+Paths above to scripts, fonts, and card artwork describe the original project.
+This edition embeds those resources in `index.html`; their licences still apply.
+Retain this notice, `LICENSE`, and the readable Astronomy Engine MIT notice in
+`licenses/astronomy-MIT.txt` when redistributing. No blanket MIT or CC BY-NC
+licence is asserted over the whole combined HTML file.
+
+### HYG star catalogue
+
+The embedded header identifies a HYG v4.1 subset by David Nash / Astronexus,
+under CC BY-SA 4.0: <https://creativecommons.org/licenses/by-sa/4.0/>.
+Source: <https://github.com/astronexus/HYG-Database>.
+The adaptation excludes Sol, selects magnitude <= 5.5 and declination >= -25
+degrees, and rounds fields. Records contain J2000 right ascension, declination,
+visual magnitude, and colour index. Retain credit, the licence link, and this
+change notice. Distributed adaptations of this dataset must follow its
+share-alike terms; the project's content licence does not replace them.
+
+### GeoNames city data
+
+Birthplace lookup embeds an adapted GeoNames cities15000 subset, including
+major cities/capitals and Australian cities, under CC BY 4.0:
+<https://creativecommons.org/licenses/by/4.0/>.
+Source and provider: <https://www.geonames.org/>.
+Data has been selected, repackaged with region/zone dictionaries, and indexed
+for local lookup. Retain GeoNames attribution, the licence link, and this change
+notice. No provider endorsement is implied.
+
+### Calculation references
+
+The embedded source references Swiss Ephemeris documentation for a calculation
+convention and explicitly states that no Swiss Ephemeris code is used.
