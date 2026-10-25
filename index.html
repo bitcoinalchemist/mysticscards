@@ -695,6 +695,9 @@ body.starry .site-header.scrolled {
 .sl-ghost-self { visibility: hidden; }
 .sl-card-binary { display: none; position: absolute; inset: 25% 0; align-content: center; text-align: center; font-family: monospace; font-size: 17cqw; line-height: 1; color: var(--card-dark); pointer-events: none; }
 .spread-grid.sl-binary .sl-card-binary { display: block; }
+.spread-grid.sl-binary .spread-card[data-binary-bit="1"] {
+  background: color-mix(in srgb, var(--card-paper) 80%, var(--card-dark));
+}
 .sl-card-binary-bit { display: none; position: absolute; top: 2.5%; right: 4%; text-align: right; font-family: monospace; font-size: 24cqw; line-height: 1; color: var(--card-dark); pointer-events: none; }
 .spread-grid.sl-binary .sl-card-binary-bit { display: block; }
 .sl-card-binary-decimal { display: none; position: absolute; bottom: 2.5%; left: 4%; text-align: left; font-family: monospace; font-size: 20cqw; line-height: 1; color: var(--card-dark); pointer-events: none; }
@@ -933,22 +936,21 @@ body.pips-only .spread-card:not(.joker) .court-only { display: block; }
 .age-controls-wrap { min-height: var(--tap-target); }
 /* NC STYLES: MENU */
 .q-controls-menu {
-  position: fixed;
-  z-index: 60;
+  position: static;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
   align-items: start;
   gap: var(--space-3);
   width: min(24rem, calc(100vw - 1.5rem));
   max-width: none;
-  max-height: calc(100vh - 1.5rem);
-  overflow: auto;
-  margin: 0;
+  max-height: none;
+  overflow: visible;
+  margin: 0 auto var(--space-3);
   padding: var(--space-3);
   border: 1px solid var(--border);
   border-radius: var(--r-md);
-  background: var(--surface);
-  box-shadow: var(--sh-md);
+  background: rgba(255,255,255,.025);
+  box-shadow: none;
 }
 .q-controls-menu[hidden] { display: none; }
 .q-controls-menu { grid-template-columns: minmax(0, 1fr); width: min(23rem, calc(100vw - 1.5rem)); }
@@ -6192,17 +6194,21 @@ window.RELATIONSHIP_READINGS = {
 <!-- NC SPREADS: RENDERING -->
 <!-- SCRIPT 08 / 24 — BEHAVIOR: Spread-grid rendering -->
 <script>function buildSpreadGrid(gridEl, opts) {
-  // Public controller APIs: showBinary(on) toggles fixed-grid seven-bit scripts;
-  // Position bits use the former Reversed setting; scripts and decimals stay fixed.
-  // Individual seat bits follow each row in reverse (A♥–7♥: 0110100).
-  // Keep the existing script grid, but display each seven-bit code reversed.
+  // Public controller API: showBinary(on) displays each card's Life Script.
+  // Read left to right across the chart: Neptune through Mercury. Each script
+  // card contributes its fixed Earthly-seat bit; codes follow card identity.
   const binaryRows = ['0010110', '0101100', '1011000', '0110001',
     '1100010', '1000101', '0001011', '111'];
-  const binarySeats = binaryRows.map(row => row.split('').reverse().join('')).join('');
   const individualBits = binaryRows.join('');
-  function binaryScript(pos) {
-    const bits = Array.from({ length: 7 }, (_, i) => binarySeats[(pos + i + 1) % 52]);
-    return bits.reverse().join('');
+  const earthlyDeck = deckAtAge(1);
+  function binaryScript(cardIdx) {
+    const card = SPREAD_CARDS[cardIdx];
+    const script = LIFE_SCRIPTS[`${card.rank}_${card.suit}`];
+    return script.slice().reverse().map(value => {
+      const scriptCard = lsParseCard(value);
+      const idx = SPREAD_CARDS.findIndex(c => c.rank === scriptCard.rank && c.suit === scriptCard.suit);
+      return individualBits[earthlyDeck.indexOf(idx)];
+    }).join('');
   }
   opts = opts || {};
   const onCardClick = opts.onCardClick || function () {};
@@ -6249,7 +6255,7 @@ window.RELATIONSHIP_READINGS = {
   jokerCard.setAttribute('role', 'button');
   jokerCard.setAttribute('tabindex', '0');
   jokerCard.setAttribute('aria-label', 'Load The Joker in Finder');
-  jokerCard.innerHTML = spreadCardPips(joker) + '<span class="sl-card-solar-value" aria-hidden="true">0</span>';
+  jokerCard.innerHTML = spreadCardPips(joker) + '<span class="sl-card-solar-value" aria-hidden="true">0</span><span class="sl-card-binary-bit" aria-label="Binary zero or one">0/1</span>';
   jokerCard.addEventListener('click', () => onCardClick(52));
   jokerCard.addEventListener('keydown', (event) => {
     if (event.key !== 'Enter' && event.key !== ' ') return;
@@ -6346,7 +6352,7 @@ window.RELATIONSHIP_READINGS = {
       if (el && seat) {
         if (el.parentNode !== seat) seat.appendChild(el);
         el.title = posLabel(pos);
-        const code = binaryScript(pos);
+        const code = binaryScript(cardIdx);
         const decimal = el.querySelector('.sl-card-binary-decimal');
         decimal.textContent = String(parseInt(code, 2));
         decimal.setAttribute('aria-label', 'Decimal ' + decimal.textContent);
@@ -6355,6 +6361,7 @@ window.RELATIONSHIP_READINGS = {
         reverseDecimal.setAttribute('aria-label', 'Reversed binary decimal ' + reverseDecimal.textContent);
         const bit = el.querySelector('.sl-card-binary-bit');
         const positionBit = individualBits[pos];
+        el.dataset.binaryBit = positionBit;
         bit.textContent = positionBit;
         bit.setAttribute('aria-label', 'Position bit ' + positionBit);
         const binary = el.querySelector('.sl-card-binary');
@@ -6838,31 +6845,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const panel = document.getElementById('qControlsMenu');
     if (!button || !panel) return function () {};
 
-    function positionMenu() {
-      if (panel.hidden) return;
-      const anchor = button.getBoundingClientRect();
-      panel.style.position = 'fixed';
-      panel.style.left = '0px';
-      panel.style.top = '0px';
-      panel.style.visibility = 'hidden';
-      const menu = panel.getBoundingClientRect();
-      const margin = 12;
-      const left = Math.max(margin, Math.min(anchor.left, window.innerWidth - menu.width - margin));
-      const below = anchor.bottom + 8;
-      const top = below + menu.height <= window.innerHeight - margin
-        ? below
-        : Math.max(margin, anchor.top - menu.height - 8);
-      panel.style.left = left + 'px';
-      panel.style.top = top + 'px';
-      panel.style.visibility = '';
-    }
-
     function setOpen(open, focusButton) {
       panel.hidden = !open;
       button.classList.toggle('on', open);
       button.setAttribute('aria-expanded', open ? 'true' : 'false');
-      if (open) positionMenu();
-      else panel.style.visibility = '';
+      panel.inert = !open;
       if (focusButton) button.focus({ preventScroll: true });
     }
     button.addEventListener('click', function () { setOpen(panel.hidden); });
@@ -6871,11 +6858,6 @@ document.addEventListener('DOMContentLoaded', function () {
       event.preventDefault();
       setOpen(false, true);
     });
-    document.addEventListener('pointerdown', function (event) {
-      if (!panel.hidden && !panel.contains(event.target) && !button.contains(event.target)) setOpen(false);
-    });
-    window.addEventListener('resize', positionMenu);
-    window.addEventListener('scroll', positionMenu, true);
     setOpen(false);
     return function () { setOpen(false); };
   }
@@ -20864,13 +20846,6 @@ var CASTFIELD_SUIT_SVG = {
                       </div>
                       <span class="q-mode-current" id="qModeCurrent" aria-live="polite"></span>
                     </div>
-                    <div class="spread-layout">
-                      <div class="spread-wrap">
-                        <div class="spread-stack">
-                          <div id="annualGrid" class="spread-grid"></div>
-                        </div>
-                      </div>
-                    </div>
                     <div class="age-controls-wrap q-controls-menu" id="qControlsMenu" aria-label="Spreads menu" hidden>
                       <fieldset class="q-control-group q-size-stepper">
                         <legend>Chart size</legend>
@@ -20906,8 +20881,8 @@ var CASTFIELD_SUIT_SVG = {
 <button type="button" class="q-disp-toggle" id="qJoker" role="switch" aria-checked="false">
                             <span class="q-toggle-icon" aria-hidden="true">✦</span><span>Show Joker</span><span class="q-switch-track" aria-hidden="true"></span>
                           </button>
-<button type="button" class="q-disp-toggle" id="qBinaryRain" role="switch" aria-checked="true"><span class="q-toggle-icon" aria-hidden="true">01</span><span>Binary Rain</span><span class="q-switch-track" aria-hidden="true"></span></button>
-<button type="button" class="q-disp-toggle" id="qFloatingCards" role="switch" aria-checked="false"><span class="q-toggle-icon" aria-hidden="true">♠</span><span>Floating Cards</span><span class="q-switch-track" aria-hidden="true"></span></button>
+
+
 <button type="button" class="q-disp-toggle q-alt-toggle" id="qAlt" role="switch" aria-checked="false">
                             <span class="q-toggle-icon" aria-hidden="true">♛</span><span>Pips Only</span><span class="q-switch-track" aria-hidden="true"></span>
                           </button>
@@ -20915,6 +20890,20 @@ var CASTFIELD_SUIT_SVG = {
                             <span class="q-toggle-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 7h17m-4-4 4 4-4 4M21 17H4m4-4-4 4 4 4"/></svg></span><span>Read left to right</span><span class="q-switch-track" aria-hidden="true"></span>
                           </button></div>
                       </fieldset>
+                      <fieldset class="q-control-group q-background-group">
+                        <legend>Background</legend>
+                        <div class="q-display-toggles">
+                          <button type="button" class="q-disp-toggle" id="qBinaryRain" role="switch" aria-checked="true"><span class="q-toggle-icon" aria-hidden="true">01</span><span>Binary Rain</span><span class="q-switch-track" aria-hidden="true"></span></button>
+                          <button type="button" class="q-disp-toggle" id="qFloatingCards" role="switch" aria-checked="false"><span class="q-toggle-icon" aria-hidden="true">♠</span><span>Floating Cards</span><span class="q-switch-track" aria-hidden="true"></span></button>
+                        </div>
+                      </fieldset>
+                    </div>
+                    <div class="spread-layout">
+                      <div class="spread-wrap">
+                        <div class="spread-stack">
+                          <div id="annualGrid" class="spread-grid"></div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
