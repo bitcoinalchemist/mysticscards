@@ -49,8 +49,6 @@ installation and offline use in compatible browsers.
 | `assets/` | Installation icons and social preview image |
 | `AGENTS.md` | Project guidance and maintenance conventions |
 
-For maintenance, follow [AGENTS.md](AGENTS.md). The opening `NC MAP` in
-`index.html` identifies its main sections.
 
 ## Licence and acknowledgements
 

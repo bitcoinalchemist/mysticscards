@@ -7468,7 +7468,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  async function shareFinderSelection() {
+  async function copyFinderSelection() {
     if (!_selectedCard) return;
     const url = new URL(window.location.href);
     url.search = '';
@@ -7489,16 +7489,21 @@ document.addEventListener('DOMContentLoaded', function () {
     const status = document.getElementById('finderShareStatus');
     status.textContent = '';
     try {
-      if (navigator.share) {
-        await navigator.share({ title: 'Nature Cards', url: url.href });
-      } else if (navigator.clipboard && navigator.clipboard.writeText) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(url.href);
         status.textContent = 'Link copied.';
+        const button = document.getElementById('finderShareBtn');
+        button.title = 'Link copied';
+        button.setAttribute('aria-label', 'Link copied');
+        window.setTimeout(function () {
+          button.title = 'Copy reading link';
+          button.setAttribute('aria-label', 'Copy reading link');
+        }, 2000);
       } else {
         window.prompt('Copy this reading link:', url.href);
       }
     } catch (error) {
-      if (error.name !== 'AbortError') window.prompt('Copy this reading link:', url.href);
+      window.prompt('Copy this reading link:', url.href);
     }
   }
 
@@ -8274,7 +8279,7 @@ document.addEventListener('DOMContentLoaded', function () {
       syncDayInput(dom.partner.day, null);
     }
     applySharedFinderState();
-    document.getElementById('finderShareBtn').addEventListener('click', shareFinderSelection);
+    document.getElementById('finderShareBtn').addEventListener('click', copyFinderSelection);
     runFinderUpdate({ animate: false });
 
     dom.you.month.addEventListener('input', function () { clearFinderBirthYear(); clearFinderOverride(); discardFinderSnapshot(); syncDayInput(dom.you.day, +this.value); find(); });
@@ -20800,8 +20805,8 @@ var CASTFIELD_SUIT_SVG = {
           <rect x="10" y="18" width="4" height="4" rx=".5" />
           <rect x="15" y="18" width="4" height="4" rx=".5" />
         </svg></button>
-            <button type="button" id="finderShareBtn" class="finder-tool-btn finder-tool-btn--icon finder-share-btn" aria-label="Share reading" title="Share reading" hidden>
-              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false"><path d="M12 15V3m-4 4 4-4 4 4M7 10H5v11h14V10h-2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <button type="button" id="finderShareBtn" class="finder-tool-btn finder-tool-btn--icon finder-share-btn" aria-label="Copy reading link" title="Copy reading link" hidden>
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false"><rect x="8" y="8" width="12" height="13" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
             <span id="finderShareStatus" class="vh" role="status"></span>
           </div>
