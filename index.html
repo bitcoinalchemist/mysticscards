@@ -7468,6 +7468,40 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
+  async function shareFinderSelection() {
+    if (!_selectedCard) return;
+    const url = new URL(window.location.href);
+    url.search = '';
+    url.hash = '';
+    if (_finderOverride) {
+      const idx = SPREAD_CARDS.findIndex(c => c.rank === _selectedCard.rank && c.suit === _selectedCard.suit);
+      url.searchParams.set('card', String(idx >= 0 ? idx + 1 : 53));
+    } else {
+      url.searchParams.set('m', String(+dom.you.month.value));
+      url.searchParams.set('d', String(+dom.you.day.value));
+      if (_finderBirthYear) url.searchParams.set('y', String(_finderBirthYear));
+      if (_selectedComposite) {
+        url.searchParams.set('rel', '1');
+        url.searchParams.set('pm', String(+dom.partner.month.value));
+        url.searchParams.set('pd', String(+dom.partner.day.value));
+      }
+    }
+    const status = document.getElementById('finderShareStatus');
+    status.textContent = '';
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: 'Nature Cards', url: url.href });
+      } else if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(url.href);
+        status.textContent = 'Link copied.';
+      } else {
+        window.prompt('Copy this reading link:', url.href);
+      }
+    } catch (error) {
+      if (error.name !== 'AbortError') window.prompt('Copy this reading link:', url.href);
+    }
+  }
+
   function cardName(card) {
     return card.suit === 'joker'
       ? 'The Joker'
@@ -8027,6 +8061,8 @@ document.addEventListener('DOMContentLoaded', function () {
     _selectedCard = state.you;
     _selectedPartner = state.partner;
     _selectedComposite = state.targetMode === 'triptych' ? state.comp : null;
+    document.getElementById('finderShareBtn').hidden = !state.you;
+    document.getElementById('finderShareStatus').textContent = '';
     if (_selectedComposite) {
       updateGridPick(_selectedComposite, 'primary');
       updateGridPick(state.you, 'secondary', state.partner);
@@ -8238,6 +8274,7 @@ document.addEventListener('DOMContentLoaded', function () {
       syncDayInput(dom.partner.day, null);
     }
     applySharedFinderState();
+    document.getElementById('finderShareBtn').addEventListener('click', shareFinderSelection);
     runFinderUpdate({ animate: false });
 
     dom.you.month.addEventListener('input', function () { clearFinderBirthYear(); clearFinderOverride(); discardFinderSnapshot(); syncDayInput(dom.you.day, +this.value); find(); });
@@ -20763,6 +20800,10 @@ var CASTFIELD_SUIT_SVG = {
           <rect x="10" y="18" width="4" height="4" rx=".5" />
           <rect x="15" y="18" width="4" height="4" rx=".5" />
         </svg></button>
+            <button type="button" id="finderShareBtn" class="finder-tool-btn finder-tool-btn--icon finder-share-btn" aria-label="Share reading" title="Share reading" hidden>
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false"><path d="M12 15V3m-4 4 4-4 4 4M7 10H5v11h14V10h-2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <span id="finderShareStatus" class="vh" role="status"></span>
           </div>
 
           <div class="finder-tray-wrap" id="bdayTrayWrap">
