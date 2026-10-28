@@ -6199,27 +6199,25 @@ window.RELATIONSHIP_READINGS = {
 <!-- NC SPREADS: RENDERING -->
 <!-- SCRIPT 08 / 24 — BEHAVIOR: Spread-grid rendering -->
 <script>function buildSpreadGrid(gridEl, opts) {
-  // Public controller API: showBinary(on) displays each card's Life Script.
-  // Read left to right across the chart: Neptune through Mercury. Each script
-  // card contributes its fixed Earthly-seat bit; codes follow card identity.
-  const binaryRows = ['0010110', '0101100', '1011000', '0110001',
-    '1100010', '1000101', '0001011', '111'];
-  const individualBits = binaryRows.join('');
-  const earthlyDeck = deckAtAge(1);
+  // Public controller APIs: showBinary(on) toggles fixed-grid seven-bit scripts;
+  // refreshBinaryDirection() reapplies the selected reading direction.
+  // Each planetary row rotates its predecessor right once; the crown stays 111.
+  // Seats render in descending column order: reverse storage so visible rows
+  // read in binaryRows order, starting with 0010110 from left to right.
+  // Card scripts and both decimals derive from this revised 52-seat grid.
+  const binaryRows = ['0010110', '0001011', '1000101', '1100010',
+    '0110001', '1011000', '0101100', '111'];
+  const binarySeats = binaryRows.map(row => row.split('').reverse().join('')).join('');
+  const individualBits = binarySeats;
   function paintBinaryCode(el, code) {
     if (gridEl.classList.contains('sl-reading-ltr')) code = code.split('').reverse().join('');
     const binary = el.querySelector('.sl-card-binary');
     binary.textContent = code;
     binary.setAttribute('aria-label', 'Binary ' + code.split('').join(' ') + ', decimal ' + parseInt(code, 2));
   }
-  function binaryScript(cardIdx) {
-    const card = SPREAD_CARDS[cardIdx];
-    const script = LIFE_SCRIPTS[`${card.rank}_${card.suit}`];
-    return script.slice().reverse().map(value => {
-      const scriptCard = lsParseCard(value);
-      const idx = SPREAD_CARDS.findIndex(c => c.rank === scriptCard.rank && c.suit === scriptCard.suit);
-      return individualBits[earthlyDeck.indexOf(idx)];
-    }).join('');
+  function binaryScript(pos) {
+    const bits = Array.from({ length: 7 }, (_, i) => binarySeats[(pos + i + 1) % 52]);
+    return bits.reverse().join('');
   }
   opts = opts || {};
   const onCardClick = opts.onCardClick || function () {};
@@ -6363,7 +6361,7 @@ window.RELATIONSHIP_READINGS = {
       if (el && seat) {
         if (el.parentNode !== seat) seat.appendChild(el);
         el.title = posLabel(pos);
-        const code = binaryScript(cardIdx);
+        const code = binaryScript(pos);
         const decimal = el.querySelector('.sl-card-binary-decimal');
         decimal.textContent = String(parseInt(code, 2));
         decimal.setAttribute('aria-label', 'Decimal ' + decimal.textContent);
@@ -6415,7 +6413,7 @@ window.RELATIONSHIP_READINGS = {
     showSolarValues(on) { gridEl.classList.toggle('sl-solar-values', !!on); },
     showBinary(on) { gridEl.classList.toggle('sl-binary', !!on); },
     refreshBinaryDirection() {
-      for (const k in cards) paintBinaryCode(cards[k], binaryScript(Number(k)));
+      if (_deck) _deck.forEach((cardIdx, pos) => paintBinaryCode(cards[cardIdx], binaryScript(pos)));
     },
     showSolarCardValues(on) { gridEl.classList.toggle('sl-solar-card-values', !!on); },
     showCrownBottom(on) {
